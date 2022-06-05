@@ -112,11 +112,7 @@ void test_net_ipa() {
 }
 
 void test_net_ifi() {
-    struct ifi_info *ifi;
-
-    ifi = get_ifi_info(AF_INET, 0);
-
-    print_ifi_info(ifi);
+    //struct ifi_info *ifi;
 
 }
 int main(int argc, char *argv[]) {

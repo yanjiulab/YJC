@@ -24,6 +24,8 @@ CFLAGS = -Wall -Wextra -g3
 TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries
 LIBS =
+# Test libraries
+TEST_LIBS = -l cmocka -L /usr/lib
 # Include directory
 INCLUDE_DIRECTORY=./include/
 # Source directory
@@ -85,7 +87,7 @@ run: compile
 test-build:
 	@mkdir -p build
 	@echo Preparing tests...
-	$(CC) $(TCFLAGS) $(TESTS) $(SOURCES) $(INCLUDES) $(LIBS) -o $(TEST_OUTPUT)
+	$(CC) $(TCFLAGS) $(TESTS) $(SOURCES) $(INCLUDES) $(LIBS) $(TEST_LIBS) -o $(TEST_OUTPUT)
 
 test: test-build
 	./$(TEST_OUTPUT)

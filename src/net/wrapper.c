@@ -1,7 +1,9 @@
 #include "wrapper.h"
 
-/* wrap sys/socket.h */
 
+
+#include "syserr.h"
+/* wrap sys/socket.h */
 
 /* wrap stdlib.h */
 void *Malloc(size_t size) {
