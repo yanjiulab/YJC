@@ -4,52 +4,11 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "ini.h"
-#include "log.h"
+
 #include "str.h"
 #include "timer.h"
 #include "ifi.h"
 
-void test_log() {
-    printf("===== %s start =====\n", __func__);
-    int level = LOG_TRACE;
-    log_set_level(level);
-
-    FILE *fp = fopen("log/app.log", "w");
-    int file_level = LOG_WARN;
-    log_add_fp(fp, file_level);
-
-    log_trace("trace");
-    log_debug("debug");
-    log_info("info");
-    log_warn("warn");
-    log_error("error");
-    log_fatal("fatal");
-
-    printf("===== %s end =====\n", __func__);
-}
-
-void test_ini() {
-    printf("===== %s start =====\n", __func__);
-    ini_t *config = ini_load("config.ini");
-
-    const char *name = ini_get(config, "owner", "name");
-    if (name) {
-        printf("name: %s\n", name);
-    }
-
-    const char *server = "default";
-    int port = 80;
-
-    ini_sget(config, "database", "server", NULL, &server);
-    ini_sget(config, "database", "port", "%d", &port);
-
-    printf("server: %s:%d\n", server, port);
-
-    ini_free(config);
-
-    printf("===== %s end =====\n", __func__);
-}
 
 void test_str_split() {
     printf("===== %s start =====\n", __func__);
@@ -106,15 +65,6 @@ void test_timer() {
 }
 
 
-void test_net_ipa() {
-
-
-}
-
-void test_net_ifi() {
-    //struct ifi_info *ifi;
-
-}
 int main(int argc, char *argv[]) {
     printf("Hello YJC\n");
 
@@ -122,11 +72,9 @@ int main(int argc, char *argv[]) {
         printf("args(%d/%d): %s\n", i, argc, argv[i]);
     }
 
-    // test_log();
-    // test_ini();
     // test_str_split();
     // test_timer();
-    test_net_ifi();
+    //test_net_ifi();
 
     return 0;
 }

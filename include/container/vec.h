@@ -27,7 +27,7 @@
 
 #define vec_deinit(v) (free((v)->data), vec_init(v))
 
-#define vec_new(T) (T *)calloc(1, sizeof(vector(T)))
+#define vec_new(T) calloc(1, sizeof(vector(T)))
 
 #define vec_free(v) (free((v)->data), free(v))
 
@@ -107,6 +107,18 @@
         for ((iter) = 0;                                               \
              (iter) < (v)->length && (((var) = (v)->data[(iter)]), 1); \
              ++(iter))
+
+#define vec_dump(v, format)                             \
+    do {                                                \
+        int i__ = 0;                                    \
+        typeof(*(v)->data) var__;                       \
+        printf("(");                                    \
+        vec_foreach(v, var__, i__) {                    \
+            printf(format, var__);                      \
+            printf(i__ == (v)->length - 1 ? "" : ", "); \
+        }                                               \
+        printf(")\n");                                    \
+    } while (0)
 
 #define vec_foreach_rev(v, var, iter)  \
     if ((v)->length > 0)               \
