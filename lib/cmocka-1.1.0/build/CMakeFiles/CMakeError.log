@@ -1,0 +1,17 @@
+Determining if the include file io.h exists failed with the following output:
+Change Dir: /home/liyj/code/YJC/lib/cmocka-1.1.0/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/bin/gmake -f Makefile cmTC_b003d/fast && /bin/gmake  -f CMakeFiles/cmTC_b003d.dir/build.make CMakeFiles/cmTC_b003d.dir/build
+gmake[1]: Entering directory '/home/liyj/code/YJC/lib/cmocka-1.1.0/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_b003d.dir/CheckIncludeFile.c.o
+/bin/cc   -std=gnu99 -pedantic -pedantic-errors -Wall -Wextra -Wshadow -Wmissing-prototypes -Wdeclaration-after-statement -Wunused -Wfloat-equal -Wpointer-arith -Wwrite-strings -Wformat-security -Wmissing-format-attribute -Wundef -fPIC -fstack-protector -D_GNU_SOURCE -D_LARGEFILE64_SOURCE  -o CMakeFiles/cmTC_b003d.dir/CheckIncludeFile.c.o -c /home/liyj/code/YJC/lib/cmocka-1.1.0/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c
+/home/liyj/code/YJC/lib/cmocka-1.1.0/build/CMakeFiles/CMakeTmp/CheckIncludeFile.c:1:10: fatal error: io.h: No such file or directory
+ #include <io.h>
+          ^~~~~~
+compilation terminated.
+gmake[1]: *** [CMakeFiles/cmTC_b003d.dir/build.make:78: CMakeFiles/cmTC_b003d.dir/CheckIncludeFile.c.o] Error 1
+gmake[1]: Leaving directory '/home/liyj/code/YJC/lib/cmocka-1.1.0/build/CMakeFiles/CMakeTmp'
+gmake: *** [Makefile:127: cmTC_b003d/fast] Error 2
+
+
+
