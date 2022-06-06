@@ -52,7 +52,7 @@ static void test_ini() {
     ini_free(config);
 }
 
-void test_vec() {
+static void test_vec() {
     // create vec
     vector(int) *i_vec_p = vec_new(int);
     printf("new i_vec_p: %p\n", i_vec_p);
