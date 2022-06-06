@@ -5,7 +5,7 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
-#include "vec.h"
+#include "vector.h"
 
 int vec_expand_(char **data, int *length, int *capacity, int memsz) {
     if (*length + 1 > *capacity) {
