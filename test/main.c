@@ -3,9 +3,12 @@
 #include <stddef.h>
 
 #include "cmocka.h"
+#include "hashmap.h"
 #include "ini.h"
+#include "linklist.h"
 #include "log.h"
-#include "vec.h"
+#include "vector.h"
+
 /* include here your files that contain test functions */
 
 /* A test case that does nothing and succeeds. */
@@ -74,15 +77,11 @@ static void test_vec() {
 
     // foreach
     int var, iter;
-    vec_foreach(i_vec_p, var, iter) {
-        printf("%d ", var);
-    }
+    vec_foreach(i_vec_p, var, iter) { printf("%d ", var); }
     printf("\n");
 
     char *str;
-    vec_foreach(&str_vec, str, iter) {
-        printf("%s ", str);
-    }
+    vec_foreach(&str_vec, str, iter) { printf("%s ", str); }
     printf("\n");
 
     // del
@@ -97,6 +96,22 @@ static void test_vec() {
     vec_free(i_vec_p);
 }
 
+void test_list() {
+    list *l = list_new();
+    listnode_add(l, 1);
+    listnode_add(l, 11);
+    listnode_add(l, 12);
+    listnode_add(l, 133);   
+    listnode_add(l, "abc"); 
+    list_dump(l, "%d");
+    listnode_delete(l, 1);
+    list_dump(l, "%d");
+
+
+}
+
+void test_map() {}
+
 /**
  * Test runner function
  */
@@ -105,10 +120,11 @@ int main(void) {
      * Insert here your test functions
      */
     const struct CMUnitTest tests[] = {
-        //cmocka_unit_test(null_test_success),
-        //cmocka_unit_test(test_log),
-        //cmocka_unit_test(test_ini),
-        cmocka_unit_test(test_vec),
+        // cmocka_unit_test(null_test_success),
+        // cmocka_unit_test(test_log),
+        // cmocka_unit_test(test_ini),
+        // cmocka_unit_test(test_vec),
+        cmocka_unit_test(test_list),
     };
 
     /* Run the tests */

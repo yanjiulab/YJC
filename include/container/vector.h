@@ -5,8 +5,8 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
-#ifndef VEC_H
-#define VEC_H
+#ifndef VECTOR_H
+#define VECTOR_H
 
 #include <stdio.h>
 #include <stdlib.h>
