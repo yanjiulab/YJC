@@ -38,7 +38,7 @@ typedef struct {
 
 #define map_new(T) calloc(1, sizeof(map(T)))
 
-#define map_free(m) (free((m)->base), free(m))
+#define map_free(m) (free((m)->base->buckets), free(m))
 
 #define map_get(m, key) ((m)->ref = map_get_(&(m)->base, key))
 
@@ -50,12 +50,16 @@ typedef struct {
 
 #define map_next(m, iter) map_next_(&(m)->base, iter)
 
+#define map_dump(m, format) map_dump_(&(m)->base, format)
+
 void map_deinit_(map_base_t *m);
 void *map_get_(map_base_t *m, const char *key);
 int map_set_(map_base_t *m, const char *key, void *value, int vsize);
 void map_remove_(map_base_t *m, const char *key);
 map_iter_t map_iter_(void);
 const char *map_next_(map_base_t *m, map_iter_t *iter);
+void map_dump_(map_base_t *m, const char *format);
+
 
 typedef map(void *) map_void_t;
 typedef map(char *) map_str_t;

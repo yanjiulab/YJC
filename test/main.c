@@ -101,16 +101,28 @@ void test_list() {
     listnode_add(l, 1);
     listnode_add(l, 11);
     listnode_add(l, 12);
-    listnode_add(l, 133);   
-    listnode_add(l, "abc"); 
+    listnode_add(l, 133);
+    listnode_add(l, "abc");
     list_dump(l, "%d");
     listnode_delete(l, 1);
     list_dump(l, "%d");
-
-
 }
 
-void test_map() {}
+void test_map() {
+    map(int) *m = map_new(int);
+
+    map_set(m, "a", 1);
+    map_set(m, "b", 11);
+    map_set(m, "c", 12);
+    map_set(m, "d", 13);
+    map_set(m, "d", "abc");
+    const char *key;
+    map_iter_t iter = map_iter(m);
+
+    while ((key = map_next(m, &iter))) {
+        printf("%s: %d\n", key, *map_get(m, key));
+    }
+}
 
 /**
  * Test runner function
@@ -124,7 +136,8 @@ int main(void) {
         // cmocka_unit_test(test_log),
         // cmocka_unit_test(test_ini),
         // cmocka_unit_test(test_vec),
-        cmocka_unit_test(test_list),
+        // cmocka_unit_test(test_list),
+        cmocka_unit_test(test_map),
     };
 
     /* Run the tests */
