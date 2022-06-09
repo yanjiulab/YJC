@@ -1,6 +1,8 @@
 #include "ipa.h"
 
-char *sock_ntop(const struct sockaddr *sa, socklen_t salen) {
+#include "debug.h"
+
+char *sock_ntop_host(const struct sockaddr *sa, socklen_t salen) {
     char portstr[8];
     static char str[128]; /* Unix domain is largest */
 
@@ -59,7 +61,7 @@ char *sock_ntop(const struct sockaddr *sa, socklen_t salen) {
     return (NULL);
 }
 
-char *sock_ntop_host(const struct sockaddr *sa, socklen_t salen) {
+char *sock_ntop(const struct sockaddr *sa, socklen_t salen) {
     static char str[128]; /* Unix domain is largest */
 
     switch (sa->sa_family) {
@@ -111,10 +113,9 @@ char *sock_ntop_host(const struct sockaddr *sa, socklen_t salen) {
     return (NULL);
 }
 
-// char *Sock_ntop(const struct sockaddr *sa, socklen_t salen) {
-//     char *ptr;
+char *Sock_ntop(const struct sockaddr *sa, socklen_t salen) {
+    char *ptr;
 
-//     if ((ptr = sock_ntop(sa, salen)) == NULL)
-//         err_sys("sock_ntop error"); /* inet_ntop() sets errno */
-//     return (ptr);
-// }
+    if ((ptr = sock_ntop(sa, salen)) == NULL) err_sys("sock_ntop error"); /* inet_ntop() sets errno */
+    return (ptr);
+}

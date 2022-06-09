@@ -91,9 +91,9 @@ void print_ifi_info(struct ifi_info *ifihead) {
             } while (--i > 0);
             printf("\n");
         }
-        if ((sa = ifi->ifi_addr) != NULL) printf("\tinet: %s ", sock_ntop_host(sa, sizeof(*sa)));
-        if ((sa = ifi->ifi_brdaddr) != NULL) printf("broadcast: %s ", sock_ntop_host(sa, sizeof(*sa)));
-        if ((sa = ifi->ifi_dstaddr) != NULL) printf("netmask: %s\n", sock_ntop_host(sa, sizeof(*sa)));
+        if ((sa = ifi->ifi_addr) != NULL) printf("\tinet: %s  ", sock_ntop(sa, sizeof(*sa)));
+        if ((sa = ifi->ifi_brdaddr) != NULL) printf("broadcast: %s  ", sock_ntop(sa, sizeof(*sa)));
+        if ((sa = ifi->ifi_dstaddr) != NULL) printf("netmask: %s\n", sock_ntop(sa, sizeof(*sa)));
     }
 }
 

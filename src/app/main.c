@@ -73,7 +73,7 @@ void test_ifi() {
     struct ifi_info *info;
     
     //info = get_ifi_info(AF_INET, 1);
-    info = get_ifi_by_index(1);
+    info = get_ifi_by_name("ens33");
     print_ifi_info(info);
     // printf("next:%p\n", info->ifi_next);
 }
