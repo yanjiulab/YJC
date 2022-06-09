@@ -1,6 +1,7 @@
 #ifndef IPA_H
 #define IPA_H
 
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>

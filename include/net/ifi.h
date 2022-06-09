@@ -22,13 +22,15 @@ struct ifi_info {
     short ifi_myflags;            /* our own IFI_xxx flags */
     struct sockaddr *ifi_addr;    /* primary address */
     struct sockaddr *ifi_brdaddr; /* broadcast address */
-    struct sockaddr *ifi_dstaddr; /* destination address */
+    struct sockaddr *ifi_dstaddr; /* destination address or netmask address */
     struct ifi_info *ifi_next;    /* next of these structures */
 };
 
 #define IFI_ALIAS 1 /* ifi_addr is an alias */
 
 /* function prototypes */
+struct ifi_info *get_ifi_by_name(const char *);
+struct ifi_info *get_ifi_by_index(unsigned int);
 struct ifi_info *get_ifi_info(int, int);
 void free_ifi_info(struct ifi_info *);
 void print_ifi_info(struct ifi_info *);
