@@ -51,7 +51,7 @@ project
 |   `args.h/args.c`   |  命令行参数解析  | TODO https://github.com/dmulholl/args |
 |    `ini.h/ini.c`    | ini 配置文件解析 | OK                                    |
 |    `log.h/log.c`    |     日志系统     | OK                                    |
-| `syserr.h/syserr.c` |  异常/错误打印   | OK                                    |
+| `debug.h/debug.c`   |  异常/错误打印   | OK                                    |
 |  `timer.h/timer.c`  |     定时队列     | OK                                    |
 |    `str.h/str.c`    |    字符串操作    | Working                               |
 
@@ -59,9 +59,9 @@ project
 
 |     模块名      |        功能         | 备注 |
 | :-------------: | :-----------------: | ---- |
-|  `vec.h/vec.c`  |      柔性数组       | OK   |
-| `list.h/list.c` |        链表         | TODO |
-| `dict.h/dict.c` | 字典（哈希+开链法） | TODO |
+|  `vector.h/vec.c`  |      柔性数组       | OK   |
+| `linklist.h/linklist.c` |        链表         | TODO |
+| `hashmap.h/hashmap.c` | 字典（哈希+开链法） | TODO |
 
 ### net
 

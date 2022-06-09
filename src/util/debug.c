@@ -1,4 +1,4 @@
-#include "syserr.h"
+#include "debug.h"
 
 static void err_doit(int, const char *, va_list);
 

@@ -4,11 +4,18 @@
 #include <string.h>
 #include <sys/socket.h>
 
-
+#include "ifi.h"
 #include "str.h"
 #include "timer.h"
-#include "ifi.h"
 
+// #include "ether.h"
+// #include "arp.h"
+// #include "ip.h"
+// #include "icmp.h"
+// #include "tcp.h"
+// #include "udp.h"
+// #include "pim.h"
+// #include "rip.h"
 
 void test_str_split() {
     printf("===== %s start =====\n", __func__);
@@ -40,9 +47,7 @@ void test_str_trim() {
     printf("===== %s end =====\n", __func__);
 }
 
-void work() {
-    printf("Its my time to work!\n");
-}
+void work() { printf("Its my time to work!\n"); }
 
 void test_timer() {
     printf("===== %s start =====\n", __func__);
@@ -64,6 +69,14 @@ void test_timer() {
     printf("===== %s end =====\n", __func__);
 }
 
+void test_ifi() {
+    struct ifi_info *info;
+    
+    //info = get_ifi_info(AF_INET, 1);
+    info = get_ifi_by_index(1);
+    print_ifi_info(info);
+    // printf("next:%p\n", info->ifi_next);
+}
 
 int main(int argc, char *argv[]) {
     printf("Hello YJC\n");
@@ -72,9 +85,10 @@ int main(int argc, char *argv[]) {
         printf("args(%d/%d): %s\n", i, argc, argv[i]);
     }
 
+    test_ifi();
     // test_str_split();
     // test_timer();
-    //test_net_ifi();
+    // test_net_ifi();
 
     return 0;
 }
