@@ -1,13 +1,10 @@
 #ifndef IFI_H
 #define IFI_H
 
-#include <arpa/inet.h>
-#include <errno.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
 
 #define IFI_NAME 16 /* same as IFNAMSIZ in <net/if.h> */
 #define IFI_HADDR 8 /* allow for 64-bit EUI-64 in future */

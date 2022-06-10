@@ -71,9 +71,9 @@ void test_timer() {
 
 void test_ifi() {
     struct ifi_info *info;
-    
-    //info = get_ifi_info(AF_INET, 1);
-    info = get_ifi_by_name("enp34s0");
+
+    // info = get_ifi_info(AF_INET, 1);
+    info = get_ifi_by_name("ens33");
     print_ifi_info(info);
     // printf("next:%p\n", info->ifi_next);
 }
@@ -86,6 +86,7 @@ int main(int argc, char *argv[]) {
     }
 
     test_ifi();
+    printf(sock_itop(ntohl(0xC0A81711)));
     // test_str_split();
     // test_timer();
     // test_net_ifi();
