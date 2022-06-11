@@ -3,10 +3,9 @@
 #include <stdio.h>
 
 #include "ipa.h"
-#define MAXLINE 4096
 
 void print_ethhdr(struct ethhdr *eth, int mode) {
-    char buf[MAXLINE];
+    char buf[HDRBUFLEN];
     if (mode) {
         sprintf(buf,
                 "> Ethernet II\n"
@@ -28,7 +27,7 @@ void print_ethhdr(struct ethhdr *eth, int mode) {
 }
 
 void print_iphdr(struct iphdr *iph, int mode) {
-    char buf[MAXLINE];
+    char buf[HDRBUFLEN];
 
     if (mode == VERBOSE) {
         sprintf(buf,
@@ -52,4 +51,51 @@ void print_iphdr(struct iphdr *iph, int mode) {
     }
 
     printf(buf);
+}
+
+void print_data(unsigned char *data, int size) {
+    printf("> Data Payload\n");
+    int i, j;
+    for (i = 0; i < size; i++) {
+        if (i != 0 && i % 16 == 0) {
+            printf("         ");
+            for (j = i - 16; j < i; j++) {
+                if (data[j] >= 32 && data[j] <= 128) {
+                    printf("%c", (unsigned char)data[j]);
+                } else {
+                    printf(".");  // otherwise print a dot
+                }
+            }
+            printf("\n");
+        }
+        if (i % 16 == 0) {
+            printf("   ");
+        }
+        printf(" %02X", (unsigned int)data[i]);
+        if (i == size - 1)  // print the last spaces
+        {
+            for (j = 0; j < 15 - i % 16; j++) {
+                printf("   ");  // extra spaces
+            }
+            printf("         ");
+            for (j = i - i % 16; j <= i; j++) {
+                if (data[j] >= 32 && data[j] <= 128) {
+                    printf("%c", (unsigned char)data[j]);
+                } else {
+                    printf(".");
+                }
+            }
+            printf("\n");
+        }
+    }
+}
+
+struct ethhdr *parse_ethhdr(unsigned char *recvbuf, int len) {
+    struct ethhdr *ethh = NULL;
+    if (len < sizeof(struct ethhdr)) {
+        printf("ether header bad len\n");
+        return recvbuf;
+    }
+
+    ethh = (struct ethhdr *)recvbuf;
 }

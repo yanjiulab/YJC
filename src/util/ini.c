@@ -22,11 +22,6 @@
 
 #include "ini.h"
 
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 struct ini_t {
     char *data;
     char *end;
@@ -67,7 +62,7 @@ static char *discard_line(ini_t *ini, char *p) {
 
 static char *unescape_quoted_value(ini_t *ini, char *p) {
     /* Use `q` as write-head and `p` as read-head, `p` is always ahead of `q`
-   * as escape sequences are always larger than their resultant data */
+     * as escape sequences are always larger than their resultant data */
     char *q = p;
     p++;
     while (p < ini->end && *p != '"' && *p != '\r' && *p != '\n') {
@@ -75,22 +70,22 @@ static char *unescape_quoted_value(ini_t *ini, char *p) {
             /* Handle escaped char */
             p++;
             switch (*p) {
-            default:
-                *q = *p;
-                break;
-            case 'r':
-                *q = '\r';
-                break;
-            case 'n':
-                *q = '\n';
-                break;
-            case 't':
-                *q = '\t';
-                break;
-            case '\r':
-            case '\n':
-            case '\0':
-                goto end;
+                default:
+                    *q = *p;
+                    break;
+                case 'r':
+                    *q = '\r';
+                    break;
+                case 'n':
+                    *q = '\n';
+                    break;
+                case 't':
+                    *q = '\t';
+                    break;
+                case '\r':
+                case '\n':
+                case '\0':
+                    goto end;
             }
 
         } else {
@@ -111,68 +106,68 @@ static void split_data(ini_t *ini) {
 
     while (p < ini->end) {
         switch (*p) {
-        case '\r':
-        case '\n':
-        case '\t':
-        case ' ':
-            *p = '\0';
-            /* Fall through */
+            case '\r':
+            case '\n':
+            case '\t':
+            case ' ':
+                *p = '\0';
+                /* Fall through */
 
-        case '\0':
-            p++;
-            break;
-
-        case '[':
-            p += strcspn(p, "]\n");
-            *p = '\0';
-            break;
-
-        case ';':
-            p = discard_line(ini, p);
-            break;
-
-        default:
-            line_start = p;
-            p += strcspn(p, "=\n");
-
-            /* Is line missing a '='? */
-            if (*p != '=') {
-                p = discard_line(ini, line_start);
+            case '\0':
+                p++;
                 break;
-            }
-            trim_back(ini, p - 1);
 
-            /* Replace '=' and whitespace after it with '\0' */
-            do {
-                *p++ = '\0';
-            } while (*p == ' ' || *p == '\r' || *p == '\t');
-
-            /* Is a value after '=' missing? */
-            if (*p == '\n' || *p == '\0') {
-                p = discard_line(ini, line_start);
+            case '[':
+                p += strcspn(p, "]\n");
+                *p = '\0';
                 break;
-            }
 
-            if (*p == '"') {
-                /* Handle quoted string value */
-                value_start = p;
-                p = unescape_quoted_value(ini, p);
+            case ';':
+                p = discard_line(ini, p);
+                break;
 
-                /* Was the string empty? */
-                if (p == value_start) {
+            default:
+                line_start = p;
+                p += strcspn(p, "=\n");
+
+                /* Is line missing a '='? */
+                if (*p != '=') {
+                    p = discard_line(ini, line_start);
+                    break;
+                }
+                trim_back(ini, p - 1);
+
+                /* Replace '=' and whitespace after it with '\0' */
+                do {
+                    *p++ = '\0';
+                } while (*p == ' ' || *p == '\r' || *p == '\t');
+
+                /* Is a value after '=' missing? */
+                if (*p == '\n' || *p == '\0') {
                     p = discard_line(ini, line_start);
                     break;
                 }
 
-                /* Discard the rest of the line after the string value */
-                p = discard_line(ini, p);
+                if (*p == '"') {
+                    /* Handle quoted string value */
+                    value_start = p;
+                    p = unescape_quoted_value(ini, p);
 
-            } else {
-                /* Handle normal value */
-                p += strcspn(p, "\n");
-                trim_back(ini, p - 1);
-            }
-            break;
+                    /* Was the string empty? */
+                    if (p == value_start) {
+                        p = discard_line(ini, line_start);
+                        break;
+                    }
+
+                    /* Discard the rest of the line after the string value */
+                    p = discard_line(ini, p);
+
+                } else {
+                    /* Handle normal value */
+                    p += strcspn(p, "\n");
+                    trim_back(ini, p - 1);
+                }
+                break;
         }
     }
 }
@@ -217,10 +212,8 @@ ini_t *ini_load(const char *filename) {
     return ini;
 
 fail:
-    if (fp)
-        fclose(fp);
-    if (ini)
-        ini_free(ini);
+    if (fp) fclose(fp);
+    if (ini) ini_free(ini);
     return NULL;
 }
 
@@ -260,9 +253,7 @@ const char *ini_get(ini_t *ini, const char *section, const char *key) {
     return NULL;
 }
 
-int ini_sget(
-    ini_t *ini, const char *section, const char *key,
-    const char *scanfmt, void *dst) {
+int ini_sget(ini_t *ini, const char *section, const char *key, const char *scanfmt, void *dst) {
     const char *val = ini_get(ini, section, key);
     if (!val) {
         return 0;
