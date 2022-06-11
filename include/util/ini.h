@@ -8,6 +8,11 @@
 #ifndef INI_H
 #define INI_H
 
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define INI_VERSION "0.1.1"
 
 typedef struct ini_t ini_t;

@@ -1,3 +1,3 @@
-2022-06-05 22:49:59 WARN  ./test/main.c:30: warn
-2022-06-05 22:49:59 ERROR ./test/main.c:31: error
-2022-06-05 22:49:59 FATAL ./test/main.c:32: fatal
+2022-06-11 00:25:12 WARN  ./test/test_log.c:15: warn
+2022-06-11 00:25:12 ERROR ./test/test_log.c:16: error
+2022-06-11 00:25:12 FATAL ./test/test_log.c:17: fatal

@@ -1,9 +1,8 @@
-
-
 #include "sock.h"
 
 #include <linux/if_packet.h>
 #include <netinet/ether.h>
+#include <string.h>
 
 #include "ifi.h"
 

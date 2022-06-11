@@ -3,4 +3,4 @@
 
 #include <sys/socket.h>
 
-#endif // !SOCK_H#define SOCK_H
+#endif  // !SOCK_H
