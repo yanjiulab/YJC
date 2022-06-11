@@ -16,7 +16,8 @@ int sock_packet(int type, int proto, const char *ifname) {
     memset(&saddr, 0, sizeof(struct sockaddr_ll));
     saddr.sll_family = PF_PACKET;
     saddr.sll_protocol = htons(ETH_P_ALL);
-    if (ifname) saddr.sll_ifindex = if_nametoindex(ifname);
+    if (ifname)
+        saddr.sll_ifindex = if_nametoindex(ifname);
 
     bind(sockfd, (struct sockaddr *)&saddr, sizeof(saddr));
 }
