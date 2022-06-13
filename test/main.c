@@ -21,6 +21,10 @@ int main(void) {
         cmocka_unit_test(test_vector),
         cmocka_unit_test(test_list),
         cmocka_unit_test(test_map),
+        cmocka_unit_test(test_ifi),
+        cmocka_unit_test(test_str_split),
+        cmocka_unit_test(test_str_trim),
+        cmocka_unit_test(test_timer),
     };
 
     /* Run the tests */
