@@ -16,6 +16,7 @@ void test_list();
 // netbase
 void test_ifi();
 void test_name();
+void test_sock();
 
 // cliser
 
