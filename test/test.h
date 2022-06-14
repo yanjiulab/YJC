@@ -15,9 +15,12 @@ void test_list();
 
 // netbase
 void test_ifi();
+void test_name();
 
 // cliser
 
 // event
+
+
 
 #endif  // !TEST_H

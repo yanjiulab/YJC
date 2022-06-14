@@ -1,3 +1,14 @@
+/**
+ * @file ifi.h
+ * @author your name (you@domain.com)
+ * @brief Enhancement of getifaddrs and ioctl
+ * @version 0.1
+ * @date 2022-06-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+
 #ifndef IFI_H
 #define IFI_H
 

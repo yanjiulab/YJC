@@ -1,5 +1,6 @@
 #include "ipa.h"
 
+#include <netdb.h>
 #include <stdbool.h>
 
 #include "debug.h"
@@ -148,3 +149,4 @@ int inet_valid_mask(uint32_t mask) {
 
     return true;
 }
+
