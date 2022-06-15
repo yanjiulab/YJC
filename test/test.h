@@ -7,6 +7,7 @@ void test_ini();
 void test_str_split();
 void test_str_trim();
 void test_timer();
+int test_json();
 
 // container
 void test_vector();
