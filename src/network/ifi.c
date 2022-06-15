@@ -2,7 +2,7 @@
 
 #include "debug.h"
 #include "ipa.h"
-#include "wrapper.h"
+#include "sock.h"
 
 struct ifi_info *get_ifi_by_name(const char *if_name) {
     int family = AF_INET;
