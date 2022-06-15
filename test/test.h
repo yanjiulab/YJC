@@ -21,7 +21,7 @@ void test_sock();
 // cliser
 
 // event
-
+void test_ev();
 
 
 #endif  // !TEST_H
