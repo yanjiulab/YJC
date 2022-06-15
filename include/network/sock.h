@@ -181,7 +181,7 @@ int sock_udp();     // UDP datagram ()
 int sock_tcp();     //
 
 /* util functions */
-const char *str_fam(int family);
-const char *str_sock(int socktype);
+char *str_fam(int family);
+char *str_sock(int socktype);
 
 #endif  // !SOCK_H

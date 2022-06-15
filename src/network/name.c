@@ -1,6 +1,7 @@
 #include "name.h"
 
 #include "ipa.h"
+#include "sock.h"
 
 struct addrinfo *host_serv(const char *host, const char *serv, int family, int socktype) {
     int n;

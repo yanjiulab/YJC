@@ -8,6 +8,7 @@
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
+#include <stdlib.h>
 #include <string.h>
 
 #define MAP_VERSION "0.1.0"
@@ -59,7 +60,6 @@ void map_remove_(map_base_t *m, const char *key);
 map_iter_t map_iter_(void);
 const char *map_next_(map_base_t *m, map_iter_t *iter);
 void map_dump_(map_base_t *m, const char *format);
-
 
 typedef map(void *) map_void_t;
 typedef map(char *) map_str_t;
