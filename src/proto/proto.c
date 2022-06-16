@@ -4,6 +4,10 @@
 
 #include "ipa.h"
 
+long tot_recv_num;
+
+void print_frame(int len) { printf("+ Frame %ld: %d Bytes captrued (%d bits)\n", ++tot_recv_num, len, len * 8); }
+
 void print_ethhdr(struct ethhdr *eth, int mode) {
     char buf[HDRBUFLEN];
     if (mode) {

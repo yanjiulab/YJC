@@ -1,6 +1,7 @@
 #ifndef PROTO_H
 #define PROTO_H
 
+#include <linux/if_packet.h>
 #include <net/if_arp.h>       // ARP
 #include <netinet/ether.h>    // Ethernet protocol, including net/ethernet
 #include <netinet/igmp.h>     // IGMP
@@ -12,6 +13,9 @@
 
 #define VERBOSE 1
 #define HDRBUFLEN 4096
+
+struct packet_ {
+} packet;
 
 struct packet_stats {
     int recv_eth;
@@ -26,15 +30,16 @@ struct packet_stats {
     int send_tcp;
 } pkt_stats;
 
+void print_frame(int len);
 void print_ethhdr(struct ethhdr *eth, int mode);      // layer 2
 void print_arphdr(struct arphdr *arph, int mode);     // layer 3 (2.5)
 void print_iphdr(struct iphdr *iph, int mode);        // layer 3
 void print_icmphdr(struct icmphdr *icmph, int mode);  // layer 4
 void print_igmp(struct igmp *igmp, int mode);         // layer 4
-void print_pimhdr(struct pimhdr *pim, int mode);      // layer 4
-void print_udphdr(struct udphdr *udph, int mode);     // layer 4
-void print_tcphdr(struct tcphdr *tcph, int mode);     // layer 4
-void print_httphdr(struct httphdr *httph, int mode);  // layer 5
+// void print_pimhdr(struct pimhdr *pim, int mode);      // layer 4
+void print_udphdr(struct udphdr *udph, int mode);  // layer 4
+void print_tcphdr(struct tcphdr *tcph, int mode);  // layer 4
+// void print_httphdr(struct httphdr *httph, int mode);  // layer 5
 void print_data(unsigned char *recvbuf, int len);
 
 struct ethhdr *parse_ethhdr(unsigned char *recvbuf, int len);

@@ -581,7 +581,7 @@ ssize_t writen(int fd, const void *vptr, size_t n) {
 
 /* our own library functions */
 #define YJ_FUNC
-int sock_packet(int type, int proto, const char *ifname) {
+int sock_packet(const char *ifname) {
     int sockfd;
 
     sockfd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -593,6 +593,8 @@ int sock_packet(int type, int proto, const char *ifname) {
     if (ifname) saddr.sll_ifindex = if_nametoindex(ifname);
 
     bind(sockfd, (struct sockaddr *)&saddr, sizeof(saddr));
+
+    return sockfd;
 }
 
 /* util functions */

@@ -175,10 +175,10 @@ void Mcast_set_ttl(int, int);
 #endif
 
 /* our own library functions */
-int sock_packet();  // Ethernet frame (including ethernet header)
-int sock_raw();     // IP datagram (including IP header)
-int sock_udp();     // UDP datagram ()
-int sock_tcp();     //
+int sock_packet(const char *);  // Ethernet frame (including ethernet header)
+int sock_raw();                 // IP datagram (including IP header)
+int sock_udp();                 // UDP datagram ()
+int sock_tcp();                 //
 
 /* util functions */
 char *str_fam(int family);
