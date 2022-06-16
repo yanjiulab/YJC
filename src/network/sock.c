@@ -597,14 +597,14 @@ int sock_packet(int type, int proto, const char *ifname) {
 
 /* util functions */
 #define UTIL_FUNC
-const char *str_fam(int family) {
+char *str_fam(int family) {
     if (family == AF_INET) return ("AF_INET");
     if (family == AF_INET6) return ("AF_INET6");
     if (family == AF_LOCAL) return ("AF_LOCAL");
     return ("<unknown family>");
 }
 
-const char *str_sock(int socktype) {
+char *str_sock(int socktype) {
     switch (socktype) {
         case SOCK_STREAM:
             return "SOCK_STREAM";
