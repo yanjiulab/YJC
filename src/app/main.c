@@ -67,7 +67,7 @@ static void sock_cb(EV_P_ ev_io *w, int revents) {
     print_frame(len);
     struct ethhdr *ethh = parse_ethhdr(recv_buf, len);
     print_ethhdr(ethh, 0);
-    struct iphdr *iph = parse_iphdr(recv_buf, len);
+    // struct iphdr *iph = parse_iphdr(recv_buf, len);
 
 
 }

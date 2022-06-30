@@ -40,8 +40,7 @@ void timer_elapse(int elapsed_time) {
     /* handle queue of expired timers */
     while (expQ) {
         ptr = expQ;
-        if (ptr->func)
-            ptr->func(ptr->data);
+        if (ptr->func) ptr->func(ptr->data);
         expQ = expQ->next;
         free(ptr);
     }
@@ -82,8 +81,7 @@ int timer_set(int delay, cfunc_t action, unsigned int data) {
 
     prev = ptr = Q;
 
-    if (node->id == 0)
-        node->id = ++id;
+    if (node->id == 0) node->id = ++id;
     /* insert node in the queue */
 
     /* if the queue is empty, insert the node and return */
@@ -123,13 +121,11 @@ int timer_left(int timer_id) {
     struct timeout_q *ptr;
     int left = 0;
 
-    if (!timer_id)
-        return -1;
+    if (!timer_id) return -1;
 
     for (ptr = Q; ptr; ptr = ptr->next) {
         left += ptr->time;
-        if (ptr->id == timer_id)
-            return left;
+        if (ptr->id == timer_id) return left;
     }
     return -1;
 }
@@ -138,8 +134,7 @@ int timer_left(int timer_id) {
 void timer_clear(int timer_id) {
     struct timeout_q *ptr, *prev;
 
-    if (!timer_id)
-        return;
+    if (!timer_id) return;
 
     prev = ptr = Q;
 
@@ -154,8 +149,7 @@ void timer_clear(int timer_id) {
                 prev->next = ptr->next;
 
             /* increment next node if any */
-            if (ptr->next != 0)
-                (ptr->next)->time += ptr->time;
+            if (ptr->next != 0) (ptr->next)->time += ptr->time;
             /*
               if (ptr->data)    /已经改为unsigned int 类型 ，无须释放/
               free(ptr->data);
@@ -172,8 +166,7 @@ void timer_clear(int timer_id) {
 void timer_print() {
     struct timeout_q *ptr;
 
-    for (ptr = Q; ptr; ptr = ptr->next)
-        printf("(%d,%d) ", ptr->id, ptr->time);
+    for (ptr = Q; ptr; ptr = ptr->next) printf("(%d,%d) ", ptr->id, ptr->time);
 
     printf("\n");
 }
