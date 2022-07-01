@@ -27,8 +27,8 @@ int main(void) {
         // cmocka_unit_test(test_timer),
         // cmocka_unit_test(test_name),
         // cmocka_unit_test(test_sock),
-        cmocka_unit_test(test_ev),
-        // cmocka_unit_test(test_json),
+        // cmocka_unit_test(test_ev),
+        cmocka_unit_test(test_json),
     };
 
     /* Run the tests */

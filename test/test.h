@@ -7,7 +7,7 @@ void test_ini();
 void test_str_split();
 void test_str_trim();
 void test_timer();
-int test_json();
+void test_json();
 
 // container
 void test_vector();
@@ -23,6 +23,5 @@ void test_sock();
 
 // event
 int test_ev();
-
 
 #endif  // !TEST_H
