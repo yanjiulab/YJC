@@ -60,16 +60,18 @@ static void sock_cb(EV_P_ ev_io *w, int revents) {
     // struct sockaddr_ll sll;
     // bzero(&sll, sizeof(sll));
     // sll.sll_ifindex = if_nametoindex("ens33");
-    
+
     // int ret = sendto(w->fd, recv_buf, len, 0, (struct sockaddr *) &sll, sizeof(sll));
     // printf("send %d \n", ret);
 
     print_frame(len);
     struct ethhdr *ethh = parse_ethhdr(recv_buf, len);
     print_ethhdr(ethh, 0);
-    // struct iphdr *iph = parse_iphdr(recv_buf, len);
-
-
+    struct iphdr *iph = parse_iphdr(recv_buf + 14, len);
+    print_iphdr(iph, 1);
+    struct udph *udph = parse_udphdr(recv_buf + 14 + 20, len);
+    print_udphdr(udph, 1);
+    print_data(recv_buf, len);
 }
 
 int main(int argc, char *argv[]) {

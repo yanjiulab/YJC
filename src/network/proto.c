@@ -40,18 +40,36 @@ void print_iphdr(struct iphdr *iph, int mode) {
                 "    |-Header Length    : %d Bytes\n"
                 "    |-Type Of Service  : %d\n"
                 "    |-Total Length     : %d Bytes\n"
-                "    |-Identification   : %d\n "
+                "    |-Identification   : %d\n"
                 "    |-Fragment offset  : %d\n"
                 "    |-TTL              : %d\n"
                 "    |-Protocol         : %d\n"
                 "    |-Checksum         : %d\n"
-                "    |-Source IP        : %s\n "
+                "    |-Source IP        : %s\n"
                 "    |-Destination IP   : %s\n",
                 (unsigned int)iph->version, (unsigned int)((iph->ihl) * 4), (unsigned int)iph->tos, ntohs(iph->tot_len),
                 ntohs(iph->id), ntohs(iph->frag_off), (unsigned int)iph->ttl, (unsigned int)iph->protocol,
                 ntohs(iph->check), sock_itop(iph->saddr), sock_itop(iph->daddr));
     } else {
-        sprintf(buf, "+ IPv4, %s -> %s (0x%.2x)\n", sock_itop(iph->saddr), sock_itop(iph->daddr));
+        sprintf(buf, "+ IPv4, %s -> %s (0x%.2x)\n", sock_itop(iph->saddr), sock_itop(iph->daddr),
+                (unsigned int)iph->protocol);
+    }
+
+    printf(buf);
+}
+
+void print_udphdr(struct udphdr *udph, int mode) {
+    char buf[HDRBUFLEN];
+    if (mode) {
+        sprintf(buf,
+                "> User Datagram Protocol\n"
+                "    |-Source Port      : %d\n"
+                "    |-Destination Port : %d\n"
+                "    |-Length           : %d\n",
+                "    |-Checksum         : %d\n", ntohs(udph->source), ntohs(udph->dest), ntohs(udph->len),
+                ntohs(udph->check));
+    } else {
+        sprintf(buf, "+ UDP, %d -> %d\n", ntohs(udph->source), ntohs(udph->dest));
     }
 
     printf(buf);
@@ -102,4 +120,27 @@ struct ethhdr *parse_ethhdr(unsigned char *recvbuf, int len) {
     }
 
     ethh = (struct ethhdr *)recvbuf;
+    return ethh;
+}
+
+struct iphdr *parse_iphdr(unsigned char *recvbuf, int len) {
+    struct iphdr *iph = NULL;
+    if (len < sizeof(struct iphdr)) {
+        printf("ip header bad len\n");
+        return recvbuf;
+    }
+
+    iph = (struct iphdr *)recvbuf;
+    return iph;
+}
+
+struct udphdr *parse_udphdr(unsigned char *recvbuf, int len) {
+    struct udphdr *udph = NULL;
+    if (len < sizeof(struct udphdr)) {
+        printf("udp header bad len\n");
+        return recvbuf;
+    }
+
+    udph = (struct udphdr *)recvbuf;
+    return udph;
 }

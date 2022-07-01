@@ -149,4 +149,3 @@ int inet_valid_mask(uint32_t mask) {
 
     return true;
 }
-
