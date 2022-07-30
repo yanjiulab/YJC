@@ -6,8 +6,7 @@ char **str_split(const char *in, size_t in_len, char delm, size_t *num_elm, size
     size_t cnt = 1;
     size_t i;
 
-    if (in == NULL || in_len == 0 || num_elm == NULL)
-        return NULL;
+    if (in == NULL || in_len == 0 || num_elm == NULL) return NULL;
 
     parsestr = malloc(in_len + 1);
     memcpy(parsestr, in, in_len + 1);
@@ -15,17 +14,14 @@ char **str_split(const char *in, size_t in_len, char delm, size_t *num_elm, size
 
     *num_elm = 1;
     for (i = 0; i < in_len; i++) {
-        if (parsestr[i] == delm)
-            (*num_elm)++;
-        if (max > 0 && *num_elm == max)
-            break;
+        if (parsestr[i] == delm) (*num_elm)++;
+        if (max > 0 && *num_elm == max) break;
     }
 
     out = malloc(*num_elm * sizeof(*out));
     out[0] = parsestr;
     for (i = 0; i < in_len && cnt < *num_elm; i++) {
-        if (parsestr[i] != delm)
-            continue;
+        if (parsestr[i] != delm) continue;
 
         /* Add the pointer to the array of elements */
         parsestr[i] = '\0';
@@ -37,10 +33,8 @@ char **str_split(const char *in, size_t in_len, char delm, size_t *num_elm, size
 }
 
 void str_split_free(char **in, size_t num_elm) {
-    if (in == NULL)
-        return;
-    if (num_elm != 0)
-        free(in[0]);
+    if (in == NULL) return;
+    if (num_elm != 0) free(in[0]);
     free(in);
 }
 

@@ -52,18 +52,19 @@ project
 |    `ini.h/ini.c`    | ini 配置文件解析 | OK                                    |
 |    `log.h/log.c`    |     日志系统     | OK                                    |
 | `debug.h/debug.c`   |  异常/错误打印   | OK                                    |
-|  `timer.h/timer.c`  |     定时队列     | OK                                    |
+|  `timer.h/timer.c`  |     定时队列     | OK (后续由ev替换)                    |
 |    `str.h/str.c`    |    字符串操作    | Working                               |
+|    `cJSON.h/cJSON.c`|    JSON 操作    | 开源库                               |
 
 ### container
 
 |     模块名      |        功能         | 备注 |
 | :-------------: | :-----------------: | ---- |
 |  `vector.h/vec.c`  |      柔性数组       | OK   |
-| `linklist.h/linklist.c` |        链表         | TODO |
-| `hashmap.h/hashmap.c` | 字典（哈希+开链法） | TODO |
+| `linklist.h/linklist.c` |        链表         | OK |
+| `hashmap.h/hashmap.c` | 字典（哈希+开链法） | OK |
 
-### net
+### netbase
 
 C 语言实现了众多网络编程接口，在构造我们自己的 net 包时，首先应当熟悉标准库为我们提供了哪些功能，避免重复造轮子。
 

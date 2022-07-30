@@ -25,7 +25,7 @@ TCFLAGS =
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries
-LIBS =
+LIBS = -lev -lm
 # Test libraries
 TEST_LIBS = -l cmocka -L /usr/lib
 # Include directory

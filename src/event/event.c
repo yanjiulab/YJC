@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 
 struct event_base *event_base_new(void) {
@@ -22,3 +23,6 @@ int demo() {
     event_del(&listen_ev);
     event_base_free(base);
 }
+=======
+#include "event.h"
+>>>>>>> f500299508943b2b9562d1c6a5c23c8dbc95f242

@@ -1,6 +1,7 @@
-#include "test.h"
-#include "hashmap.h"
+#include <stdio.h>
 
+#include "hashmap.h"
+#include "test.h"
 void test_map() {
     map(int) *m = map_new(int);
 
