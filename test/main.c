@@ -16,7 +16,7 @@ int main(void) {
      */
     const struct CMUnitTest tests[] = {
         // cmocka_unit_test(null_test_success),
-        // cmocka_unit_test(test_log),
+        cmocka_unit_test(test_log),
         // cmocka_unit_test(test_ini),
         // cmocka_unit_test(test_vector),
         // cmocka_unit_test(test_list),
@@ -28,7 +28,7 @@ int main(void) {
         // cmocka_unit_test(test_name),
         // cmocka_unit_test(test_sock),
         // cmocka_unit_test(test_ev),
-        cmocka_unit_test(test_json),
+        // cmocka_unit_test(test_json),
     };
 
     /* Run the tests */
