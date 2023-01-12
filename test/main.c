@@ -16,7 +16,7 @@ int main(void) {
      */
     const struct CMUnitTest tests[] = {
         // cmocka_unit_test(null_test_success),
-        cmocka_unit_test(test_log),
+        // cmocka_unit_test(test_log),
         // cmocka_unit_test(test_ini),
         // cmocka_unit_test(test_vector),
         // cmocka_unit_test(test_list),
@@ -26,9 +26,15 @@ int main(void) {
         // cmocka_unit_test(test_str_trim),
         // cmocka_unit_test(test_timer),
         // cmocka_unit_test(test_name),
-        // cmocka_unit_test(test_sock),
+        cmocka_unit_test(test_sock),
         // cmocka_unit_test(test_ev),
         // cmocka_unit_test(test_json),
+        // cmocka_unit_test(test_shell),
+        // cmocka_unit_test(test_ev_my),
+        // cmocka_unit_test(test_epoll),
+        // cmocka_unit_test(test_rbtree),
+        // cmocka_unit_test(test_list),
+        // cmocka_unit_test(test_math),
     };
 
     /* Run the tests */

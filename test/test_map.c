@@ -9,7 +9,7 @@ void test_map() {
     map_set(m, "b", 11);
     map_set(m, "c", 12);
     map_set(m, "d", 13);
-    map_set(m, "d", "abc");
+
     const char *key;
     map_iter_t iter = map_iter(m);
 

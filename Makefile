@@ -25,11 +25,11 @@ TCFLAGS =
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries
-LIBS = -lm #-lev
+LIBS = -lev -lm -lreadline -lpthread
 # Test libraries
 TEST_LIBS = -l cmocka -L /usr/lib
 # Include directory
-INCLUDE_DIRECTORY=./include/
+INCLUDE_DIRECTORY=./include/ ./src/
 # Source directory
 SOURCE_DIRECTORY=./src
 # Test Directory
