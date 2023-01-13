@@ -12,6 +12,7 @@
 #include <sys/time.h>
 #include <sys/un.h>  // sockaddr_un
 #include <unistd.h>
+#include <netinet/in.h>
 
 #include "defs.h"
 #include "export.h"
@@ -63,6 +64,11 @@ void sockaddr_set_port(sockaddr_u* addr, int port);
 int sockaddr_set_ipport(sockaddr_u* addr, const char* host, int port);
 socklen_t sockaddr_len(sockaddr_u* addr);
 const char* sockaddr_str(sockaddr_u* addr, char* buf, int len);
+
+#define inet_atoi_n(cp) inet_addr(cp)
+#define inet_atoi_h(cp) ntohl(inet_addr(cp))
+char* inet_itoa_h(uint32_t i);
+char* inet_itoa_n(uint32_t i);
 
 #ifdef ENABLE_UDS
 #define SOCKADDR_STRLEN sizeof(((struct sockaddr_un*)(NULL))->sun_path)

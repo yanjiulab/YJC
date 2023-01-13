@@ -1,8 +1,11 @@
 #include <stdio.h>
 
+#include "crc.h"
+#include "inet.h"
 #include "log.h"
 #include "sock.h"
 #include "test.h"
+
 void test_sock() {
     assert(is_ipv4("192.168.1.1") == true);
     assert(is_ipv4("1.168.1.1") == true);
@@ -30,4 +33,11 @@ void test_sock() {
     int tcp_fd = Listen(8990, ANYADDR);
 
     printf("udp server: %d\ntcp server: %d\n", udp_fd, tcp_fd);
+}
+
+void test_inet() {
+    char data[2] = {0x00, 0x30};
+    // short r = crc16_ccitt(data, 2);
+    short r = crc16_cus(data, 2);
+    log_info("%x", r);
 }

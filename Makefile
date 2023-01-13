@@ -19,7 +19,7 @@ endif
 # C Compiler
 CC = gcc
 # Compiler Flags
-CFLAGS = -Wall -Wextra -g3
+# CFLAGS = -Wall -Wextra -g3
 # Test Compiler flags
 TCFLAGS = 
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3

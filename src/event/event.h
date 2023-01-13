@@ -175,7 +175,7 @@ struct eio_s {
 #endif
 };
 /*
- * hio lifeline:
+ * eio lifeline:
  *
  * fd =>
  * eio_get => EV_ALLOC_SIZEOF(io) => eio_init => eio_ready

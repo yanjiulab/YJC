@@ -5,28 +5,19 @@
 #include <string.h>
 #include <sys/socket.h>
 
-#include "ev.h"
+#include "base.h"
 #include "eventloop.h"
 #include "inet.h"
 #include "ini.h"
 #include "log.h"
-#include "proto.h"
-#include "socket.h"
+
+#include "sock.h"
 #include "str.h"
-// #include "time.h"
-// #include "timer.h"
 
-// int main(int argc, char *argv[]) {
-
-//     for (int i = 0; i < argc; i++) {
-//         printf("args(%d/%d): %s\n", i, argc, argv[i]);
-//     }
-
-//     return 0;
-// }
-
-#include "base.h"
-#include "eventloop.h"
+void on_idle(eidle_t* idle) {
+    printf("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld\n", LLU(event_id(idle)), event_priority(idle),
+           (long)(intptr_t)(event_userdata(idle)));
+}
 
 void on_timer(etimer_t* timer) {
     eloop_t* loop = event_loop(timer);
@@ -38,7 +29,8 @@ void on_timer(etimer_t* timer) {
 void on_stdin(eio_t* io, void* buf, int readbytes) {
     printf("on_stdin fd=%d readbytes=%d\n", eio_fd(io), readbytes);
     printf("> %s\n", (char*)buf);
-    if (strncmp((char*)buf, "quit", 4) == 0) {
+    if (STR_EQUAL((char*)buf, "quit")) {
+        // if (strncmp((char*)buf, "quit", 4) == 0) {
         eloop_stop(event_loop(io));
     }
 }
@@ -46,18 +38,23 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
 int main() {
     // memcheck atexit
     EV_MEMCHECK;
+    // struct in_addr i;
+    // log_info("%.8x", inet_atoi_n("192.168.0.1"));
+    // log_info("%.8x", inet_atoi_h("192.168.0.1"));
+    // log_info("%s, %s", inet_itoa_h(0xc0a81717), inet_itoa_h(0xc0a81718));
+    // log_info("%s", inet_itoa_n(0x0102a8c0));
 
     eloop_t* loop = eloop_new(0);
 
-    // // test idle and priority
-    // for (int i = EVENT_LOWEST_PRIORITY; i <= EVENT_HIGHEST_PRIORITY; ++i) {
-    //     eidle_t* idle = eidle_add(loop, on_idle, 10);
-    //     event_set_priority(idle, i);
-    // }
+    // test idle and priority
+    for (int i = EVENT_LOWEST_PRIORITY; i <= EVENT_HIGHEST_PRIORITY; ++i) {
+        eidle_t* idle = eidle_add(loop, on_idle, 10);
+        event_set_priority(idle, i);
+    }
 
     // test timer timeout
     for (int i = 1; i <= 10; ++i) {
-        etimer_t* timer = etimer_add(loop, on_timer, i * 1000, 3);
+        etimer_t* timer = etimer_add(loop, on_timer, i * 10000, 3);
         event_set_userdata(timer, (void*)(intptr_t)i);
     }
 
@@ -65,6 +62,9 @@ int main() {
     printf("input 'quit' to quit loop\n");
     char buf[64];
     hread(loop, 0, buf, sizeof(buf), on_stdin);
+
+    // test io
+    eio_t* io = eloop_create_udp_server(loop, ANYADDR, 8080);
 
     eloop_run(loop);
     eloop_free(&loop);
