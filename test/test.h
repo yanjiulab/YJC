@@ -34,6 +34,7 @@ void test_ev_my();
 void test_epoll();
 
 void test_rbtree();
+void test_tree();
 void test_list();
 
 void test_math();

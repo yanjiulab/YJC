@@ -13,7 +13,7 @@ struct rbtree_entry {
     rbtree_val_type val;
 };
 
-int rbtree_insert(struct rb_root* root, struct rbtree_entry* entry) {
+static int rbtree_insert(struct rb_root* root, struct rbtree_entry* entry) {
     printf("insert %d\n", entry->key);
     struct rb_node** n = &root->rb_node;
     struct rb_node* parent = NULL;
@@ -35,13 +35,13 @@ int rbtree_insert(struct rb_root* root, struct rbtree_entry* entry) {
     return 0;
 }
 
-int rbtree_remove(struct rb_root* root, struct rbtree_entry* entry) {
+static int rbtree_remove(struct rb_root* root, struct rbtree_entry* entry) {
     printf("remove %d\n", entry->key);
     rb_erase(&entry->rb_node, root);
     return 0;
 }
 
-struct rbtree_entry* rbtree_search(struct rb_root* root, const rbtree_key_type* key) {
+static struct rbtree_entry* rbtree_search(struct rb_root* root, const rbtree_key_type* key) {
     struct rb_node* n = root->rb_node;
     struct rbtree_entry* e = NULL;
     while (n) {
@@ -57,7 +57,7 @@ struct rbtree_entry* rbtree_search(struct rb_root* root, const rbtree_key_type* 
     return NULL;
 }
 
-void rbtree_entry_print(struct rbtree_entry* entry) {
+static void rbtree_entry_print(struct rbtree_entry* entry) {
     if (entry == NULL) {
         printf("null\n");
         return;
