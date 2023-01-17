@@ -742,11 +742,7 @@ bool eio_exists(eloop_t* loop, int fd) {
 
 int eio_add(eio_t* io, eio_cb cb, int events) {
     printd("eio_add fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
-#ifdef OS_WIN
-    // Windows iowatcher not work on stdio
-    if (io->fd < 3)
-        return -1;
-#endif
+
     eloop_t* loop = io->loop;
     if (!io->active) {
         EVENT_ADD(loop, io, cb);
@@ -770,11 +766,7 @@ int eio_add(eio_t* io, eio_cb cb, int events) {
 
 int eio_del(eio_t* io, int events) {
     printd("eio_del fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
-#ifdef OS_WIN
-    // Windows iowatcher not work on stdio
-    if (io->fd < 3)
-        return -1;
-#endif
+
     if (!io->active)
         return -1;
 

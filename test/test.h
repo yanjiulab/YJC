@@ -18,7 +18,7 @@ void test_linklist();
 void test_ifi();
 void test_name();
 void test_sock();
-
+void test_inet();
 // cliser
 
 // event
@@ -37,4 +37,5 @@ void test_rbtree();
 void test_list();
 
 void test_math();
+
 #endif  // !TEST_H

@@ -110,6 +110,22 @@ socklen_t sockaddr_len(sockaddr_u* addr) {
     return sizeof(sockaddr_u);
 }
 
+char* inet_itoa_n(uint32_t i) {
+    struct in_addr ia = {0};
+    char* r;
+    ia.s_addr = i;
+    r = inet_ntoa(ia);
+    return strdup(r);
+}
+
+char* inet_itoa_h(uint32_t i) {
+    struct in_addr ia = {0};
+    char* r;
+    ia.s_addr = htonl(i);
+    r = inet_ntoa(ia);
+    return strdup(r);
+}
+
 const char* sockaddr_str(sockaddr_u* addr, char* buf, int len) {
     char ip[SOCKADDR_STRLEN] = {0};
     uint16_t port = 0;
