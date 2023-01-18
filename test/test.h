@@ -1,6 +1,9 @@
 #ifndef TEST_H
 #define TEST_H
 #include <assert.h>
+// base
+void test_base();
+
 // util
 void test_log();
 void test_ini();

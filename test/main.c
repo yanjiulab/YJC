@@ -15,6 +15,7 @@ int main(void) {
      * Insert here your test functions
      */
     const struct CMUnitTest tests[] = {
+        cmocka_unit_test(test_base),
         // cmocka_unit_test(null_test_success),
         // cmocka_unit_test(test_log),
         // cmocka_unit_test(test_ini),
@@ -34,7 +35,7 @@ int main(void) {
         // cmocka_unit_test(test_ev_my),
         // cmocka_unit_test(test_epoll),
         // cmocka_unit_test(test_rbtree),
-        cmocka_unit_test(test_tree),
+        // cmocka_unit_test(test_tree),
         // cmocka_unit_test(test_list),
         // cmocka_unit_test(test_math),
     };
