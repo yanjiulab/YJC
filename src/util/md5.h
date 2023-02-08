@@ -9,13 +9,13 @@ typedef struct {
     unsigned char buffer[64];
 } MD5_CTX;
 
-EXPORT void MD5Init(MD5_CTX *ctx);
-EXPORT void MD5Update(MD5_CTX *ctx, unsigned char *input, unsigned int inputlen);
-EXPORT void MD5Final(MD5_CTX *ctx, unsigned char digest[16]);
+void MD5Init(MD5_CTX *ctx);
+void MD5Update(MD5_CTX *ctx, unsigned char *input, unsigned int inputlen);
+void MD5Final(MD5_CTX *ctx, unsigned char digest[16]);
 
-EXPORT void md5(unsigned char *input, unsigned int inputlen, unsigned char digest[16]);
+void md5(unsigned char *input, unsigned int inputlen, unsigned char digest[16]);
 
 // NOTE: if outputlen > 32: output[32] = '\0'
-EXPORT void md5_hex(unsigned char *input, unsigned int inputlen, char *output, unsigned int outputlen);
+void md5_hex(unsigned char *input, unsigned int inputlen, char *output, unsigned int outputlen);
 
 #endif  // MD5_H_

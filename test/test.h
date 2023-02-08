@@ -4,9 +4,15 @@
 // base
 void test_base();
 
+// event
+
+// net
+
 // util
 void test_log();
 void test_ini();
+void test_base64_md5_sha1();
+
 void test_str_split();
 void test_str_trim();
 void test_timer();

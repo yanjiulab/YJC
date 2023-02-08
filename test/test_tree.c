@@ -82,7 +82,7 @@ int rbtree_insert(struct rb_root* root, struct rbtree_entry* entry) {
 }
 
 int rbtree_remove(struct rb_root* root, struct rbtree_entry* entry) {
-    printf("remove %d\n", entry->key);
+    printf("remove %s\n", entry->key);
     rb_erase(&entry->rb_node, root);
     return 0;
 }
