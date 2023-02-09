@@ -41,6 +41,11 @@ int main(void) {
         // cmocka_unit_test(test_ev_my),
         // cmocka_unit_test(test_epoll),
         // cmocka_unit_test(test_math),
+<<<<<<< HEAD
+=======
+        // cmocka_unit_test(test_base64_md5_sha1),
+        cmocka_unit_test(test_str),
+>>>>>>> a3c76dbe8816fb4a782e468d091531eba3c13ec1
     };
 
     /* Run the tests */
