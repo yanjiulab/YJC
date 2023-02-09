@@ -36,9 +36,12 @@ void test_str() {
     printf(s);
     assert(str_hash("hello") == str_hash("hello"));
 
-    char *in = "www.baidu.com";
-    char *out[10];
-    int n = str_split(in, out, ".");
+    char in[] = "www.baidu.com.www.baidu.com.www.baidu.com.www.baidu.com.www.baidu.com";
+    char *out[4];
+    int n = STR_SPLIT(in, out, ".");
+    printf("%d\n", n);
+    
+    // printf("%s\n", in);
 
     for (int i = 0; i < n; i++)
     {

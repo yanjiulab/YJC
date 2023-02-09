@@ -14,6 +14,7 @@
 #include <string.h>
 
 #define STR_EQUAL(s1, s2) (strncmp((s1), (s2), strlen((s2))) == 0)
+#define STR_SPLIT(in, out, sep) str_split(in, out, sizeof(out) / sizeof(out[0]), sep)
 
 char *str(const char *fmtstr, ...);
 int str2int(const char *string);
@@ -21,8 +22,7 @@ double str2double(const char *string);
 char *str_dup(const char *string);
 uint32_t str_hash(const char *string);
 
-
-int str_split(char *in, char **out, const char *sep);
+int str_split(char *in, char **out, int outlen, const char *sep);
 // char **str_split(const char *in, size_t in_len, char delm, size_t *num_elm, size_t max);
 // void str_split_free(char **in, size_t num_elm);
 

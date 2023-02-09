@@ -69,16 +69,28 @@ uint32_t str_hash(const char *string) {
     return hash;
 }
 
-int str_split(char *in, char **out, const char *sep) {
-    int n = 0;
-    char *result = NULL;
-    char *p;
-    result = strtok(in, sep);
-    while (result != NULL) {
-        *out++ = result;
-        ++n;
-        result = strtok(NULL, sep);
+int str_split(char *in, char **out, int outlen, const char *sep) {
+    if (in == NULL || strlen(in) == 0)
+        return 0;
+    if (sep == NULL || strlen(sep) == 0) {
+        *out = in;
+        return 1;
     }
+
+    int n;
+    char *str, *token, *saveptr;
+    for (n = 0, str = in;; n++, str = NULL) {
+        if (n == outlen) {
+            break;
+        }
+        token = strtok_r(str, sep, &saveptr);
+        if (token == NULL)
+            break;
+        printf("(%d)%d: %s\n", outlen, n, token);
+
+        out[n] = token;
+    }
+
     return n;
 }
 
@@ -115,8 +127,10 @@ int str_split(char *in, char **out, const char *sep) {
 // }
 
 void str_split_free(char **in, size_t num_elm) {
-    if (in == NULL) return;
-    if (num_elm != 0) free(in[0]);
+    if (in == NULL)
+        return;
+    if (num_elm != 0)
+        free(in[0]);
     free(in);
 }
 
