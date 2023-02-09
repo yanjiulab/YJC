@@ -13,6 +13,7 @@ void test_log();
 void test_ini();
 void test_base64_md5_sha1();
 
+void test_str();
 void test_str_split();
 void test_str_trim();
 void test_timer();
@@ -22,6 +23,9 @@ void test_json();
 void test_vector();
 void test_map();
 void test_linklist();
+void test_heap();
+void test_array();
+void test_queue();
 
 // netbase
 void test_ifi();

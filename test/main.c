@@ -38,7 +38,8 @@ int main(void) {
         // cmocka_unit_test(test_tree),
         // cmocka_unit_test(test_list),
         // cmocka_unit_test(test_math),
-        cmocka_unit_test(test_base64_md5_sha1),
+        // cmocka_unit_test(test_base64_md5_sha1),
+        cmocka_unit_test(test_str),
     };
 
     /* Run the tests */
