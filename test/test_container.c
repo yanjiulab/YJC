@@ -113,7 +113,7 @@ void rbtree_entry_print(struct rbtree_entry* entry) {
     printf("%s:%d\n", entry->key, entry->val);
 }
 
-void test_tree() {
+void test_container() {
     unsigned long long start, end;
     char keys[10000][16] = {0};
     for (int i = 0; i < 10000; ++i) {

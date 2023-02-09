@@ -13,15 +13,19 @@ void test_log();
 void test_ini();
 void test_base64_md5_sha1();
 
+// container
+void test_list();
+void test_map();
+void test_heap();
+void test_rbtree();
+void test_container();
+void test_vector();
+void test_linklist();
+
 void test_str_split();
 void test_str_trim();
 void test_timer();
 void test_json();
-
-// container
-void test_vector();
-void test_map();
-void test_linklist();
 
 // netbase
 void test_ifi();
@@ -41,10 +45,6 @@ void test_ev_my();
 
 // epoll
 void test_epoll();
-
-void test_rbtree();
-void test_tree();
-void test_list();
 
 void test_math();
 
