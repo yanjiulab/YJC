@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "hashmap.h"
+#include "map.h"
 #include "test.h"
 void test_map() {
     map(int) *m = map_new(int);

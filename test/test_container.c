@@ -4,7 +4,7 @@
 
 #include "base.h"
 #include "datetime.h"
-#include "hashmap.h"
+#include "map.h"
 #include "list.h"
 #include "log.h"
 #include "rbtree.h"

@@ -1,5 +1,5 @@
-#ifndef STR_H
-#define STR_H
+#ifndef STR_H_
+#define STR_H_
 
 #include <assert.h>
 #include <ctype.h>
@@ -19,16 +19,11 @@
 char *str(const char *fmtstr, ...);
 int str2int(const char *string);
 double str2double(const char *string);
-char *str_dup(const char *string);
 uint32_t str_hash(const char *string);
 
 int str_split(char *in, char **out, int outlen, const char *sep);
-// char **str_split(const char *in, size_t in_len, char delm, size_t *num_elm, size_t max);
-// void str_split_free(char **in, size_t num_elm);
-
 char *str_rtrim(char *str, char junk);
 char *str_ltrim(char *str, char junk);
 char *str_trim(char *str, char junk);
 
-// str append
 #endif

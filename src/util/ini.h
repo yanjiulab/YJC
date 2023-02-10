@@ -5,8 +5,8 @@
  * under the terms of the MIT license. See `ini.c` for details.
  */
 
-#ifndef INI_H
-#define INI_H
+#ifndef INI_H_
+#define INI_H_
 
 #include <ctype.h>
 #include <stdio.h>

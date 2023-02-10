@@ -5,7 +5,7 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
-#include "hashmap.h"
+#include "map.h"
 
 #include <stdio.h>
 #include <stdlib.h>

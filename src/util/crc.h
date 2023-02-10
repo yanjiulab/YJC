@@ -1,5 +1,5 @@
-#ifndef CRCLIB_H__
-#define CRCLIB_H__
+#ifndef CRCLIB_H_
+#define CRCLIB_H_
 
 #include <stdint.h>
 
@@ -29,4 +29,4 @@ uint32_t crc32_mpeg_2(uint8_t *data, uint16_t length);
 // custom
 uint16_t crc16_cus(uint8_t *data, uint16_t length);
 
-#endif  // __CRCLIB_H__
+#endif  // __CRCLIB_H_

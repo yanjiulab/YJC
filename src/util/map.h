@@ -5,8 +5,8 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
-#ifndef SMAP_H
-#define SMAP_H
+#ifndef MAP_H_
+#define MAP_H_
 
 #include <stdlib.h>
 #include <string.h>

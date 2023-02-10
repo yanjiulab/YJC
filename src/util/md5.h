@@ -1,8 +1,6 @@
 #ifndef MD5_H_
 #define MD5_H_
 
-#include "export.h"
-
 typedef struct {
     unsigned int count[2];
     unsigned int state[4];
