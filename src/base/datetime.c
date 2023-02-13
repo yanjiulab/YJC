@@ -2,8 +2,8 @@
 
 static const char* s_weekdays[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
-static const char* s_months[] = {"January", "February", "March", "April", "May", "June",
-                                 "July", "August", "September", "October", "November", "December"};
+static const char* s_months[] = {"January", "February", "March",     "April",   "May",      "June",
+                                 "July",    "August",   "September", "October", "November", "December"};
 
 //                               1       3       5       7   8       10      12
 static const uint8_t s_days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -124,34 +124,26 @@ char* duration_fmt(int sec, char* buf) {
 }
 
 char* datetime_fmt(datetime_t* dt, char* buf) {
-    sprintf(buf, DATETIME_FMT,
-            dt->year, dt->month, dt->day,
-            dt->hour, dt->min, dt->sec);
+    sprintf(buf, DATETIME_FMT, dt->year, dt->month, dt->day, dt->hour, dt->min, dt->sec);
     return buf;
 }
 
 char* datetime_fmt_iso(datetime_t* dt, char* buf) {
-    sprintf(buf, DATETIME_FMT_ISO,
-            dt->year, dt->month, dt->day,
-            dt->hour, dt->min, dt->sec,
-            dt->ms);
+    sprintf(buf, DATETIME_FMT_ISO, dt->year, dt->month, dt->day, dt->hour, dt->min, dt->sec, dt->ms);
     return buf;
 }
 
 char* gmtime_fmt(time_t time, char* buf) {
     struct tm* tm = gmtime(&time);
     // strftime(buf, GMTIME_FMT_BUFLEN, "%a, %d %b %Y %H:%M:%S GMT", tm);
-    sprintf(buf, GMTIME_FMT,
-            s_weekdays[tm->tm_wday],
-            tm->tm_mday, s_months[tm->tm_mon], tm->tm_year + 1900,
+    sprintf(buf, GMTIME_FMT, s_weekdays[tm->tm_wday], tm->tm_mday, s_months[tm->tm_mon], tm->tm_year + 1900,
             tm->tm_hour, tm->tm_min, tm->tm_sec);
     return buf;
 }
 
 int month_atoi(const char* month) {
     for (size_t i = 0; i < 12; ++i) {
-        if (strnicmp(month, s_months[i], strlen(month)) == 0)
-            return i + 1;
+        if (strnicmp(month, s_months[i], strlen(month)) == 0) return i + 1;
     }
     return 0;
 }
@@ -163,20 +155,18 @@ const char* month_itoa(int month) {
 
 int weekday_atoi(const char* weekday) {
     for (size_t i = 0; i < 7; ++i) {
-        if (strnicmp(weekday, s_weekdays[i], strlen(weekday)) == 0)
-            return i;
+        if (strnicmp(weekday, s_weekdays[i], strlen(weekday)) == 0) return i;
     }
     return 0;
 }
 
 const char* weekday_itoa(int weekday) {
     assert(weekday >= 0 && weekday <= 7);
-    if (weekday == 7)
-        weekday = 0;
+    if (weekday == 7) weekday = 0;
     return s_weekdays[weekday];
 }
 
-datetime_t ev_compile_datetime() {
+datetime_t compile_datetime() {
     datetime_t dt;
     char month[32];
     sscanf(__DATE__, "%s %d %d", month, &dt.day, &dt.year);
@@ -229,30 +219,48 @@ time_t cron_next_timeout(int minute, int hour, int day, int week, int month) {
     }
 
     switch (period_type) {
-    case MINUTELY:
-        tt_round += SECONDS_PER_MINUTE;
-        return tt_round;
-    case HOURLY:
-        tt_round += SECONDS_PER_HOUR;
-        return tt_round;
-    case DAILY:
-        tt_round += SECONDS_PER_DAY;
-        return tt_round;
-    case WEEKLY:
-        tt_round += SECONDS_PER_WEEK;
-        return tt_round;
-    case MONTHLY:
-        if (++tm.tm_mon == 12) {
-            tm.tm_mon = 0;
+        case MINUTELY:
+            tt_round += SECONDS_PER_MINUTE;
+            return tt_round;
+        case HOURLY:
+            tt_round += SECONDS_PER_HOUR;
+            return tt_round;
+        case DAILY:
+            tt_round += SECONDS_PER_DAY;
+            return tt_round;
+        case WEEKLY:
+            tt_round += SECONDS_PER_WEEK;
+            return tt_round;
+        case MONTHLY:
+            if (++tm.tm_mon == 12) {
+                tm.tm_mon = 0;
+                ++tm.tm_year;
+            }
+            break;
+        case YEARLY:
             ++tm.tm_year;
-        }
-        break;
-    case YEARLY:
-        ++tm.tm_year;
-        break;
-    default:
-        return -1;
+            break;
+        default:
+            return -1;
     }
 
     return mktime(&tm);
+}
+
+timezone_t timezone_now() {
+    time_t t;
+    time(&t);
+    struct tm* tm = localtime(&t);
+    timezone_t tz;
+    tz.gmtoff = tm->tm_gmtoff;
+    tz.timezone = tm->tm_zone;
+    long int off = tm->tm_gmtoff < 0 ? -tm->tm_gmtoff : tm->tm_gmtoff;
+    tz.hour = (uint8_t)(off / 3600);
+    tz.min = (uint8_t)(off % 3600 / 60);
+    return tz;
+}
+
+char* timezone_fmt(timezone_t* tz, char* buf) {
+    sprintf(buf, TIMEZONE_FMT, tz->timezone, tz->gmtoff < 0 ? "-" : "+", tz->hour, tz->min);
+    return buf;
 }

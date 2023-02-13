@@ -27,8 +27,8 @@ int main(void) {
         cmocka_unit_test(test_heap),
         cmocka_unit_test(test_rbtree),
         cmocka_unit_test(test_container),
+        cmocka_unit_test(test_json),
         // cmocka_unit_test(test_vector),
-
         // cmocka_unit_test(test_base),
         // cmocka_unit_test(null_test_success),
         // cmocka_unit_test(test_ifi),
@@ -42,6 +42,7 @@ int main(void) {
         // cmocka_unit_test(test_ev_my),
         // cmocka_unit_test(test_epoll),
         // cmocka_unit_test(test_math),
+        cmocka_unit_test(test_datetime),
 
     };
 

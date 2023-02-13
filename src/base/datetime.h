@@ -21,6 +21,13 @@ typedef struct datetime_s {
     int ms;
 } datetime_t;
 
+typedef struct timezone_s {
+    long gmtoff;
+    uint8_t hour;
+    uint8_t min;
+    const char *timezone;
+} timezone_t;
+
 EXPORT unsigned int gettick_ms();
 INLINE unsigned long long gettimeofday_ms() {
     struct timeval tv;
@@ -36,6 +43,7 @@ EXPORT unsigned long long gethrtime_us();
 
 EXPORT datetime_t datetime_now();
 EXPORT datetime_t datetime_localtime(time_t seconds);
+
 EXPORT time_t datetime_mktime(datetime_t* dt);
 
 EXPORT datetime_t* datetime_past(datetime_t* dt, int days DEFAULT(1));
@@ -63,7 +71,7 @@ EXPORT const char* month_itoa(int month);
 EXPORT int weekday_atoi(const char* weekday);
 EXPORT const char* weekday_itoa(int weekday);
 
-EXPORT datetime_t ev_compile_datetime();
+EXPORT datetime_t compile_datetime();
 
 /*
  * minute   hour    day     week    month       action
@@ -76,5 +84,10 @@ EXPORT datetime_t ev_compile_datetime();
  *  30      1        1      -1      10          cron.yearly
  */
 EXPORT time_t cron_next_timeout(int minute, int hour, int day, int week, int month);
+
+EXPORT timezone_t timezone_now();
+#define TIMEZONE_FMT "%s(UTC%s%02d:%02d)"
+#define TZ_FMT_BUFLEN 20
+EXPORT char* timezone_fmt(timezone_t* tz, char* buf);
 
 #endif

@@ -55,5 +55,6 @@ void test_ev_my();
 void test_epoll();
 
 void test_math();
+void test_datetime();
 
 #endif  // !TEST_H

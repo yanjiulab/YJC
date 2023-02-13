@@ -1,3 +1,3 @@
-2023-02-10 17:42:02 WARN  ./test/test_log.c:15: warn
-2023-02-10 17:42:02 ERROR ./test/test_log.c:16: error
-2023-02-10 17:42:02 FATAL ./test/test_log.c:17: fatal
+2023-02-13 15:09:08 WARN  ./test/test_log.c:15: warn
+2023-02-13 15:09:08 ERROR ./test/test_log.c:16: error
+2023-02-13 15:09:08 FATAL ./test/test_log.c:17: fatal
