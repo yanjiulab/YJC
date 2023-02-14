@@ -22,7 +22,10 @@
 
 #include "ini.h"
 
+#include "inet.h"
+
 struct ini_t {
+    char *file;
     char *data;
     char *end;
 };
@@ -123,6 +126,7 @@ static void split_data(ini_t *ini) {
                 break;
 
             case ';':
+            case '#':
                 p = discard_line(ini, p);
                 break;
 
@@ -199,6 +203,7 @@ ini_t *ini_load(const char *filename) {
     ini->data = malloc(sz + 1);
     ini->data[sz] = '\0';
     ini->end = ini->data + sz;
+    ini->file = filename;
     n = fread(ini->data, 1, sz, fp);
     if (n != sz) {
         goto fail;
@@ -264,4 +269,92 @@ int ini_sget(ini_t *ini, const char *section, const char *key, const char *scanf
         *((const char **)dst) = val;
     }
     return 1;
+}
+
+int ini_set(ini_t *ini, const char *section, const char *key, char *new_val) {
+    char *current_section = "";
+    char *val, *val_start, *val_end;
+    char *p = ini->data;
+    int old_val_len, new_val_len, prev_len, next_len;
+
+    new_val_len = strlen(new_val);
+
+    /* Search val of key */
+    if (*p == '\0') {
+        p = next(ini, p);
+    }
+
+    val_start = NULL;
+    while (p < ini->end) {
+        if (*p == '[') {
+            /* Handle section */
+            current_section = p + 1;
+        } else {
+            /* Handle key */
+            val = next(ini, p);
+            if (!section || !strcmpci(section, current_section)) {
+                if (!strcmpci(p, key)) {
+                    old_val_len = strlen(val);
+                    val_start = val;
+                    prev_len = val_start - ini->data;
+                    next_len = ini->end - val_start - old_val_len;
+                    break;
+                }
+            }
+            p = val;
+        }
+        p = next(ini, p);
+    }
+
+    if (!val_start) {
+        return 0;
+    }
+
+    /* Repen file */
+    int n, old_sz, new_sz;
+    FILE *fp = fopen(ini->file, "rb");
+    if (!fp) {
+        goto fail;
+    }
+
+    /* Allocate memory */
+    new_sz = prev_len + new_val_len + next_len;
+    char *new_ini_data = calloc(1, new_sz + 1);
+    new_ini_data[new_sz] = '\0';
+
+    /* Copy data to memory */
+    p = new_ini_data;
+    n = fread(p, 1, prev_len, fp);
+    if (n != prev_len) {
+        goto fail;
+    }
+    p += prev_len;
+
+    strncpy(p, new_val, new_val_len);
+    p += new_val_len;
+
+    fseek(fp, old_val_len, SEEK_CUR);
+    n = fread(p, 1, next_len, fp);
+    if (n != next_len) {
+        goto fail;
+    }
+
+    /* Write to file */
+    if (fp) fclose(fp);
+    fp = fopen(ini->file, "wb");  // clear the old data
+    if (!fp) {
+        goto fail;
+    }
+    fseek(fp, 0, SEEK_SET);
+    n = fwrite(new_ini_data, 1, new_sz, fp);
+    if (n != new_sz) {
+        goto fail;
+    }
+    fclose(fp);
+
+    return 1;
+fail:
+    if (fp) fclose(fp);
+    if (new_ini_data) free(new_ini_data);
+    return 0;
 }

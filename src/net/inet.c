@@ -1,5 +1,5 @@
 #include "inet.h"
-
+#define HDRSTR_VERBOSE 1
 char buf[HDRSTRLEN];
 
 char* ethhdr_str(ethhdr_t* eth) {
