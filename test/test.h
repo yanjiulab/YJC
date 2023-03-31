@@ -57,4 +57,7 @@ void test_epoll();
 void test_math();
 void test_datetime();
 
+// graph
+void test_graph();
+
 #endif  // !TEST_H

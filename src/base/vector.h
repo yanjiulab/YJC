@@ -1,136 +1,75 @@
-/**
- * Copyright (c) 2014 rxi
+/*
+ * Generic vector interface header.
+ * Copyright (C) 1997, 98 Kunihiro Ishiguro
  *
- * This library is free software; you can redistribute it and/or modify it
- * under the terms of the MIT license. See LICENSE for details.
+ * This file is part of GNU Zebra.
+ *
+ * GNU Zebra is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2, or (at your option) any
+ * later version.
+ *
+ * GNU Zebra is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; see the file COPYING; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define VEC_VERSION "0.2.1"
-
-#define vec_unpack_(v) (char **)&(v)->data, &(v)->length, &(v)->capacity, sizeof(*(v)->data)
-
-/* vector creation and destroy */
-#define vector(T)             \
-    struct {                  \
-        T *data;              \
-        int length, capacity; \
-    }
-#define vec_init(v) memset((v), 0, sizeof(*(v)))
-#define vec_deinit(v) (free((v)->data), vec_init(v))
-#define vec_new(T) calloc(1, sizeof(vector(T)))
-#define vec_free(v) (free((v)->data), free(v))
-
-/* stack like operation */
-#define vec_push(v, val) (vec_expand_(vec_unpack_(v)) ? -1 : ((v)->data[(v)->length++] = (val), 0), 0)
-#define vec_pop(v) (v)->data[--(v)->length]
-#define vec_first(v) (v)->data[0]
-#define vec_last(v) (v)->data[(v)->length - 1]
-
-/* list like operation */
-#define vec_get(v, i) (v)->data[i]
-#define vec_set(v, val) vec_push(v, val)
-#define vec_insert(v, idx, val) (vec_insert_(vec_unpack_(v), idx) ? -1 : ((v)->data[idx] = (val), 0), (v)->length++, 0)
-
-/* advanced operator */
-#define vec_splice(v, start, count) (vec_splice_(vec_unpack_(v), start, count), (v)->length -= (count))
-
-#define vec_swapsplice(v, start, count) (vec_swapsplice_(vec_unpack_(v), start, count), (v)->length -= (count))
-
-#define vec_sort(v, fn) qsort((v)->data, (v)->length, sizeof(*(v)->data), fn)
-
-#define vec_swap(v, idx1, idx2) vec_swap_(vec_unpack_(v), idx1, idx2)
-
-#define vec_truncate(v, len) ((v)->length = (len) < (v)->length ? (len) : (v)->length)
-
-#define vec_clear(v) ((v)->length = 0)
-
-#define vec_reserve(v, n) vec_reserve_(vec_unpack_(v), n)
-
-#define vec_compact(v) vec_compact_(vec_unpack_(v))
-
-#define vec_pusharr(v, arr, count)                                           \
-    do {                                                                     \
-        int i__, n__ = (count);                                              \
-        if (vec_reserve_po2_(vec_unpack_(v), (v)->length + n__) != 0) break; \
-        for (i__ = 0; i__ < n__; i__++) {                                    \
-            (v)->data[(v)->length++] = (arr)[i__];                           \
-        }                                                                    \
-    } while (0)
-
-#define vec_extend(v, v2) vec_pusharr((v), (v2)->data, (v2)->length)
-
-#define vec_find(v, val, idx)                           \
-    do {                                                \
-        for ((idx) = 0; (idx) < (v)->length; (idx)++) { \
-            if ((v)->data[(idx)] == (val)) break;       \
-        }                                               \
-        if ((idx) == (v)->length) (idx) = -1;           \
-    } while (0)
-
-#define vec_remove(v, val)                        \
-    do {                                          \
-        int idx__;                                \
-        vec_find(v, val, idx__);                  \
-        if (idx__ != -1) vec_splice(v, idx__, 1); \
-    } while (0)
-
-#define vec_reverse(v)                                   \
-    do {                                                 \
-        int i__ = (v)->length / 2;                       \
-        while (i__--) {                                  \
-            vec_swap((v), i__, (v)->length - (i__ + 1)); \
-        }                                                \
-    } while (0)
-
-#define vec_foreach(v, var, iter) \
-    if ((v)->length > 0)          \
-        for ((iter) = 0; (iter) < (v)->length && (((var) = (v)->data[(iter)]), 1); ++(iter))
-
-#define vec_dump(v, format)                             \
-    do {                                                \
-        int i__ = 0;                                    \
-        typeof(*(v)->data) var__;                       \
-        printf("(");                                    \
-        vec_foreach(v, var__, i__) {                    \
-            printf(format, var__);                      \
-            printf(i__ == (v)->length - 1 ? "" : ", "); \
-        }                                               \
-        printf(")\n");                                  \
-    } while (0)
-
-#define vec_foreach_rev(v, var, iter) \
-    if ((v)->length > 0)              \
-        for ((iter) = (v)->length - 1; (iter) >= 0 && (((var) = (v)->data[(iter)]), 1); --(iter))
-
-#define vec_foreach_ptr(v, var, iter) \
-    if ((v)->length > 0)              \
-        for ((iter) = 0; (iter) < (v)->length && (((var) = &(v)->data[(iter)]), 1); ++(iter))
-
-#define vec_foreach_ptr_rev(v, var, iter) \
-    if ((v)->length > 0)                  \
-        for ((iter) = (v)->length - 1; (iter) >= 0 && (((var) = &(v)->data[(iter)]), 1); --(iter))
-
-int vec_expand_(char **data, int *length, int *capacity, int memsz);
-int vec_reserve_(char **data, int *length, int *capacity, int memsz, int n);
-int vec_reserve_po2_(char **data, int *length, int *capacity, int memsz, int n);
-int vec_compact_(char **data, int *length, int *capacity, int memsz);
-int vec_insert_(char **data, int *length, int *capacity, int memsz, int idx);
-void vec_splice_(char **data, int *length, int *capacity, int memsz, int start, int count);
-void vec_swapsplice_(char **data, int *length, int *capacity, int memsz, int start, int count);
-void vec_swap_(char **data, int *length, int *capacity, int memsz, int idx1, int idx2);
-
-typedef vector(void *) vec_void_t;
-typedef vector(char *) vec_str_t;
-typedef vector(int) vec_int_t;
-typedef vector(char) vec_char_t;
-typedef vector(float) vec_float_t;
-typedef vector(double) vec_double_t;
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+/* struct for vector */
+struct _vector {
+    unsigned int active;  /* number of active slots */
+    unsigned int alloced; /* number of allocated slot */
+    unsigned int count;
+    void **index; /* index to data */
+};
+typedef struct _vector *vector;
+
+#define VECTOR_MIN_SIZE 1
+
+/* (Sometimes) usefull macros.  This macro convert index expression to
+ array expression. */
+/* Reference slot at given index, caller must ensure slot is active */
+#define vector_slot(V, I) ((V)->index[(I)])
+/* Number of active slots.
+ * Note that this differs from vector_count() as it the count returned
+ * will include any empty slots
+ */
+#define vector_active(V) ((V)->active)
+
+/* Prototypes. */
+extern vector vector_init(unsigned int size);
+extern void vector_ensure(vector v, unsigned int num);
+extern int vector_empty_slot(vector v);
+extern int vector_set(vector v, void *val);
+extern int vector_set_index(vector v, unsigned int i, void *val);
+extern void vector_unset(vector v, unsigned int i);
+extern void vector_unset_value(vector v, void *val);
+extern void vector_remove(vector v, unsigned int ix);
+extern void vector_compact(vector v);
+
+static inline unsigned int vector_count(vector v) { return v->count; }
+
+extern void vector_free(vector v);
+extern vector vector_copy(vector v);
+
+extern void *vector_lookup(vector, unsigned int);
+extern void *vector_lookup_ensure(vector, unsigned int);
+extern void vector_to_array(vector v, void ***dest, int *argc);
+extern vector array_to_vector(void **src, int argc);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* _ZEBRA_VECTOR_H */
