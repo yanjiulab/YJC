@@ -94,3 +94,10 @@ const char *hv_strerror(int err) {
         return "Undefined error";
     }
 }
+
+/* Wrapper around strerror to handle case where it returns NULL. */
+const char *safe_strerror(int errnum)
+{
+	const char *s = strerror(errnum);
+	return (s != NULL) ? s : "Unknown error";
+}
