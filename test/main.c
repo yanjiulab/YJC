@@ -18,7 +18,7 @@ int main(void) {
         // // utils
         // cmocka_unit_test(test_log),
         // cmocka_unit_test(test_ini),
-        cmocka_unit_test(test_base64_md5_sha1_sha256),
+        // cmocka_unit_test(test_base64_md5_sha1_sha256),
         // cmocka_unit_test(test_str),
         // cmocka_unit_test(test_str_split),
         // cmocka_unit_test(test_str_trim),
@@ -31,7 +31,7 @@ int main(void) {
         // // base
         // cmocka_unit_test(test_datetime),
         /* Test */
-
+        cmocka_unit_test(test_sqlite3),
         // cmocka_unit_test(test_graph),
         // cmocka_unit_test(test_vector),
         // cmocka_unit_test(test_ringbuf),

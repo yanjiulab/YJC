@@ -61,5 +61,6 @@ void test_datetime();
 void test_graph();
 
 void test_ringbuf();
+void test_sqlite3();
 
 #endif  // !TEST_H

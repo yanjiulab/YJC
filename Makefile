@@ -25,7 +25,7 @@ TCFLAGS =
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries
-LIBS = -lm -lreadline -lpthread -lncurses
+LIBS = -lm -lreadline -lpthread -lncurses -lsqlite3
 # Test libraries
 TEST_LIBS = -lcmocka -L /usr/lib
 # Include directory
