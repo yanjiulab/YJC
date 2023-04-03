@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <
 
 #define STR_EQUAL(s1, s2) (strncmp((s1), (s2), strlen((s2))) == 0)
 #define STR_SPLIT(in, out, sep) str_split(in, out, sizeof(out) / sizeof(out[0]), sep)

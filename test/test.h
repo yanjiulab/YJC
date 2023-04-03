@@ -60,4 +60,5 @@ void test_datetime();
 // graph
 void test_graph();
 
+void test_ringbuf();
 #endif  // !TEST_H

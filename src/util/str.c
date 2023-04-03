@@ -187,7 +187,7 @@ char *str_hex(char *buff, size_t bufsiz, const uint8_t *str, size_t num)
 
 	for (size_t i = 0; i < num; i++) {
 		snprintf(tmp, sizeof(tmp), "%02x", (unsigned char)str[i]);
-		strlcat(buff, tmp, bufsiz);
+		strncat(buff, tmp, bufsiz);
 	}
 
 	return buff;
