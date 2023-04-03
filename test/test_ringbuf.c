@@ -4,10 +4,10 @@
 #include "ringbuf.h"
 #include "test.h"
 
-#define BUFSIZ 4096
+#define BUFSIZE 4096
 
 void test_ringbuf() {
-    struct ringbuf *soil = ringbuf_new(BUFSIZ);
+    struct ringbuf *soil = ringbuf_new(BUFSIZE);
 
     printf("Validating reset on empty buffer...\n");
     ringbuf_reset(soil);
@@ -25,8 +25,8 @@ void test_ringbuf() {
 
     /* copy stack garbage to buffer */
     printf("Validating big write...\n");
-    uint8_t compost[BUFSIZ];
-    assert(ringbuf_put(soil, &compost, sizeof(compost)) == BUFSIZ);
+    uint8_t compost[BUFSIZE];
+    assert(ringbuf_put(soil, &compost, sizeof(compost)) == BUFSIZE);
     assert(soil->start == 0);
     assert(soil->end == 0);
 
@@ -37,7 +37,7 @@ void test_ringbuf() {
     assert(soil->end == 0);
 
     printf("Validating wraparound...\n");
-    assert(ringbuf_put(soil, &compost[BUFSIZ / 2], 10) == 10);
+    assert(ringbuf_put(soil, &compost[BUFSIZE / 2], 10) == 10);
     assert(soil->start == 15);
     assert(soil->end == 10);
 
@@ -45,7 +45,7 @@ void test_ringbuf() {
     assert(ringbuf_put(soil, &compost, 15) == 5);
 
     printf("Validating big read...\n");
-    assert(ringbuf_get(soil, &compost, BUFSIZ) == BUFSIZ);
+    assert(ringbuf_get(soil, &compost, BUFSIZE) == BUFSIZE);
     assert(soil->empty == true);
     assert(soil->start == soil->end);
     assert(soil->start == 15);

@@ -29,8 +29,8 @@
 #ifndef _SHA256_H_
 #define _SHA256_H_
 #include <stdint.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,6 +50,11 @@ typedef struct HMAC_SHA256Context {
 void SHA256_Init(SHA256_CTX *);
 void SHA256_Update(SHA256_CTX *, const void *, size_t);
 void SHA256_Final(unsigned char[32], SHA256_CTX *);
+void SHA256(char *hash_out, const char *str, uint32_t len);
+void sha256(unsigned char *input, uint32_t inputlen, unsigned char digest[20]);
+// NOTE: if outputlen > 64: output[64] = '\0'
+void sha256_hex(unsigned char *input, uint32_t inputlen, char *output, uint32_t outputlen);
+
 void HMAC__SHA256_Init(HMAC_SHA256_CTX *, const void *, size_t);
 void HMAC__SHA256_Update(HMAC_SHA256_CTX *, const void *, size_t);
 void HMAC__SHA256_Final(unsigned char[32], HMAC_SHA256_CTX *);
@@ -60,11 +65,6 @@ void HMAC__SHA256_Final(unsigned char[32], HMAC_SHA256_CTX *);
  * write the output to buf.  The value dkLen must be at most 32 * (2^32 - 1).
  */
 void PBKDF2_SHA256(const uint8_t *, size_t, const uint8_t *, size_t, uint64_t, uint8_t *, size_t);
-
-void SHA256(char *hash_out, const char *str, uint32_t len);
-void sha256(unsigned char* input, uint32_t inputlen, unsigned char digest[20]);
-// NOTE: if outputlen > 40: output[40] = '\0'
-void sha256_hex(unsigned char* input, uint32_t inputlen, char* output, uint32_t outputlen);
 
 #ifdef __cplusplus
 }
