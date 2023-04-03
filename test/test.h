@@ -11,7 +11,7 @@ void test_base();
 // util
 void test_log();
 void test_ini();
-void test_base64_md5_sha1();
+void test_base64_md5_sha1_sha256();
 
 // container
 void test_list();
@@ -61,4 +61,5 @@ void test_datetime();
 void test_graph();
 
 void test_ringbuf();
+
 #endif  // !TEST_H
