@@ -34,8 +34,8 @@
 
 #include "db.h"
 
-#include "log.h"
 #include "defs.h"
+#include "log.h"
 
 static struct sqlite3 *dbp;
 
@@ -88,6 +88,7 @@ static int db_vbindf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
     void *blob;
     uint64_t uinteger64;
     uint32_t uinteger;
+    double float64;
     int vlen;
 
     while (*sptr) {
@@ -105,6 +106,10 @@ static int db_vbindf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
             case 'd':
                 uinteger64 = va_arg(vl, uint64_t);
                 if (sqlite3_bind_int64(ss, column++, uinteger64) != SQLITE_OK) return -1;
+                break;
+            case 'f':
+                float64 = va_arg(vl, double);
+                if (sqlite3_bind_double(ss, column++, float64) != SQLITE_OK) return -1;
                 break;
             case 's':
                 str = va_arg(vl, const char *);
@@ -194,6 +199,20 @@ int db_run(struct sqlite3_stmt *ss) {
     return result;
 }
 
+int db_reset(struct sqlite3_stmt *ss) {
+    int result;
+
+    result = sqlite3_reset(ss);
+
+    switch (result) {
+        case SQLITE_OK:
+            break;
+        default:
+            log_warn("%s: reset failed (%d:%s)", __func__, result, sqlite3_errstr(result));
+    }
+
+    return result;
+}
 /* Helper function to load format to variables. */
 static int db_vloadf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
     const char *sptr = fmt;
@@ -261,9 +280,9 @@ int db_loadf(struct sqlite3_stmt *ss, const char *fmt, ...) {
 }
 
 /* Finalize query and return memory. */
-void db_finalize(struct sqlite3_stmt **ss) {
-    sqlite3_finalize(*ss);
-    *ss = NULL;
+void db_finalize(struct sqlite3_stmt *ss) {
+    sqlite3_finalize(ss);
+    // *ss = NULL;
 }
 
 /* Execute one or more statements. */

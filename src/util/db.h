@@ -46,12 +46,13 @@ extern "C" {
 
 extern int db_init(const char *path_fmt, ...);
 extern int db_close(void);
-extern int db_bindf(struct sqlite3_stmt *ss, const char *fmt, ...);
 extern struct sqlite3_stmt *db_prepare_len(const char *stmt, int stmtlen);
 extern struct sqlite3_stmt *db_prepare(const char *stmt);
+extern void db_finalize(struct sqlite3_stmt *ss);
+extern int db_bindf(struct sqlite3_stmt *ss, const char *fmt, ...);
 extern int db_run(struct sqlite3_stmt *ss);
+extern int db_reset(struct sqlite3_stmt *ss);
 extern int db_loadf(struct sqlite3_stmt *ss, const char *fmt, ...);
-extern void db_finalize(struct sqlite3_stmt **ss);
 extern int db_execute(const char *stmt_fmt, ...);
 
 #ifdef __cplusplus
