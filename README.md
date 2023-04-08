@@ -28,4 +28,7 @@ heap.h|二叉堆|Linux 内核风格堆实现（优先队列）
 rbtree.h|红黑树|Linux 内核红黑树简化实现
 
 ## TODO
-- change makefile
+- change makefile 这可以解决 cjson 的警告
+- 数据库
+- ui 界面
+- 控制台命令系统 vtysh
