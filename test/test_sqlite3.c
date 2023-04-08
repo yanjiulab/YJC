@@ -1,37 +1,80 @@
-#include <stdio.h>
 
-#include "sqlite3.h"
+// The following two objects and eight methods comprise the essential elements of the SQLite interface:
+// sqlite3 → The database connection object. Created by sqlite3_open() and destroyed by sqlite3_close().
+// sqlite3_stmt → The prepared statement object. Created by sqlite3_prepare() and destroyed by sqlite3_finalize().
+// sqlite3_open() → Open a connection to a new or existing SQLite database. The constructor for sqlite3.
+// sqlite3_prepare() → Compile SQL text into byte-code that will do the work of querying or updating the database. The
+// constructor for sqlite3_stmt.
+// sqlite3_bind() → Store application data into parameters of the original SQL.
+// sqlite3_step() → Advance an sqlite3_stmt to the next result row or to completion.
+// sqlite3_column() → Column values in the current result row for an sqlite3_stmt.
+// sqlite3_finalize() → Destructor for sqlite3_stmt.
+// sqlite3_close() → Destructor for sqlite3.
+// sqlite3_exec() → A wrapper function that does sqlite3_prepare(), sqlite3_step(), sqlite3_column(), and
+// sqlite3_finalize() for a string of one or more SQL statements.
 
-/* print a record from table outputed by sql statement */
-static int callback(void* NotUsed, int argc, char** argv, char** azColName) {
-    int i;
-    for (i = 0; i < argc; i++) {
-        printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-    }
-    printf("\n");
-    return 0;
-}
-
-int test_sqlite3() {
-    sqlite3* db;
-    char* zErrMsg = 0;
+#include "db.h"
+#include "log.h"
+#include "test.h"
+void test_sqlite3() {
     int rc;
 
-    if (argc != 3) {
-        fprintf(stderr, "Usage: %s DATABASE SQL-STATEMENT\n", argv[0]);
-        return (1);
+    // Open the database
+    db_init("my.db");
+
+    // Delete table
+    db_execute("DROP TABLE IF EXISTS member;");
+
+    // Create table if not exist
+    db_execute(
+        "CREATE TABLE IF NOT EXISTS member("
+        " name TEXT PRIMARY KEY NOT NULL,"
+        " age INT NOT NULL,"
+        " weight REAL NOT NULL,"
+        " datestamp DATETIME DEFAULT CURRENT_TIMESTAMP);");
+
+    // Clear table content
+    // db_execute("DELETE FROM member;");
+
+    // Insert some rows
+    struct sqlite3_stmt* ss;
+    char* names[5] = {"Alice", "Bob", "Corol", "David", "Ella"};
+    int age = 18;
+    double weight = 73.52;
+
+    ss = db_prepare(
+        "INSERT INTO member"
+        "  (name, age, weight)"
+        "VALUES"
+        "  (?, ?, ?);");
+
+    for (int i = 0; i < 5; i++) {
+        db_bindf(ss, "%s%d%f", names[i], strlen(names[i]), age, weight);
+        db_run(ss);
+        db_reset(ss);
+        age++;
+        weight += 0.16;
     }
-    rc = sqlite3_open(argv[1], &db); /* open database */
-    if (rc) {
-        fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-        sqlite3_close(db);
-        return (1);
-    }
-    rc = sqlite3_exec(db, argv[2], callback, 0, &zErrMsg); /* execute SQL statement */
-    if (rc != SQLITE_OK) {
-        fprintf(stderr, "SQL error: %s\n", zErrMsg);
-        sqlite3_free(zErrMsg);
-    }
-    sqlite3_close(db); /* close database */
-    return 0;
+
+    db_finalize(ss);
+
+    ss = db_prepare("SELECT * FROM member;");
+    db_run(ss);
+
+    char name[100] = {0};
+    int a;
+    double w;
+    db_loadf(ss, "%s%d%d", name, sizeof(name), &a, &w);
+    
+
+    // sqlite3_column_text(ss, )
+    // db_loadf(ss, "%s", &buf1);
+    // db_loadf(ss, "%s%s", buf1, buf2);
+    // log_info("%s", buf1);
+    // log_info("%s", buf2);
+    // db_finalize(&ss);
+
+    // Close the database
+    db_close();
 }
+>>>>>>> 1d993a3ecb7d0138beed04b07b9d2974bf8f33d6

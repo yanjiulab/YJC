@@ -3,6 +3,7 @@
 
 #include "vector.h"
 struct vty {};
+
 /* Structure of command element. */
 struct cmd_element {
     const char *string; /* Command specification by string. */

@@ -257,3 +257,4 @@ void print_ifi_info(struct ifi_info *ifihead) {
 //     if ((ifi = get_ifi_info(family, doaliases)) == NULL) err_quit("get_ifi_info error");
 //     return (ifi);
 // }
+

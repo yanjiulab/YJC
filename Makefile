@@ -19,13 +19,13 @@ endif
 # C Compiler
 CC = gcc
 # Compiler Flags
-# CFLAGS = -Wall -Wextra -g3
+# CFLAGS =  -std=c99 #-Wall -g3
 # Test Compiler flags
 TCFLAGS = 
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries
-LIBS = -lm -lreadline -lpthread -lsqlite3 -L lib/
+LIBS = -lm -lreadline -lpthread -lncurses -lsqlite3 -L lib/
 # Test libraries
 TEST_LIBS = -lcmocka -L /usr/lib 
 # Include directory

@@ -6,8 +6,9 @@
 #include "md5.h"
 #include "sha1.h"
 #include "test.h"
+#include "sha256.h"
 
-void test_base64_md5_sha1() {
+void test_base64_md5_sha1_sha256() {
     FILE *fp = fopen("/etc/passwd", "r");
     fseek(fp, 0, SEEK_END);
     int len = ftell(fp);
@@ -35,4 +36,8 @@ void test_base64_md5_sha1() {
     char sha1[41];
     sha1_hex(in, len, sha1, sizeof(sha1));
     printf("sha1: %s\n", sha1);
+
+    char sha256[65];
+    sha256_hex(in, len, sha256, sizeof(sha256));
+    printf("sha256: %s\n", sha256);
 }
