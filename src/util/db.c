@@ -69,6 +69,8 @@ int db_init(const char *path_fmt, ...) {
     return 0;
 }
 
+struct sqlite3 *db() { return dbp; }
+
 /* Closes the database if open. */
 int db_close(void) {
     if (dbp == NULL) return 0;
@@ -222,11 +224,14 @@ static int db_vloadf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
     const void *blobsrc;
     uint64_t *uinteger64;
     uint32_t *uinteger;
+    double *float64;
     int vlen;
     int dlen;
     int columncount;
 
     columncount = sqlite3_column_count(ss);
+    // printf("%d\n", columncount);
+
     if (columncount == 0) return -1;
 
     while (*sptr) {
@@ -244,6 +249,10 @@ static int db_vloadf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
             case 'd':
                 uinteger64 = va_arg(vl, uint64_t *);
                 *uinteger64 = sqlite3_column_int64(ss, column);
+                break;
+            case 'f':
+                float64 = va_arg(vl, double *);
+                *float64 = sqlite3_column_double(ss, column);
                 break;
             case 's':
                 str = va_arg(vl, const char **);

@@ -43,7 +43,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+extern struct sqlite3 *db();
 extern int db_init(const char *path_fmt, ...);
 extern int db_close(void);
 extern struct sqlite3_stmt *db_prepare_len(const char *stmt, int stmtlen);

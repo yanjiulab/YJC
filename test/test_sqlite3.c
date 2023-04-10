@@ -47,7 +47,6 @@ void test_sqlite3() {
         "  (name, age, weight)"
         "VALUES"
         "  (?, ?, ?);");
-
     for (int i = 0; i < 5; i++) {
         db_bindf(ss, "%s%d%f", names[i], strlen(names[i]), age, weight);
         db_run(ss);
@@ -55,24 +54,39 @@ void test_sqlite3() {
         age++;
         weight += 0.16;
     }
-
     db_finalize(ss);
 
-    ss = db_prepare("SELECT * FROM member;");
-    db_run(ss);
+    // ss = db_prepare("SELECT * FROM member;");
+    // char** name;
+    // int a;
+    // double w;
+    // while (db_run(ss)) {
+    //     db_loadf(ss, "%s%d%f", name, &a, &w);
+    //     log_info("%s", *name);
+    //     log_info("%d", a);
+    //     log_info("%f", w);
+    //     // *t = sqlite3_column_text(ss, 3);
+    //     // log_info("%s", *t);
+    // }
+    // db_finalize(ss);
 
-    char name[100] = {0};
-    int a;
-    double w;
-    db_loadf(ss, "%s%d%d", name, sizeof(name), &a, &w);
-    
+    int i = 0, j = 0;
+    int nrow, ncol, idx;
+    char **result, *errmsg;
 
-    // sqlite3_column_text(ss, )
-    // db_loadf(ss, "%s", &buf1);
-    // db_loadf(ss, "%s%s", buf1, buf2);
-    // log_info("%s", buf1);
-    // log_info("%s", buf2);
-    // db_finalize(&ss);
+    rc = sqlite3_get_table(db(), "SELECT * FROM member;", &result, &nrow, &ncol, &errmsg);
+    if (rc) {
+        printf("error: %s\n", errmsg);
+    }
+    idx = ncol;
+    log_info("r: %d, c: %d", nrow, ncol);
+    for (i = 0; i <= nrow; i++) {
+        for (j = 0; j < ncol; j++) {
+            printf("%-8s : %-8s\n", result[j], result[idx]);
+            idx++;
+        }
+    }
+    sqlite3_free_table(result);
 
     // Close the database
     db_close();
