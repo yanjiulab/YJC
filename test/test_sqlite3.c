@@ -64,7 +64,7 @@ void test_sqlite3() {
     char name[100] = {0};
     int a;
     double w;
-    db_loadf(ss, "%s%d%d", name, sizeof(name), &a, &w);
+    db_loadf(ss, "%s%d%d", name, &a, &w);
     
 
     // sqlite3_column_text(ss, )
@@ -77,4 +77,3 @@ void test_sqlite3() {
     // Close the database
     db_close();
 }
->>>>>>> 1d993a3ecb7d0138beed04b07b9d2974bf8f33d6
