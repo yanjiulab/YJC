@@ -56,39 +56,46 @@ void test_sqlite3() {
     }
     db_finalize(ss);
 
-    // ss = db_prepare("SELECT * FROM member;");
-    // char** name;
-    // int a;
-    // double w;
+    ss = db_prepare(" select name,age,weight,datestamp from member;");
+    char** name, **ts;
+    int a;
+    double w;
+    while (db_run(ss)) {
+        db_loadf(ss, "%s %d %f %s", name, &a, &w, ts);
+        log_info("%s\t%d\t%f", *name, a, w);
+        // *t = sqlite3_column_text(ss, 3);
+        // log_info("%s", *t);
+    }
+    db_finalize(ss);
+
+    // select (julianday('2023-04-10 17:16:00') - julianday('1970-01-01')) * 86400;
+    // ss = db_prepare("SELECT datestamp FROM member;");
     // while (db_run(ss)) {
-    //     db_loadf(ss, "%s%d%f", name, &a, &w);
+    //     db_loadf(ss, "%s", name);
     //     log_info("%s", *name);
-    //     log_info("%d", a);
-    //     log_info("%f", w);
     //     // *t = sqlite3_column_text(ss, 3);
     //     // log_info("%s", *t);
     // }
     // db_finalize(ss);
 
-    int i = 0, j = 0;
-    int nrow, ncol, idx;
-    char **result, *errmsg;
 
-    rc = sqlite3_get_table(db(), "SELECT * FROM member;", &result, &nrow, &ncol, &errmsg);
-    if (rc) {
-        printf("error: %s\n", errmsg);
-    }
-    idx = ncol;
-    log_info("r: %d, c: %d", nrow, ncol);
-    for (i = 0; i <= nrow; i++) {
-        for (j = 0; j < ncol; j++) {
-            printf("%-8s : %-8s\n", result[j], result[idx]);
-            idx++;
-        }
-    }
-    sqlite3_free_table(result);
+
+
+    // int i = 0, j = 0;
+    // int nrow, ncol, idx;
+    // char **result, *errmsg;
+    // rc = sqlite3_get_table(db(), "SELECT * FROM member;", &result, &nrow, &ncol, &errmsg);
+    // if (rc) {
+    //     printf("error: %s\n", errmsg);
+    // }
+    // for (i = 0; i <= nrow; i++) {
+    //     for (j = 0; j < ncol; j++) {
+    //         printf("%s\t", result[i * ncol + j] ? result[i * ncol + j] : "(null)");
+    //     }
+    //     printf("\n");
+    // }
+    // sqlite3_free_table(result);
 
     // Close the database
     db_close();
 }
->>>>>>> 1d993a3ecb7d0138beed04b07b9d2974bf8f33d6

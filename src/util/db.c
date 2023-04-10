@@ -219,7 +219,7 @@ int db_reset(struct sqlite3_stmt *ss) {
 static int db_vloadf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
     const char *sptr = fmt;
     int column = 0;
-    const char **str;
+    char **str;
     void *blob;
     const void *blobsrc;
     uint64_t *uinteger64;
@@ -230,8 +230,6 @@ static int db_vloadf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
     int columncount;
 
     columncount = sqlite3_column_count(ss);
-    // printf("%d\n", columncount);
-
     if (columncount == 0) return -1;
 
     while (*sptr) {
