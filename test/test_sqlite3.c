@@ -91,3 +91,4 @@ void test_sqlite3() {
     // Close the database
     db_close();
 }
+>>>>>>> 1d993a3ecb7d0138beed04b07b9d2974bf8f33d6

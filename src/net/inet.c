@@ -60,7 +60,7 @@ char* udphdr_str(udphdr_t* udph) {
             "> User Datagram Protocol\n"
             "    |-Source Port      : %d\n"
             "    |-Destination Port : %d\n"
-            "    |-Length           : %d\n",
+            "    |-Length           : %d\n"
             "    |-Checksum         : %d\n", ntohs(udph->source), ntohs(udph->dest), ntohs(udph->len),
             ntohs(udph->check));
 #else
