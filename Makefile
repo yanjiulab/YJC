@@ -21,11 +21,11 @@ CC = gcc
 # Compiler Flags
 # CFLAGS =  -std=c99 #-Wall -g3
 # Test Compiler flags
-TCFLAGS = 
+TCFLAGS = -g3
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries
-LIBS = -lm -lreadline -lpthread -lncurses -lsqlite3 -ldl -L lib
+LIBS = -lm -lreadline -lpthread -lncurses -lsqlite3 -ldl #-L lib
 # Test libraries
 TEST_LIBS = -lcmocka -L /usr/lib 
 # Include directory

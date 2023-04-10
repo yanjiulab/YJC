@@ -36,6 +36,7 @@
 
 #include "defs.h"
 #include "log.h"
+#include "str.h"
 
 static struct sqlite3 *dbp;
 
@@ -48,7 +49,8 @@ int db_init(const char *path_fmt, ...) {
     char path[BUFSIZ];
     va_list ap;
 
-    if (dbp) return -1;
+    if (dbp)
+        return -1;
 
     va_start(ap, path_fmt);
     vsnprintf(path, sizeof(path), path_fmt, ap);
@@ -61,7 +63,8 @@ int db_init(const char *path_fmt, ...) {
         }
 
         log_warn("%s: failed to open database '%s': %s", __func__, path, sqlite3_errmsg(dbp));
-        if (sqlite3_close_v2(dbp) != SQLITE_OK) log_warn("%s: failed to terminate database", __func__);
+        if (sqlite3_close_v2(dbp) != SQLITE_OK)
+            log_warn("%s: failed to terminate database", __func__);
         dbp = NULL;
         return -1;
     }
@@ -69,9 +72,12 @@ int db_init(const char *path_fmt, ...) {
     return 0;
 }
 
+struct sqlite3 *db() { return dbp; }
+
 /* Closes the database if open. */
 int db_close(void) {
-    if (dbp == NULL) return 0;
+    if (dbp == NULL)
+        return 0;
 
     if (sqlite3_close_v2(dbp) != SQLITE_OK) {
         log_warn("%s: failed to terminate database", __func__);
@@ -96,37 +102,44 @@ static int db_vbindf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
             sptr++;
             continue;
         }
-        if (sptr++ && *sptr == 0) break;
+        if (sptr++ && *sptr == 0)
+            break;
 
         switch (*sptr) {
-            case 'i':
-                uinteger = va_arg(vl, uint32_t);
-                if (sqlite3_bind_int(ss, column++, uinteger) != SQLITE_OK) return -1;
-                break;
-            case 'd':
-                uinteger64 = va_arg(vl, uint64_t);
-                if (sqlite3_bind_int64(ss, column++, uinteger64) != SQLITE_OK) return -1;
-                break;
-            case 'f':
-                float64 = va_arg(vl, double);
-                if (sqlite3_bind_double(ss, column++, float64) != SQLITE_OK) return -1;
-                break;
-            case 's':
-                str = va_arg(vl, const char *);
-                vlen = va_arg(vl, int);
-                if (sqlite3_bind_text(ss, column++, str, vlen, SQLITE_STATIC) != SQLITE_OK) return -1;
-                break;
-            case 'b':
-                blob = va_arg(vl, void *);
-                vlen = va_arg(vl, int);
-                if (sqlite3_bind_blob(ss, column++, blob, vlen, SQLITE_STATIC) != SQLITE_OK) return -1;
-                break;
-            case 'n':
-                if (sqlite3_bind_null(ss, column++) != SQLITE_OK) return -1;
-                break;
-            default:
-                log_warn("%s: invalid format '%c'", __func__, *sptr);
+        case 'i':
+            uinteger = va_arg(vl, uint32_t);
+            if (sqlite3_bind_int(ss, column++, uinteger) != SQLITE_OK)
                 return -1;
+            break;
+        case 'd':
+            uinteger64 = va_arg(vl, uint64_t);
+            if (sqlite3_bind_int64(ss, column++, uinteger64) != SQLITE_OK)
+                return -1;
+            break;
+        case 'f':
+            float64 = va_arg(vl, double);
+            if (sqlite3_bind_double(ss, column++, float64) != SQLITE_OK)
+                return -1;
+            break;
+        case 's':
+            str = va_arg(vl, const char *);
+            vlen = va_arg(vl, int);
+            if (sqlite3_bind_text(ss, column++, str, vlen, SQLITE_STATIC) != SQLITE_OK)
+                return -1;
+            break;
+        case 'b':
+            blob = va_arg(vl, void *);
+            vlen = va_arg(vl, int);
+            if (sqlite3_bind_blob(ss, column++, blob, vlen, SQLITE_STATIC) != SQLITE_OK)
+                return -1;
+            break;
+        case 'n':
+            if (sqlite3_bind_null(ss, column++) != SQLITE_OK)
+                return -1;
+            break;
+        default:
+            log_warn("%s: invalid format '%c'", __func__, *sptr);
+            return -1;
         }
     }
 
@@ -154,7 +167,8 @@ struct sqlite3_stmt *db_prepare_len(const char *stmt, int stmtlen) {
     struct sqlite3_stmt *ss;
     int c;
 
-    if (dbp == NULL) return NULL;
+    if (dbp == NULL)
+        return NULL;
 
     c = sqlite3_prepare_v2(dbp, stmt, stmtlen, &ss, NULL);
     if (ss == NULL) {
@@ -174,26 +188,26 @@ int db_run(struct sqlite3_stmt *ss) {
 
     result = sqlite3_step(ss);
     switch (result) {
-        case SQLITE_BUSY:
-            /* TODO handle busy database. */
-            break;
+    case SQLITE_BUSY:
+        /* TODO handle busy database. */
+        break;
 
-        case SQLITE_OK:
-        /*
-         * SQLITE_DONE just causes confusion since it means the query went OK,
-         * but it has a different value.
-         */
-        case SQLITE_DONE:
-            result = SQLITE_OK;
-            break;
+    case SQLITE_OK:
+    /*
+     * SQLITE_DONE just causes confusion since it means the query went OK,
+     * but it has a different value.
+     */
+    case SQLITE_DONE:
+        result = SQLITE_OK;
+        break;
 
-        case SQLITE_ROW:
-            /* NOTHING */
-            /* It is expected to receive SQLITE_ROW on search queries. */
-            break;
+    case SQLITE_ROW:
+        /* NOTHING */
+        /* It is expected to receive SQLITE_ROW on search queries. */
+        break;
 
-        default:
-            log_warn("%s: step failed (%d:%s)", __func__, result, sqlite3_errstr(result));
+    default:
+        log_warn("%s: step failed (%d:%s)", __func__, result, sqlite3_errstr(result));
     }
 
     return result;
@@ -205,10 +219,10 @@ int db_reset(struct sqlite3_stmt *ss) {
     result = sqlite3_reset(ss);
 
     switch (result) {
-        case SQLITE_OK:
-            break;
-        default:
-            log_warn("%s: reset failed (%d:%s)", __func__, result, sqlite3_errstr(result));
+    case SQLITE_OK:
+        break;
+    default:
+        log_warn("%s: reset failed (%d:%s)", __func__, result, sqlite3_errstr(result));
     }
 
     return result;
@@ -222,43 +236,50 @@ static int db_vloadf(struct sqlite3_stmt *ss, const char *fmt, va_list vl) {
     const void *blobsrc;
     uint64_t *uinteger64;
     uint32_t *uinteger;
+    double *float64;
     int vlen;
     int dlen;
     int columncount;
 
     columncount = sqlite3_column_count(ss);
-    if (columncount == 0) return -1;
+    if (columncount == 0)
+        return -1;
 
     while (*sptr) {
         if (*sptr != '%') {
             sptr++;
             continue;
         }
-        if (sptr++ && *sptr == 0) break;
+        if (sptr++ && *sptr == 0)
+            break;
 
         switch (*sptr) {
-            case 'i':
-                uinteger = va_arg(vl, uint32_t *);
-                *uinteger = sqlite3_column_int(ss, column);
-                break;
-            case 'd':
-                uinteger64 = va_arg(vl, uint64_t *);
-                *uinteger64 = sqlite3_column_int64(ss, column);
-                break;
-            case 's':
-                str = va_arg(vl, const char **);
-                *str = (const char *)sqlite3_column_text(ss, column);
-                break;
-            case 'b':
-                blob = va_arg(vl, void *);
-                vlen = va_arg(vl, int);
-                dlen = sqlite3_column_bytes(ss, column);
-                blobsrc = sqlite3_column_blob(ss, column);
-                memcpy(blob, blobsrc, MIN(vlen, dlen));
-                break;
-            default:
-                log_warn("%s: invalid format '%c'", __func__, *sptr);
-                return -1;
+        case 'i':
+            uinteger = va_arg(vl, uint32_t *);
+            *uinteger = sqlite3_column_int(ss, column);
+            break;
+        case 'd':
+            uinteger64 = va_arg(vl, uint64_t *);
+            *uinteger64 = sqlite3_column_int64(ss, column);
+            break;
+        case 'f':
+            float64 = va_arg(vl, double *);
+            *float64 = sqlite3_column_double(ss, column);
+            break;
+        case 's':
+            str = va_arg(vl, const char **);
+            *str = (const char *)sqlite3_column_text(ss, column);
+            break;
+        case 'b':
+            blob = va_arg(vl, void *);
+            vlen = va_arg(vl, int);
+            dlen = sqlite3_column_bytes(ss, column);
+            blobsrc = sqlite3_column_blob(ss, column);
+            memcpy(blob, blobsrc, MIN(vlen, dlen));
+            break;
+        default:
+            log_warn("%s: invalid format '%c'", __func__, *sptr);
+            return -1;
         }
 
         column++;
@@ -286,11 +307,12 @@ void db_finalize(struct sqlite3_stmt *ss) {
 }
 
 /* Execute one or more statements. */
-int db_execute(const char *stmt_fmt, ...) {
+int db_exec(const char *stmt_fmt, ...) {
     char stmt[BUFSIZ];
     va_list ap;
 
-    if (dbp == NULL) return -1;
+    if (dbp == NULL)
+        return -1;
 
     va_start(ap, stmt_fmt);
     vsnprintf(stmt, sizeof(stmt), stmt_fmt, ap);
@@ -303,3 +325,44 @@ int db_execute(const char *stmt_fmt, ...) {
 
     return 0;
 }
+
+static int callback(void *data, int argc, char **argv, char **colnames) {
+    for (int i = 0; i < argc; i++) {
+        printf("%s%s", i ? "|" : "", argv[i] ? argv[i] : "NULL");
+    }
+    printf("\n");
+
+    return 0;
+}
+
+int db_table_dump(const char *table_name) {
+    struct sqlite3_stmt *ss;
+    const char *sql = str("SELECT * FROM %s ;", table_name);
+    printf("sqlite> %s\n", sql);
+    if (sqlite3_exec(dbp, sql, callback, NULL, NULL) != SQLITE_OK) {
+        log_warn("%s: failed to execute statement(s): %s", __func__, sqlite3_errmsg(dbp));
+        return -1;
+    }
+    printf("\n");
+
+    return 0;
+}
+
+// int db_exec_cb(const char *stmt_fmt, sqlite3_callback xCallback, ...) {
+//     char stmt[BUFSIZ];
+//     va_list ap;
+
+//     if (dbp == NULL)
+//         return -1;
+
+//     va_start(ap, stmt_fmt);
+//     vsnprintf(stmt, sizeof(stmt), stmt_fmt, ap);
+//     va_end(ap);
+
+//     if (sqlite3_exec(dbp, stmt, NULL, 0, NULL) != SQLITE_OK) {
+//         log_warn("%s: failed to execute statement(s): %s", __func__, sqlite3_errmsg(dbp));
+//         return -1;
+//     }
+
+//     return 0;
+// }
