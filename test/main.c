@@ -28,11 +28,11 @@ int main(void) {
         // cmocka_unit_test(test_rbtree),
         // cmocka_unit_test(test_container),
         // cmocka_unit_test(test_json),
+        // cmocka_unit_test(test_sqlite3),
         // // base
         // cmocka_unit_test(test_datetime),
         /* Test */
-        cmocka_unit_test(test_sqlite3),
-        // cmocka_unit_test(test_graph),
+        cmocka_unit_test(test_graph),
         // cmocka_unit_test(test_vector),
         // cmocka_unit_test(test_ringbuf),
         // cmocka_unit_test(test_base),

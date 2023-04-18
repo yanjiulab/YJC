@@ -15,26 +15,60 @@ struct graph_node {
     vector from;  // nodes which have edges to this node
     vector to;    // nodes which this node has edges to
 
+    unsigned int id;          // node id
     void *data;               // node data
     void (*del)(void *data);  // deletion callback
 };
+typedef struct graph_node graph_node_t;
+
+struct graph_edge {
+    struct graph_node *from;
+    struct graph_node *to;
+
+    void *attr;               // edge attr
+    void (*del)(void *addr);  // deletion callback
+};
+typedef struct graph_edge graph_edge_t;
 
 struct graph {
-    vector nodes;
+    vector nodes;  // all nodes
+    vector edges;  // all edges
 };
 typedef struct graph graph_t;
 
+/**
+ * Create a new graph
+ *
+ * @return the new graph pointer
+ */
 struct graph *graph_new(void);
 
 /**
- * Creates a new node.
+ * Deletes a graph.
+ * Calls graph_delete_node on each node before freeing the graph struct itself.
+ *
+ * @param graph the graph to delete
+ */
+void graph_delete(struct graph *graph);
+
+/**
+ * Dump a graph.
+ *
+ * @param graph the graph to dump
+ */
+void graph_dump_nodes(struct graph *graph);
+void graph_dump_edges(struct graph *graph);
+void graph_dump(struct graph *graph);
+
+/**
+ * Creates a new node and add to graph
  *
  * @struct graph the graph this node exists in
  * @param[in] data this node's data
  * @param[in] del data deletion callback
  * @return the new node
  */
-struct graph_node *graph_new_node(struct graph *graph, void *data, void (*del)(void *));
+struct graph_node *graph_add_node(struct graph *graph, void *data, void (*del)(void *));
 
 /**
  * Deletes a node.
@@ -57,7 +91,8 @@ void graph_delete_node(struct graph *graph, struct graph_node *node);
  * @param[in] to
  * @return to
  */
-struct graph_node *graph_add_edge(struct graph_node *from, struct graph_node *to);
+struct graph_edge *graph_add_edge(struct graph *graph, struct graph_node *from, struct graph_node *to, void *attr,
+                                  void (*del)(void *));
 
 /**
  * Removes a directed edge between two nodes.
@@ -65,15 +100,7 @@ struct graph_node *graph_add_edge(struct graph_node *from, struct graph_node *to
  * @param[in] from
  * @param[in] to
  */
-void graph_remove_edge(struct graph_node *from, struct graph_node *to);
-
-/**
- * Deletes a graph.
- * Calls graph_delete_node on each node before freeing the graph struct itself.
- *
- * @param graph the graph to delete
- */
-void graph_delete_graph(struct graph *graph);
+void graph_delete_edge(struct graph *graph, struct graph_node *from, struct graph_node *to);
 
 /*
  * Finds a node in the graph.
@@ -91,7 +118,7 @@ struct graph_node *graph_find_node(struct graph *graph, void *data);
  * @param to
  * @return whether there is a directed edge from `from` to `to`.
  */
-bool graph_has_edge(struct graph_node *from, struct graph_node *to);
+bool graph_has_edge(struct graph *graph, struct graph_node *from, struct graph_node *to);
 
 /*
  * Depth-first search.
