@@ -12,6 +12,8 @@ extern "C" {
 #endif
 
 typedef enum graph_type { Graph, DiGraph, MultiGraph, MultiDiGraph } graph_type_t;
+typedef enum edge_weight_type { Unweighted, Int, Double } edge_weight_type_t;
+typedef enum sp_algo { Dijkstra, BellmanFord } sp_algo_t;
 
 typedef struct graph_node {
     vector from;  // nodes which have edges to this node
@@ -37,6 +39,7 @@ typedef struct graph {
     vector edges;  // all edges
 } graph_t;
 
+/*********************************** Basic **************************************************/
 /**
  * Create a new graph
  *
@@ -51,17 +54,6 @@ struct graph *graph_new(graph_type_t t);
  * @param graph the graph to delete
  */
 void graph_delete(struct graph *graph);
-
-/**
- * Dump a graph.
- *
- * @param graph the graph to dump
- */
-void graph_dump_nodes(struct graph *graph);
-void graph_dump_edges(struct graph *graph);
-void graph_dump(struct graph *graph);
-int graph_number_of_nodes(struct graph *graph);
-int graph_number_of_edges(struct graph *graph);
 
 /**
  * Creates a new node and add to graph
@@ -113,7 +105,14 @@ void graph_delete_edge(struct graph *graph, struct graph_node *from, struct grap
  * @return the first graph node whose data pointer matches `data`
  */
 struct graph_node *graph_find_node(struct graph *graph, void *data);
+
+/**
+ * Finds an edge in the graph.
+ *
+ * @return struct graph_edge*
+ */
 struct graph_edge *graph_find_edge(struct graph *graph, struct graph_node *from, struct graph_node *to);
+
 /*
  * Determines whether two nodes have a directed edge between them.
  *
@@ -123,20 +122,18 @@ struct graph_edge *graph_find_edge(struct graph *graph, struct graph_node *from,
  */
 bool graph_has_edge(struct graph *graph, struct graph_node *from, struct graph_node *to);
 
-/*
- * Depth-first search.
+/*********************************** Views **************************************************/
+/**
+ * Dump a graph.
  *
- * Performs a depth-first traversal of the given graph, visiting each node
- * exactly once and calling the user-provided callback for each visit.
- *
- * @param graph the graph to operate on
- * @param start the node to take as the root
- * @param dfs_cb callback called for each node visited in the traversal
- * @param arg argument to provide to dfs_cb
+ * @param graph the graph to dump
  */
-void graph_dfs(struct graph *graph, struct graph_node *start, void (*dfs_cb)(struct graph_node *, void *), void *arg);
-
-void graph_shortest_path(struct graph *graph, struct graph_node *from);
+void graph_dump_nodes(struct graph *graph);
+void graph_dump_edges(struct graph *graph);
+void graph_dump(struct graph *graph);
+int graph_number_of_nodes(struct graph *graph);
+int graph_number_of_edges(struct graph *graph);
+graph_t *graph_reverse(graph_t *graph, bool copy);
 
 /*********************************** Generators **************************************************/
 
@@ -209,6 +206,23 @@ struct graph *graph_gen_complete(int n, graph_type_t t);
 struct graph *graph_gen_random(int n, graph_type_t t);
 struct graph *graph_gen_random_tree(int n, graph_type_t t);
 struct graph *graph_gen_binomial_tree(int order, graph_type_t t);
+
+/*********************************** Algorithms **************************************************/
+
+/*
+ * Depth-first search.
+ *
+ * Performs a depth-first traversal of the given graph, visiting each node
+ * exactly once and calling the user-provided callback for each visit.
+ *
+ * @param graph the graph to operate on
+ * @param start the node to take as the root
+ * @param dfs_cb callback called for each node visited in the traversal
+ * @param arg argument to provide to dfs_cb
+ */
+void graph_dfs(struct graph *graph, struct graph_node *start, void (*dfs_cb)(struct graph_node *, void *), void *arg);
+
+void graph_shortest_path(struct graph *graph, struct graph_node *from);
 
 #ifdef __cplusplus
 }

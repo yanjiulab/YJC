@@ -97,8 +97,8 @@ void graph_delete_node(graph_t *graph, graph_node_t *node) {
 }
 
 // Done
-static graph_edge_t *_graph_add_edge(graph_t *graph, graph_node_t *from, graph_node_t *to,
-                                          void *attr, void (*del)(void *)) {
+static graph_edge_t *_graph_add_edge(graph_t *graph, graph_node_t *from, graph_node_t *to, void *attr,
+                                     void (*del)(void *)) {
     graph_edge_t *edge = calloc(1, sizeof(graph_edge_t));
     edge->from = from;
     edge->to = to;
@@ -111,8 +111,7 @@ static graph_edge_t *_graph_add_edge(graph_t *graph, graph_node_t *from, graph_n
     return edge;
 }
 
-graph_edge_t *graph_add_edge(graph_t *graph, graph_node_t *from, graph_node_t *to, void *attr,
-                                  void (*del)(void *)) {
+graph_edge_t *graph_add_edge(graph_t *graph, graph_node_t *from, graph_node_t *to, void *attr, void (*del)(void *)) {
     graph_edge_t *e = NULL;
 
     // Check nodes if exist
@@ -273,6 +272,33 @@ int graph_number_of_nodes(graph_t *graph) { return graph->nodes->active; }
 
 int graph_number_of_edges(graph_t *graph) { return graph->edges->active; }
 
+graph_t *graph_reverse(graph_t *graph, bool copy) {
+    if (graph->type == Graph || graph->type == MultiGraph) return graph;
+
+    graph_node_t *node, *temp;
+    graph_edge_t *edge;
+
+    if (copy) {
+        // TODO
+    } else {
+        for (unsigned int i = vector_active(graph->nodes); i--; /**/) {
+            node = vector_slot(graph->nodes, i);
+            temp = node->from;
+            node->from = node->to;
+            node->to = temp;
+        }
+
+        for (unsigned int i = vector_active(graph->edges); i--; /**/) {
+            edge = vector_slot(graph->edges, i);
+            temp = edge->from;
+            edge->from = edge->to;
+            edge->to = temp;
+        }
+    }
+
+    return graph;
+}
+
 /*********************************** Generators **************************************************/
 
 graph_t *graph_gen_trivial(graph_type_t t) {
@@ -374,8 +400,8 @@ graph_t *graph_gen_random(int n, graph_type_t t) {}
 graph_t *graph_gen_random_tree(int n, graph_type_t t) {}
 
 /*********************************** Algorithms **************************************************/
-static void _graph_dfs(graph_t *graph, graph_node_t *start, vector visited,
-                       void (*dfs_cb)(graph_node_t *, void *), void *arg) {
+static void _graph_dfs(graph_t *graph, graph_node_t *start, vector visited, void (*dfs_cb)(graph_node_t *, void *),
+                       void *arg) {
     /* check that we have not visited this node */
     for (unsigned int i = 0; i < vector_active(visited); i++) {
         if (start == vector_slot(visited, i)) return;
@@ -426,6 +452,13 @@ static int min_dist(int dist[], bool sptSet[], int n) {
 }
 
 // TODO
+vector build_path_from_pred(int pred[]) {
+    vector path = vector_init(VECTOR_MIN_SIZE);
+
+    
+    vector_set(path, pred)
+}
+
 void graph_shortest_path(graph_t *graph, graph_node_t *from) {
     int nn = graph->nodes->active;
     int src = -1;  // from index
@@ -439,13 +472,13 @@ void graph_shortest_path(graph_t *graph, graph_node_t *from) {
 
     unsigned int dist[nn];
     bool sptSet[nn];
-    int path[nn];
+    int pred[nn];
 
     // Initial all distances as INF and stpSet[] as false
     for (int i = 0; i < nn; i++) {
         dist[i] = INF;
         sptSet[i] = false;
-        path[i] = -1;
+        pred[i] = -1;
     }
     // Distance of source vertex from itself is always 0
     dist[src] = 0;
@@ -467,7 +500,7 @@ void graph_shortest_path(graph_t *graph, graph_node_t *from) {
             unsigned int weight = e ? (int)e->attr : 0;
             if (!sptSet[v] && e && dist[u] != INF && dist[u] + weight < dist[v]) {
                 dist[v] = dist[u] + weight;
-                path[v] = u;
+                pred[v] = u;
             }
         }
     }
@@ -475,10 +508,70 @@ void graph_shortest_path(graph_t *graph, graph_node_t *from) {
     // print solution
     graph_node_t *n, *p;
     for (int i = 0; i < nn; i++) {
-        if (path[i] == -1) continue;
+        if (pred[i] == -1) continue;
         n = vector_slot(graph->nodes, i);
-        p = vector_slot(graph->nodes, path[i]);
+        p = vector_slot(graph->nodes, pred[i]);
         printf("n(%d) -> n(%d): distance %d via n(%d)\n", from->id, n->id, dist[i], p->id);
+    }
+}
+
+
+
+void _graph_shortest_path(graph_t *graph, graph_node_t *from, graph_node_t *to, edge_weight_type_t weight,
+                          sp_algo_t method) {
+    // if (method == Dijkstra) {
+    // } else if (method == BellmanFord) {
+    // } else {
+    //     weight = Unweighted;
+    //     printf("method not supported: {%s}", method);
+    // }
+
+    vector path = vector_init(VECTOR_MIN_SIZE); // 0 to 4 is [0, 1, 2, 3, 4]
+    
+    if (from == NULL) {
+        if (to == NULL) {
+            // Find paths between all pairs.
+            if (method == Dijkstra) {
+                all_pairs_dijkstra_path(graph, weight);
+            } else if (method == BellmanFord) {
+                all_pairs_bellman_ford_path(graph, weight);
+            } else {
+                all_pairs_shortest_path(graph);
+            }
+        } else {
+            // Find paths from all nodes co-accessible to the target.
+            graph = graph_reverse(graph, false);
+            if (method == Dijkstra) {
+                single_source_dijkstra_path(graph, to, weight);
+            } else if (method == BellmanFord) {
+                single_source_bellman_ford_path(graph, to, weight);
+            } else {
+                single_source_shortest_path(graph);
+            }
+            // Now flip the paths so they go from a source to the target.
+            // for target in paths:
+            //     paths[target] = list(reversed(paths[target]))
+        }
+    } else {
+        if (to == NULL) {
+            // Find paths to all nodes accessible from the source.
+            if (method == Dijkstra) {
+                single_source_dijkstra_path(graph, from, weight);
+            } else if (method == BellmanFord) {
+                single_source_bellman_ford_path(graph, from, weight);
+            } else {
+                single_source_shortest_path(graph);
+            }
+        } else {
+            //  Find shortest source-target path.
+            if (method == Dijkstra) {
+                bidirectional_dijkstra(graph, from, weight);
+            } else if (method == BellmanFord) {
+                bellman_ford_path(graph, from, weight);
+            } else {
+                bidirectional_shortest_path(graph);
+            }
+        }
     }
 }
 
