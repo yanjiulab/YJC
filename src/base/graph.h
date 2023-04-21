@@ -11,40 +11,38 @@
 extern "C" {
 #endif
 
-enum graph_type { Graph, DiGraph };
+typedef enum graph_type { Graph, DiGraph, MultiGraph, MultiDiGraph } graph_type_t;
 
-struct graph_node {
+typedef struct graph_node {
     vector from;  // nodes which have edges to this node
     vector to;    // nodes which this node has edges to
 
     unsigned int id;          // node id
     void *data;               // node data
     void (*del)(void *data);  // deletion callback
-};
-typedef struct graph_node graph_node_t;
+} graph_node_t;
 
-struct graph_edge {
+typedef struct graph_edge {
     struct graph_node *from;
     struct graph_node *to;
 
     void *attr;               // edge attr
     void (*del)(void *addr);  // deletion callback
-};
-typedef struct graph_edge graph_edge_t;
+} graph_edge_t;
 
-struct graph {
-    int max_id;
+typedef struct graph {
+    int max_id;  // record
+    graph_type_t type;
     vector nodes;  // all nodes
     vector edges;  // all edges
-};
-typedef struct graph graph_t;
+} graph_t;
 
 /**
  * Create a new graph
  *
  * @return the new graph pointer
  */
-struct graph *graph_new(void);
+struct graph *graph_new(graph_type_t t);
 
 /**
  * Deletes a graph.
@@ -144,10 +142,10 @@ void graph_shortest_path(struct graph *graph, struct graph_node *from);
 
 /**
  * @brief Return the Trivial graph with one node (with label 0) and no edges.
- * 
- * @return struct graph* 
+ *
+ * @return struct graph*
  */
-struct graph *graph_gen_trivial();
+struct graph *graph_gen_trivial(graph_type_t t);
 
 /**
  * @brief Returns the empty graph with n nodes and zero edges.
@@ -155,7 +153,7 @@ struct graph *graph_gen_trivial();
  * @param n
  * @return struct graph*
  */
-struct graph *graph_gen_empty(int n);
+struct graph *graph_gen_empty(int n, graph_type_t t);
 
 /**
  * @brief Returns the Path graph of linearly connected nodes.
@@ -163,7 +161,7 @@ struct graph *graph_gen_empty(int n);
  * @param n
  * @return struct graph*
  */
-struct graph *graph_gen_path(int n);
+struct graph *graph_gen_path(int n, graph_type_t t);
 
 /**
  * @brief Returns the cycle graph of cyclically connected nodes.
@@ -171,7 +169,7 @@ struct graph *graph_gen_path(int n);
  * @param n
  * @return struct graph*
  */
-struct graph *graph_gen_cycle(int n);
+struct graph *graph_gen_cycle(int n, graph_type_t t);
 
 /**
  * @brief The star graph consists of one center node connected to n outer nodes.
@@ -179,18 +177,16 @@ struct graph *graph_gen_cycle(int n);
  * @param n
  * @return struct graph*
  */
-struct graph *graph_gen_star(int n);
-
+struct graph *graph_gen_star(int n, graph_type_t t);
 
 /**
  * @brief Return the wheel graph
  * The wheel graph consists of a hub node connected to a cycle of (n-1) nodes.
- * 
- * @param n 
- * @return struct graph* 
+ *
+ * @param n
+ * @return struct graph*
  */
-struct graph *graph_gen_wheel(int n);
-
+struct graph *graph_gen_wheel(int n, graph_type_t t);
 
 /**
  * @brief The grid graph has each node connected to its four nearest neighbors.
@@ -199,7 +195,7 @@ struct graph *graph_gen_wheel(int n);
  * @param n
  * @return struct graph*
  */
-struct graph *graph_gen_grid(int m, int n);
+struct graph *graph_gen_grid(int m, int n, graph_type_t t);
 
 /**
  * @brief Return the complete graph K_n with n nodes.
@@ -208,11 +204,11 @@ struct graph *graph_gen_grid(int m, int n);
  * @param n
  * @return struct graph*
  */
-struct graph *graph_gen_complete(int n);
+struct graph *graph_gen_complete(int n, graph_type_t t);
 
-struct graph *graph_gen_random(int n);
-struct graph *graph_gen_random_tree(int n);
-struct graph *graph_gen_binomial_tree(int order);
+struct graph *graph_gen_random(int n, graph_type_t t);
+struct graph *graph_gen_random_tree(int n, graph_type_t t);
+struct graph *graph_gen_binomial_tree(int order, graph_type_t t);
 
 #ifdef __cplusplus
 }

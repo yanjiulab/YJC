@@ -4,22 +4,23 @@
 
 /*********************************** Basics **************************************************/
 // Done
-struct graph *graph_new(void) {
-    struct graph *graph = calloc(1, sizeof(struct graph));
+graph_t *graph_new(graph_type_t t) {
+    graph_t *graph = calloc(1, sizeof(graph_t));
     graph->nodes = vector_init(VECTOR_MIN_SIZE);
     graph->edges = vector_init(VECTOR_MIN_SIZE);
     graph->max_id = 0;
+    graph->type = t;
     return graph;
 }
 
-// Bugs!
-void graph_delete(struct graph *graph) {
+// Done
+void graph_delete(graph_t *graph) {
     for (unsigned int i = vector_active(graph->nodes); i--; /**/)
         graph_delete_node(graph, vector_slot(graph->nodes, i));
 
     vector_free(graph->nodes);
 
-    struct graph_edge *e;
+    graph_edge_t *e;
     for (unsigned int i = vector_active(graph->edges); i--; /**/) {
         e = vector_slot(graph->edges, i);
         graph_delete_edge(graph, e->from, e->to);
@@ -31,8 +32,8 @@ void graph_delete(struct graph *graph) {
 }
 
 // Done
-struct graph_node *graph_add_node(struct graph *graph, void *data, void (*del)(void *)) {
-    struct graph_node *node = calloc(1, sizeof(struct graph_node));
+graph_node_t *graph_add_node(graph_t *graph, void *data, void (*del)(void *)) {
+    graph_node_t *node = calloc(1, sizeof(graph_node_t));
 
     node->from = vector_init(VECTOR_MIN_SIZE);
     node->to = vector_init(VECTOR_MIN_SIZE);
@@ -59,11 +60,11 @@ static void graph_vector_remove(vector v, unsigned int ix) {
 }
 
 // Done
-void graph_delete_node(struct graph *graph, struct graph_node *node) {
+void graph_delete_node(graph_t *graph, graph_node_t *node) {
     if (!node) return;
 
     // an adjacent node
-    struct graph_node *adj;
+    graph_node_t *adj;
 
     // remove all edges from other nodes to us
     for (unsigned int i = vector_active(node->from); i--; /**/) {
@@ -96,18 +97,9 @@ void graph_delete_node(struct graph *graph, struct graph_node *node) {
 }
 
 // Done
-struct graph_edge *graph_add_edge(struct graph *graph, struct graph_node *from, struct graph_node *to, void *attr,
-                                  void (*del)(void *)) {
-    // Check nodes if exist
-    bool f = false, t = false;
-    for (unsigned int i = vector_active(graph->nodes); i--; /**/) {
-        if (from == vector_slot(graph->nodes, i)) f = true;
-        if (to == vector_slot(graph->nodes, i)) t = true;
-    }
-
-    if (!f || !t) return NULL;
-
-    struct graph_edge *edge = calloc(1, sizeof(struct graph_edge));
+static graph_edge_t *_graph_add_edge(graph_t *graph, graph_node_t *from, graph_node_t *to,
+                                          void *attr, void (*del)(void *)) {
+    graph_edge_t *edge = calloc(1, sizeof(graph_edge_t));
     edge->from = from;
     edge->to = to;
     edge->attr = attr;
@@ -119,9 +111,44 @@ struct graph_edge *graph_add_edge(struct graph *graph, struct graph_node *from, 
     return edge;
 }
 
-// Done
-void graph_delete_edge(struct graph *graph, struct graph_node *from, struct graph_node *to) {
-    struct graph_edge *e;
+graph_edge_t *graph_add_edge(graph_t *graph, graph_node_t *from, graph_node_t *to, void *attr,
+                                  void (*del)(void *)) {
+    graph_edge_t *e = NULL;
+
+    // Check nodes if exist
+    bool f = false, t = false;
+    for (unsigned int i = vector_active(graph->nodes); i--; /**/) {
+        if (from == vector_slot(graph->nodes, i)) f = true;
+        if (to == vector_slot(graph->nodes, i)) t = true;
+    }
+    if (!f || !t) return e;
+
+    switch (graph->type) {
+        case Graph:
+            if (!graph_has_edge(graph, from, to)) e = _graph_add_edge(graph, from, to, attr, del);
+            if (!graph_has_edge(graph, to, from)) e = _graph_add_edge(graph, to, from, attr, del);
+            break;
+        case DiGraph:
+            if (!graph_has_edge(graph, from, to)) e = _graph_add_edge(graph, from, to, attr, del);
+            break;
+        case MultiGraph:
+            e = _graph_add_edge(graph, from, to, attr, del);
+            e = _graph_add_edge(graph, to, from, attr, del);
+            break;
+        case MultiDiGraph:
+            e = _graph_add_edge(graph, from, to, attr, del);
+            break;
+        default:
+            if (!graph_has_edge(graph, from, to)) {
+                e = _graph_add_edge(graph, from, to, attr, del);
+            }
+            break;
+    }
+    return e;
+}
+
+static void _graph_delete_edge(graph_t *graph, graph_node_t *from, graph_node_t *to) {
+    graph_edge_t *e;
 
     // remove edge from graph->edges
     for (unsigned int i = vector_active(graph->edges); i--; /**/) {
@@ -143,11 +170,37 @@ void graph_delete_edge(struct graph *graph, struct graph_node *from, struct grap
             graph_vector_remove(from->to, i);
             break;
         }
+
+    // if there is a deletion callback, call it
+    if (e->del && e->attr) (*e->del)(e->attr);
+}
+
+// How about multiple edge deletion?
+void graph_delete_edge(graph_t *graph, graph_node_t *from, graph_node_t *to) {
+    switch (graph->type) {
+        case Graph:
+            _graph_delete_edge(graph, from, to);
+            _graph_delete_edge(graph, to, from);
+            break;
+        case DiGraph:
+            _graph_delete_edge(graph, from, to);
+            break;
+        case MultiGraph:
+            _graph_delete_edge(graph, from, to);
+            _graph_delete_edge(graph, to, from);
+            break;
+        case MultiDiGraph:
+            _graph_delete_edge(graph, from, to);
+            break;
+        default:
+            _graph_delete_edge(graph, from, to);
+            break;
+    }
 }
 
 // Done (need improve)
-struct graph_node *graph_find_node(struct graph *graph, void *data) {
-    struct graph_node *g;
+graph_node_t *graph_find_node(graph_t *graph, void *data) {
+    graph_node_t *g;
 
     for (unsigned int i = vector_active(graph->nodes); i--; /**/) {
         g = vector_slot(graph->nodes, i);
@@ -157,21 +210,18 @@ struct graph_node *graph_find_node(struct graph *graph, void *data) {
     return NULL;
 }
 
-bool graph_has_edge(struct graph *graph, struct graph_node *from, struct graph_node *to) {
-    for (unsigned int i = vector_active(from->to); i--; /**/)
-        if (vector_slot(from->to, i) == to) return true;
-
-    // struct graph_edge *e;
-    // for (unsigned int i = vector_active(graph->edges); i--; /**/) {
-    //     e = vector_slot(graph->edges, i);
-    //     if (e->from == from && e->to == to) return true;
-    // }
+bool graph_has_edge(graph_t *graph, graph_node_t *from, graph_node_t *to) {
+    graph_edge_t *e;
+    for (unsigned int i = vector_active(graph->edges); i--; /**/) {
+        e = vector_slot(graph->edges, i);
+        if (e->from == from && e->to == to) return true;
+    }
 
     return false;
 }
 
-struct graph_edge *graph_find_edge(struct graph *graph, struct graph_node *from, struct graph_node *to) {
-    struct graph_edge *e;
+graph_edge_t *graph_find_edge(graph_t *graph, graph_node_t *from, graph_node_t *to) {
+    graph_edge_t *e;
     for (unsigned int i = vector_active(graph->edges); i--; /**/) {
         e = vector_slot(graph->edges, i);
         if (e->from == from && e->to == to) return e;
@@ -180,7 +230,15 @@ struct graph_edge *graph_find_edge(struct graph *graph, struct graph_node *from,
     return NULL;
 }
 /*********************************** Views **************************************************/
-void graph_dump_nodes(struct graph *graph) {
+char *graph_type_str(graph_t *graph) {
+    return graph->type == Graph          ? "Graph"
+           : graph->type == DiGraph      ? "DiGraph"
+           : graph->type == MultiGraph   ? "MultiGraph"
+           : graph->type == MultiDiGraph ? "MultiDiGraph"
+                                         : "UnknownGraph";
+}
+
+void graph_dump_nodes(graph_t *graph) {
     char nbuf[64];
     graph_node_t *n;
     printf("  nodes = {");
@@ -192,7 +250,7 @@ void graph_dump_nodes(struct graph *graph) {
     printf("}\n");
 }
 
-void graph_dump_edges(struct graph *graph) {
+void graph_dump_edges(graph_t *graph) {
     char nbuf[64];
     graph_edge_t *e;
     printf("  edges = {\n");
@@ -204,52 +262,52 @@ void graph_dump_edges(struct graph *graph) {
     printf("  }\n");
 }
 
-void graph_dump(struct graph *graph) {
-    printf("DiGraph = {\n");
+void graph_dump(graph_t *graph) {
+    printf("%s = {\n", graph_type_str(graph));
     graph_dump_nodes(graph);
     graph_dump_edges(graph);
     printf("}\n");
 }
 
-int graph_number_of_nodes(struct graph *graph) { return graph->nodes->active; }
+int graph_number_of_nodes(graph_t *graph) { return graph->nodes->active; }
 
-int graph_number_of_edges(struct graph *graph) { return graph->edges->active; }
+int graph_number_of_edges(graph_t *graph) { return graph->edges->active; }
 
 /*********************************** Generators **************************************************/
 
-struct graph *graph_gen_trivial() {
-    graph_t *g = graph_new();
+graph_t *graph_gen_trivial(graph_type_t t) {
+    graph_t *g = graph_new(t);
     graph_add_node(g, 0, 0);
     return g;
 }
 
-struct graph *graph_gen_empty(int n) {
+graph_t *graph_gen_empty(int n, graph_type_t t) {
     int i;
-    graph_t *g = graph_new();
+    graph_t *g = graph_new(t);
     for (i = 0; i < n; i++) {
         graph_add_node(g, 0, 0);
     }
     return g;
 }
 
-struct graph *graph_gen_path(int n) {
+graph_t *graph_gen_path(int n, graph_type_t t) {
     int i;
-    graph_t *g = graph_new();
+    graph_t *g = graph_new(t);
     for (i = 0; i < n; i++) graph_add_node(g, 0, 0);
     for (i = 0; i < g->nodes->active - 1; i++)
         graph_add_edge(g, vector_slot(g->nodes, i), vector_slot(g->nodes, i + 1), 0, NULL);
     return g;
 }
 
-struct graph *graph_gen_cycle(int n) {
-    struct graph *g = graph_gen_path(n);
+graph_t *graph_gen_cycle(int n, graph_type_t t) {
+    graph_t *g = graph_gen_path(n, t);
     graph_add_edge(g, vector_slot(g->nodes, g->nodes->active - 1), vector_slot(g->nodes, 0), 0, NULL);
     return g;
 }
 
-struct graph *graph_gen_star(int n) {
+graph_t *graph_gen_star(int n, graph_type_t t) {
     int i;
-    graph_t *g = graph_new();
+    graph_t *g = graph_new(t);
     graph_node_t *center, *node;
     center = graph_add_node(g, 0, 0);
     for (i = 0; i < n; i++) {
@@ -259,10 +317,10 @@ struct graph *graph_gen_star(int n) {
     return g;
 }
 
-struct graph *graph_gen_wheel(int n) {
+graph_t *graph_gen_wheel(int n, graph_type_t t) {
     if (n <= 0) return NULL;
     int i, j;
-    struct graph *g = graph_gen_star(n - 1);
+    graph_t *g = graph_gen_star(n - 1, t);
     for (i = 1; i < g->nodes->active; i++) {
         j = i == g->nodes->active - 1 ? 1 : i + 1;
         graph_add_edge(g, vector_slot(g->nodes, i), vector_slot(g->nodes, j), 0, NULL);
@@ -270,10 +328,12 @@ struct graph *graph_gen_wheel(int n) {
     return g;
 }
 
-struct graph *graph_gen_grid(int m, int n) {
-    if (m == 1) return graph_gen_cycle(n);
-    if (n == 1) return graph_gen_cycle(m);
+graph_t *graph_gen_grid(int m, int n, graph_type_t t) {
+    if (m == 1) return graph_gen_cycle(n, t);
+    if (n == 1) return graph_gen_cycle(m, t);
     int i, j, k, u, d, l, r;
+    graph_t *g = graph_gen_empty(m * n, t);
+
     for (i = 0; i < m; i++) {
         for (j = 0; j < n; j++) {
             k = i * n + j;
@@ -285,15 +345,18 @@ struct graph *graph_gen_grid(int m, int n) {
             if (i == m - 1) d = -1;
             if (j == 0) l = -1;
             if (j == n - 1) r = -1;
-
-            graph_add_edge(g, )
+            if (u != -1) graph_add_edge(g, vector_slot(g->nodes, k), vector_slot(g->nodes, u), 0, NULL);
+            if (r != -1) graph_add_edge(g, vector_slot(g->nodes, k), vector_slot(g->nodes, r), 0, NULL);
+            if (d != -1) graph_add_edge(g, vector_slot(g->nodes, k), vector_slot(g->nodes, d), 0, NULL);
+            if (l != -1) graph_add_edge(g, vector_slot(g->nodes, k), vector_slot(g->nodes, l), 0, NULL);
         }
     }
+    return g;
 }
 
-struct graph *graph_gen_complete(int n) {
+graph_t *graph_gen_complete(int n, graph_type_t t) {
     int i, j;
-    graph_t *g = graph_new();
+    graph_t *g = graph_new(t);
     for (i = 0; i < n; i++) graph_add_node(g, 0, 0);
 
     for (i = 0; i < g->nodes->active; i++) {
@@ -305,14 +368,14 @@ struct graph *graph_gen_complete(int n) {
     return g;
 }
 
-struct graph *graph_gen_binomial_tree(int order) {}  // n = 2^order
+graph_t *graph_gen_binomial_tree(int order, graph_type_t t) {}  // n = 2^order
 
-struct graph *graph_gen_random(int n) {}
-struct graph *graph_gen_random_tree(int n) {}
+graph_t *graph_gen_random(int n, graph_type_t t) {}
+graph_t *graph_gen_random_tree(int n, graph_type_t t) {}
 
 /*********************************** Algorithms **************************************************/
-static void _graph_dfs(struct graph *graph, struct graph_node *start, vector visited,
-                       void (*dfs_cb)(struct graph_node *, void *), void *arg) {
+static void _graph_dfs(graph_t *graph, graph_node_t *start, vector visited,
+                       void (*dfs_cb)(graph_node_t *, void *), void *arg) {
     /* check that we have not visited this node */
     for (unsigned int i = 0; i < vector_active(visited); i++) {
         if (start == vector_slot(visited, i)) return;
@@ -327,24 +390,24 @@ static void _graph_dfs(struct graph *graph, struct graph_node *start, vector vis
 
     /* recurse into children */
     for (unsigned int i = vector_active(start->to); i--; /**/) {
-        struct graph_node *c = vector_slot(start->to, i);
+        graph_node_t *c = vector_slot(start->to, i);
 
         _graph_dfs(graph, c, visited, dfs_cb, arg);
     }
 }
 
-void graph_dfs(struct graph *graph, struct graph_node *start, void (*dfs_cb)(struct graph_node *, void *), void *arg) {
+void graph_dfs(graph_t *graph, graph_node_t *start, void (*dfs_cb)(graph_node_t *, void *), void *arg) {
     vector visited = vector_init(VECTOR_MIN_SIZE);
 
     _graph_dfs(graph, start, visited, dfs_cb, arg);
     vector_free(visited);
 }
 
-void graph_dump_dot_default_print_cb(struct graph_node *gn) {
+void graph_dump_dot_default_print_cb(graph_node_t *gn) {
     char nbuf[64];
 
     for (unsigned int i = 0; i < vector_active(gn->to); i++) {
-        struct graph_node *adj = vector_slot(gn->to, i);
+        graph_node_t *adj = vector_slot(gn->to, i);
         snprintf(nbuf, sizeof(nbuf), "    n(%d) -> n(%d);\n", gn->id, adj->id);
         printf("%s", nbuf);
     }
@@ -362,7 +425,8 @@ static int min_dist(int dist[], bool sptSet[], int n) {
     return min_index;
 }
 
-void graph_shortest_path(struct graph *graph, struct graph_node *from) {
+// TODO
+void graph_shortest_path(graph_t *graph, graph_node_t *from) {
     int nn = graph->nodes->active;
     int src = -1;  // from index
     for (unsigned int i = vector_active(graph->nodes); i--; /**/) {
@@ -399,7 +463,7 @@ void graph_shortest_path(struct graph *graph, struct graph_node *from) {
         for (int v = 0; v < nn; v++) {
             // Update dist[v] only if is not in sptSet, there is an edge from u to v, and total weight of path from
             // to v through u is smaller than current value of dist[v]
-            struct graph_edge *e = graph_find_edge(graph, vector_slot(graph->nodes, u), vector_slot(graph->nodes, v));
+            graph_edge_t *e = graph_find_edge(graph, vector_slot(graph->nodes, u), vector_slot(graph->nodes, v));
             unsigned int weight = e ? (int)e->attr : 0;
             if (!sptSet[v] && e && dist[u] != INF && dist[u] + weight < dist[v]) {
                 dist[v] = dist[u] + weight;
@@ -409,7 +473,7 @@ void graph_shortest_path(struct graph *graph, struct graph_node *from) {
     }
 
     // print solution
-    struct graph_node *n, *p;
+    graph_node_t *n, *p;
     for (int i = 0; i < nn; i++) {
         if (path[i] == -1) continue;
         n = vector_slot(graph->nodes, i);
@@ -418,20 +482,20 @@ void graph_shortest_path(struct graph *graph, struct graph_node *from) {
     }
 }
 
-// void graph_dump_dot_default_print_cb(struct graph_node *gn, struct buffer *buf)
+// void graph_dump_dot_default_print_cb(graph_node_t *gn, struct buffer *buf)
 // {
 // 	char nbuf[64];
 
 // 	for (unsigned int i = 0; i < vector_active(gn->to); i++) {
-// 		struct graph_node *adj = vector_slot(gn->to, i);
+// 		graph_node_t *adj = vector_slot(gn->to, i);
 
 // 		snprintf(nbuf, sizeof(nbuf), "    n%p -> n%p;\n", gn, adj);
 // 		buffer_putstr(buf, nbuf);
 // 	}
 // }
 
-// char *graph_dump_dot(struct graph *graph, struct graph_node *start,
-// 		     void (*pcb)(struct graph_node *, struct buffer *))
+// char *graph_dump_dot(graph_t *graph, graph_node_t *start,
+// 		     void (*pcb)(graph_node_t *, struct buffer *))
 // {
 // 	struct buffer *buf = buffer_new(0);
 // 	char *ret;
@@ -439,7 +503,7 @@ void graph_shortest_path(struct graph *graph, struct graph_node *from) {
 // 	pcb = (pcb) ? pcb : graph_dump_dot_default_print_cb;
 // 	buffer_putstr(buf, "digraph {\n");
 
-// 	graph_dfs(graph, start, (void (*)(struct graph_node *, void *))pcb,
+// 	graph_dfs(graph, start, (void (*)(graph_node_t *, void *))pcb,
 // 		  buf);
 
 // 	buffer_putstr(buf, "}\n");
