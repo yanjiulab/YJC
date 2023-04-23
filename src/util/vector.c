@@ -230,9 +230,9 @@ void vector_reverse(vector v) {
     }
 }
 
-static int vec_int_cmp(const void *p1, const void *p2) { return *(int *)p1 - *(int *)p2; }
+int vector_int_cmp(const void *p1, const void *p2) { return *(int *)p1 - *(int *)p2; }
 
 void vector_sort(vector v, __compar_fn_t fn) {
-    if (fn == NULL) qsort(&v->index[0], v->active, sizeof(void *), vec_int_cmp);
+    if (fn == NULL) qsort(&v->index[0], v->active, sizeof(void *), vector_int_cmp);
     else qsort(&v->index[0], v->active, sizeof(void *), fn);
 }
