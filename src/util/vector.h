@@ -22,6 +22,8 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -47,30 +49,38 @@ typedef struct _vector *vector;
  */
 #define vector_active(V) ((V)->active)
 
-/* Prototypes. */
+/* List-like operation */
+// int vector_set(vector v, void *val);
+
+/* Prototypes */
 extern vector vector_init(unsigned int size);
 extern void vector_ensure(vector v, unsigned int num);
 extern int vector_empty_slot(vector v);
 extern int vector_set(vector v, void *val);
 extern int vector_set_index(vector v, unsigned int i, void *val);
+extern int vector_insert(vector v, unsigned int i, void *val);
 extern void vector_unset(vector v, unsigned int i);
 extern void vector_unset_value(vector v, void *val);
 extern void vector_remove(vector v, unsigned int ix);
-extern void vector_compact(vector v);
-
 static inline unsigned int vector_count(vector v) { return v->count; }
-
-extern void vector_free(vector v);
-extern vector vector_copy(vector v);
-
 extern void *vector_lookup(vector, unsigned int);
 extern void *vector_lookup_ensure(vector, unsigned int);
-
-void vector_swap(vector v, unsigned int i, unsigned int j);
-void vector_reverse(vector v);
-
+extern void vector_free(vector v);
+extern vector vector_copy(vector v);
+extern void vector_compact(vector v);
 extern void vector_to_array(vector v, void ***dest, int *argc);
 extern vector array_to_vector(void **src, int argc);
+
+/* Stack-like operation */
+#define vector_first(v) vector_slot(v, 0)
+#define vector_last(v) vector_slot(v, vector_active(v) - 1)
+extern void vector_push(vector v, void *val);
+extern void *vector_pop(vector v);
+
+/* Advanced operation */
+void vector_swap(vector v, unsigned int i, unsigned int j);
+void vector_reverse(vector v);
+void vector_sort(vector v, __compar_fn_t fn);
 
 #ifdef __cplusplus
 }

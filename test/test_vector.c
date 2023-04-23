@@ -1,7 +1,7 @@
+#include "inet.h"
 #include "log.h"
 #include "test.h"
 #include "vector.h"
-#include "inet.h"
 void test_vector() {
     // create vec
     // vector(int) *i_vec_p = vec_new(int);
@@ -44,14 +44,23 @@ void test_vector() {
 
     vector v = vector_init(10);
     int a = 1, b = 2;
+
     vector_set(v, 1);
     vector_set(v, 2);
     vector_set(v, 3);
     vector_set(v, 4);
-    vector_unset(v, 2);
+    // vector_unset(v, 1);
+    // vector_unset(v, 2);
+    vector_remove(v, 1);
+    vector_remove(v, 2);
+    vector_push(v, 5);
+    vector_push(v, 6);
+    // vector_insert(v, 7, 7);
+    vector_push(v, 8);
+    vector_set(v, 1);
+    // vector_set(v, 7);
     // vector_set_index(v, 1, &b);
     // int *l = vector_lookup(v, 0);
-
 
     // log_info("%d", *l);
     log_info("next empty idx:%d", vector_empty_slot(v));
@@ -59,6 +68,8 @@ void test_vector() {
     log_info("count:%d", vector_count(v));
     log_info("alloced:%d", v->alloced);
     print_data(v->index, v->active * sizeof(void*));
-    vector_reverse(v);
+    // vector_reverse(v);
+    vector_sort(v, NULL);
     print_data(v->index, v->active * sizeof(void*));
+    
 }

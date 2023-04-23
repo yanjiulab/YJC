@@ -112,6 +112,18 @@ int vector_set_index(vector v, unsigned int i, void *val) {
     return i;
 }
 
+/* Insert value to specified index slot. */
+int vector_insert(vector v, unsigned int i, void *val) {
+    vector_ensure(v, i);
+    if (v->index[i] == 0) return vector_set_index(v, i, val);
+
+    memmove(&v->index[i + 1], &v->index[i], (v->active - i) * sizeof(void *));
+    if (val) v->count++;
+    v->index[i] = val;
+    if (v->active <= i) v->active = i + 1;
+    return i;
+}
+
 /* Look up vector.  */
 void *vector_lookup(vector v, unsigned int i) {
     if (i >= v->active) return NULL;
@@ -174,6 +186,33 @@ void vector_unset_value(vector v, void *val) {
         while (i && v->index[--i] == NULL);
 }
 
+void vector_to_array(vector v, void ***dest, int *argc) {
+    *dest = calloc(1, sizeof(void *) * v->active);
+    memcpy(*dest, v->index, sizeof(void *) * v->active);
+    *argc = v->active;
+}
+
+vector array_to_vector(void **src, int argc) {
+    vector v = vector_init(VECTOR_MIN_SIZE);
+
+    for (int i = 0; i < argc; i++) vector_set_index(v, i, src[i]);
+    return v;
+}
+
+/* Stack-like operation */
+void vector_push(vector v, void *val) {
+    unsigned int idx = vector_active(v);
+    vector_ensure(v, idx);
+    vector_set_index(v, idx, val);
+}
+
+void *vector_pop(vector v) {
+    void *val = vector_last(v);
+    vector_remove(v, vector_active(v) - 1);
+    return val;
+}
+
+/* Advanced operation */
 void vector_swap(vector v, unsigned int i, unsigned int j) {
     if (vector_active(v) < 2) return;
     if (i == j) return;
@@ -191,15 +230,9 @@ void vector_reverse(vector v) {
     }
 }
 
-void vector_to_array(vector v, void ***dest, int *argc) {
-    *dest = calloc(1, sizeof(void *) * v->active);
-    memcpy(*dest, v->index, sizeof(void *) * v->active);
-    *argc = v->active;
-}
+static int vec_int_cmp(const void *p1, const void *p2) { return *(int *)p1 - *(int *)p2; }
 
-vector array_to_vector(void **src, int argc) {
-    vector v = vector_init(VECTOR_MIN_SIZE);
-
-    for (int i = 0; i < argc; i++) vector_set_index(v, i, src[i]);
-    return v;
+void vector_sort(vector v, __compar_fn_t fn) {
+    if (fn == NULL) qsort(&v->index[0], v->active, sizeof(void *), vec_int_cmp);
+    else qsort(&v->index[0], v->active, sizeof(void *), fn);
 }
