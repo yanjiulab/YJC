@@ -3,6 +3,8 @@
 #include "test.h"
 #include "vector.h"
 void test_vector() {
+    void *val;
+    int i;
     // create vec
     // vector(int) *i_vec_p = vec_new(int);
     // printf("new i_vec_p: %p\n", i_vec_p);
@@ -45,19 +47,19 @@ void test_vector() {
     vector v = vector_init(10);
     int a = 1, b = 2;
 
-    vector_set(v, 1);
-    vector_set(v, 2);
-    vector_set(v, 3);
-    vector_set(v, 4);
+    vector_set(v, "a11");
+    vector_set(v, "b21");
+    vector_set(v, "e31");
+    vector_set(v, "f41");
     // vector_unset(v, 1);
     // vector_unset(v, 2);
     vector_remove(v, 1);
     vector_remove(v, 2);
-    vector_push(v, 5);
-    vector_push(v, 6);
+    vector_push(v, "a51");
+    vector_push(v, "c61");
     // vector_insert(v, 7, 7);
-    vector_push(v, 8);
-    vector_set(v, 1);
+    vector_push(v, "b81");
+    vector_set(v, "211");
     // vector_set(v, 7);
     // vector_set_index(v, 1, &b);
     // int *l = vector_lookup(v, 0);
@@ -67,9 +69,18 @@ void test_vector() {
     log_info("active:%d", vector_active(v));
     log_info("count:%d", vector_count(v));
     log_info("alloced:%d", v->alloced);
-    print_data(v->index, v->active * sizeof(void*));
+    print_data(v->index, v->active * sizeof(void *));
     // vector_reverse(v);
-    vector_sort(v, NULL);
-    print_data(v->index, v->active * sizeof(void*));
-    
+    vector_foreach(v, val, i) { printf("%s ", val); }
+    printf("\n");
+
+    vector_sort(v, vector_str_cmp);
+
+    print_data(v->index, v->active * sizeof(void *));
+    vector_foreach(v, val, i) { printf("%s ", val); }
+    printf("\n");
+    // vector_foreach_rev(v, val, i) { printf("%s ", val); }
+    // printf("\n");
+    printf("%s\n", vector_slot(v, 0));
+
 }

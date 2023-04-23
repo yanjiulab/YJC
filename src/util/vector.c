@@ -232,7 +232,19 @@ void vector_reverse(vector v) {
 
 int vector_int_cmp(const void *p1, const void *p2) { return *(int *)p1 - *(int *)p2; }
 
+int vector_str_cmp(const void *p1, const void *p2) { return strcmp(*(const char **)p1, *(const char **)p2); }
+
+int vector_double_cmp(const void *p1, const void *p2) {
+    double diff = *(double *)p1 - *(double *)p2;
+    if (fabs(diff) < 1e-9)
+        return 0;
+    else
+        return diff > 0 ? 1 : -1;
+}
+
 void vector_sort(vector v, __compar_fn_t fn) {
-    if (fn == NULL) qsort(&v->index[0], v->active, sizeof(void *), vector_int_cmp);
-    else qsort(&v->index[0], v->active, sizeof(void *), fn);
+    if (fn == NULL)
+        qsort(&v->index[0], v->active, sizeof(void *), vector_int_cmp);
+    else
+        qsort(&v->index[0], v->active, sizeof(void *), fn);
 }

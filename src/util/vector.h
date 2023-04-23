@@ -23,6 +23,7 @@
 #define VECTOR_H
 
 #include <stdlib.h>
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -80,7 +81,19 @@ extern void *vector_pop(vector v);
 /* Advanced operation */
 void vector_swap(vector v, unsigned int i, unsigned int j);
 void vector_reverse(vector v);
+
+int vector_str_cmp(const void *p1, const void *p2);
+int vector_int_cmp(const void *p1, const void *p2);
+int vector_double_cmp(const void *p1, const void *p2);
+
 void vector_sort(vector v, __compar_fn_t fn);
+
+#define vector_foreach(v, var, iter) \
+    if ((v)->active > 0)             \
+        for ((iter) = 0; (iter) < (v)->active && (((var) = (v)->index[(iter)]), 1); ++(iter))
+#define vector_foreach_rev(v, var, iter) \
+    if ((v)->active > 0)                 \
+        for ((iter) = (v)->active - 1; (iter) >= 0 && (((var) = (v)->index[(iter)]), 1); --(iter))
 
 #ifdef __cplusplus
 }
