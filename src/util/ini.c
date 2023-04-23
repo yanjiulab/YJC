@@ -22,8 +22,6 @@
 
 #include "ini.h"
 
-#include "inet.h"
-
 struct ini_t {
     char *file;
     char *data;
