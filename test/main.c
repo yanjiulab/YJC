@@ -32,8 +32,8 @@ int main(void) {
         // // base
         // cmocka_unit_test(test_datetime),
         /* Test */
-        cmocka_unit_test(test_graph),
-        // cmocka_unit_test(test_vector),
+        // cmocka_unit_test(test_graph),
+        cmocka_unit_test(test_vector),
         // cmocka_unit_test(test_ringbuf),
         // cmocka_unit_test(test_base),
         // cmocka_unit_test(null_test_success),

@@ -455,8 +455,7 @@ static int min_dist(int dist[], bool sptSet[], int n) {
 vector build_path_from_pred(int pred[]) {
     vector path = vector_init(VECTOR_MIN_SIZE);
 
-    
-    vector_set(path, pred)
+    // vector_set(path, pred)
 }
 
 void graph_shortest_path(graph_t *graph, graph_node_t *from) {
@@ -515,8 +514,6 @@ void graph_shortest_path(graph_t *graph, graph_node_t *from) {
     }
 }
 
-
-
 void _graph_shortest_path(graph_t *graph, graph_node_t *from, graph_node_t *to, edge_weight_type_t weight,
                           sp_algo_t method) {
     // if (method == Dijkstra) {
@@ -526,8 +523,8 @@ void _graph_shortest_path(graph_t *graph, graph_node_t *from, graph_node_t *to, 
     //     printf("method not supported: {%s}", method);
     // }
 
-    vector path = vector_init(VECTOR_MIN_SIZE); // 0 to 4 is [0, 1, 2, 3, 4]
-    
+    vector path = vector_init(VECTOR_MIN_SIZE);  // 0 to 4 is [0, 1, 2, 3, 4]
+
     if (from == NULL) {
         if (to == NULL) {
             // Find paths between all pairs.
@@ -546,7 +543,7 @@ void _graph_shortest_path(graph_t *graph, graph_node_t *from, graph_node_t *to, 
             } else if (method == BellmanFord) {
                 single_source_bellman_ford_path(graph, to, weight);
             } else {
-                single_source_shortest_path(graph);
+                single_source_shortest_path(graph, to);
             }
             // Now flip the paths so they go from a source to the target.
             // for target in paths:
@@ -560,21 +557,30 @@ void _graph_shortest_path(graph_t *graph, graph_node_t *from, graph_node_t *to, 
             } else if (method == BellmanFord) {
                 single_source_bellman_ford_path(graph, from, weight);
             } else {
-                single_source_shortest_path(graph);
+                single_source_shortest_path(graph, from);
             }
         } else {
             //  Find shortest source-target path.
             if (method == Dijkstra) {
-                bidirectional_dijkstra(graph, from, weight);
+                bidirectional_dijkstra(graph, from, to, weight);
             } else if (method == BellmanFord) {
-                bellman_ford_path(graph, from, weight);
+                bellman_ford_path(graph, from, to, weight);
             } else {
-                bidirectional_shortest_path(graph);
+                bidirectional_shortest_path(graph, from, to);
             }
         }
     }
 }
 
+vector all_pairs_dijkstra_path(graph_t *graph, edge_weight_type_t weight) {}
+vector all_pairs_bellman_ford_path(graph_t *graph, edge_weight_type_t weight) {}
+vector all_pairs_shortest_path(graph_t *graph) {}
+vector single_source_dijkstra_path(graph_t *graph, graph_node_t *from, edge_weight_type_t weight) {}
+vector single_source_bellman_ford_path(graph_t *graph, graph_node_t *from, edge_weight_type_t weight) {}
+vector single_source_shortest_path(graph_t *graph, graph_node_t *from) {}
+vector bidirectional_dijkstra(graph_t *graph, graph_node_t *from, graph_node_t *to, edge_weight_type_t weight) {}
+vector bellman_ford_path(graph_t *graph, graph_node_t *from, graph_node_t *to, edge_weight_type_t weight) {}
+vector bidirectional_shortest_path(graph_t *graph, graph_node_t *from, graph_node_t *to) {}
 // void graph_dump_dot_default_print_cb(graph_node_t *gn, struct buffer *buf)
 // {
 // 	char nbuf[64];

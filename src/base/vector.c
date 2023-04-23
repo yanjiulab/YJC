@@ -174,6 +174,23 @@ void vector_unset_value(vector v, void *val) {
         while (i && v->index[--i] == NULL);
 }
 
+void vector_swap(vector v, unsigned int i, unsigned int j) {
+    if (vector_active(v) < 2) return;
+    if (i == j) return;
+
+    void *val;
+    val = v->index[i];
+    v->index[i] = v->index[j];
+    v->index[j] = val;
+}
+
+void vector_reverse(vector v) {
+    int c = vector_active(v) / 2;
+    while (c--) {
+        vector_swap(v, c, vector_active(v) - (c + 1));
+    }
+}
+
 void vector_to_array(vector v, void ***dest, int *argc) {
     *dest = calloc(1, sizeof(void *) * v->active);
     memcpy(*dest, v->index, sizeof(void *) * v->active);

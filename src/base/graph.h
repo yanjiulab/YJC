@@ -224,6 +224,16 @@ void graph_dfs(struct graph *graph, struct graph_node *start, void (*dfs_cb)(str
 
 void graph_shortest_path(struct graph *graph, struct graph_node *from);
 
+vector all_pairs_dijkstra_path(graph_t *graph, edge_weight_type_t weight);
+vector all_pairs_bellman_ford_path(graph_t *graph, edge_weight_type_t weight);
+vector all_pairs_shortest_path(graph_t *graph);
+vector single_source_dijkstra_path(graph_t *graph, graph_node_t *from, edge_weight_type_t weight);
+vector single_source_bellman_ford_path(graph_t *graph, graph_node_t *from, edge_weight_type_t weight);
+vector single_source_shortest_path(graph_t *graph, graph_node_t *from);
+vector bidirectional_dijkstra(graph_t *graph, graph_node_t *from, graph_node_t *to, edge_weight_type_t weight);
+vector bellman_ford_path(graph_t *graph, graph_node_t *from, graph_node_t *to, edge_weight_type_t weight);
+vector bidirectional_shortest_path(graph_t *graph, graph_node_t *from, graph_node_t *to);
+
 #ifdef __cplusplus
 }
 #endif
