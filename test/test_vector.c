@@ -14,7 +14,6 @@ void test_vector() {
     vector_push(v, 7);
     vector_push(v, 0);
     vector_push(v, -12);
-
     printf("vector: ");
     vector_foreach(v, val, i) { printf("%d ", val); }
     printf("\n");
@@ -22,58 +21,52 @@ void test_vector() {
     printf("vector reverse: ");
     vector_foreach(v, val, i) { printf("%d ", val); }
     printf("\n");
-    vector_insert(v, 4, 0);
-    vector_insert(v, 6, 123);
-    vector_insert(v, 1000, 10);
-    vector_remove(v, 1);
-    vector_unset_value(v, 100);
+    // vector_insert(v, 4, 0);
+    // vector_insert(v, 6, 123);
+    // vector_insert(v, 1000, 10);
+    // vector_remove(v, 1);
+    // vector_unset_value(v, 100);
     printf("vector: ");
     vector_foreach(v, val, i) { printf("%d ", val); }
     printf("\n");
-    vector_sort(v, vector_int_cmp);
+    vector_sort(v, vector_ptr_cmp);
     printf("vector sort: ");
     vector_foreach(v, val, i) { printf("%d ", val); }
     printf("\n");
     int a = 14;
-    printf("vector find %d, result: %d\n", 47, vector_find(v, 47, vector_int_cmp));
-    printf("vector find %d, result: %d\n", a, vector_find(v, a, vector_int_cmp));
-    printf("vector find %d, result: %d\n", -12, vector_find(v, -12, vector_int_cmp));
-    printf("vector find %d, result: %d\n", 86, vector_find(v, 86, vector_int_cmp));
+    printf("vector find %d, result: %d\n", 47, vector_find(v, 47, vector_ptr_cmp));
+    printf("vector find %d, result: %d\n", a, vector_find(v, a, vector_ptr_cmp));
+    printf("vector find %d, result: %d\n", -12, vector_find(v, -12, vector_ptr_cmp));
+    printf("vector find %d, result: %d\n", 86, vector_find(v, 86, vector_ptr_cmp));
     printf("vector next empty idx:%d\n", vector_empty_slot(v));
     printf("vector active:%d\n", vector_active(v));
     printf("vector count:%d\n", vector_count(v));
     printf("vector alloced:%d\n", v->alloced);
     printf("vector hex dump:\n");
     print_data((unsigned char *)v->index, v->active * sizeof(void *));
-
-    // vector_free(v);
+    vector_free(v);
 
     printf("-------------- double vector test --------------\n");
-    // v = vector_init(10);
-    // vector_push(v, (void *)11.04);
-    // vector_push(v, (void *)1.1);
-    // vector_push(v, (void *)0.346);
-    // vector_push(v, (void *)1e-5);
-    // vector_push(v, (void *)1e-6);
-    // vector_push(v, (void *)1e3);
-    // printf("vector: ");
-    // vector_foreach(v, val, i) { printf("%d ", val); }
-    // printf("\n");
-    // vector_reverse(v);
-    // printf("vector reverse: ");
-    // vector_foreach(v, val, i) { printf("%d ", val); }
-    // printf("\n");
-    // vector_sort(v, vector_int_cmp);
-    // printf("vector sort: ");
-    // vector_foreach(v, val, i) { printf("%d ", val); }
-    // printf("\n");
-    // int a = 14;
-    // printf("vector find %d, result: %d\n", 47, vector_find(v, 47, vector_int_cmp));
-    // printf("vector find %d, result: %d\n", a, vector_find(v, a, vector_int_cmp));
-    // printf("vector find %d, result: %d\n", -12, vector_find(v, -12, vector_int_cmp));
-    // printf("vector find %d, result: %d\n", 86, vector_find(v, 86, vector_int_cmp));
+    v = vector_init(10);
+    double d[] = {11.04, 1.1, 0.346, 1e-5, 1e-6, 1e3};
+    for (i = 0; i < sizeof(d) / sizeof(double); i++) {
+        vector_push(v, &d[i]);
+    }
 
-    // vector_free(v);
+    double *dval;
+    printf("vector: ");
+    vector_foreach(v, dval, i) { printf("%f ", *dval); }
+    printf("\n");
+    vector_reverse(v);
+    printf("vector reverse: ");
+    vector_foreach(v, dval, i) { printf("%f ", *dval); }
+    printf("\n");
+    vector_sort(v, vector_double_cmp);
+    printf("vector sort: ");
+    vector_foreach(v, dval, i) { printf("%f ", *dval); }
+    printf("\n");
+    vector_free(v);
+
     printf("-------------- str vector test --------------\n");
     v = vector_init(10);
     vector_set(v, "a11");
@@ -118,4 +111,5 @@ void test_vector() {
     vector_free(v);
 
     printf("-------------- custom vector test --------------\n");
+    
 }

@@ -211,7 +211,9 @@ void vector_reverse(vector v) {
     }
 }
 
-int vector_int_cmp(const void *p1, const void *p2) { return *(int *)p1 - *(int *)p2; }
+int vector_ptr_cmp(const void *p1, const void *p2) { return *(int *)p1 - *(int *)p2; }
+
+int vector_int_cmp(const void *p1, const void *p2) { return **(int **)p1 - **(int **)p2; }
 
 int vector_str_cmp(const void *p1, const void *p2) {
     const char *str1 = *(const char **)p1;
@@ -223,7 +225,7 @@ int vector_str_cmp(const void *p1, const void *p2) {
 }
 
 int vector_double_cmp(const void *p1, const void *p2) {
-    double diff = *(double *)p1 - *(double *)p2;
+    double diff = **(double **)p1 - **(double **)p2;
     if (fabs(diff) < 1e-9)
         return 0;
     else

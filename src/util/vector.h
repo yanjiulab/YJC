@@ -65,6 +65,7 @@ extern void *vector_pop(vector v);
 /* Advanced operation */
 void vector_swap(vector v, unsigned int i, unsigned int j);
 void vector_reverse(vector v);
+int vector_ptr_cmp(const void *p1, const void *p2);
 int vector_str_cmp(const void *p1, const void *p2);
 int vector_int_cmp(const void *p1, const void *p2);
 int vector_double_cmp(const void *p1, const void *p2);
