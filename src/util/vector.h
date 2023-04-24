@@ -1,29 +1,13 @@
 /*
  * Generic vector interface header.
- * Copyright (C) 1997, 98 Kunihiro Ishiguro
- *
- * This file is part of GNU Zebra.
- *
- * GNU Zebra is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
- * later version.
- *
- * GNU Zebra is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; see the file COPYING; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,6 +69,7 @@ int vector_str_cmp(const void *p1, const void *p2);
 int vector_int_cmp(const void *p1, const void *p2);
 int vector_double_cmp(const void *p1, const void *p2);
 void vector_sort(vector v, __compar_fn_t fn);
+int vector_find(vector v, void *val, __compar_fn_t fn);
 
 #define vector_foreach(v, var, iter) \
     if ((v)->active > 0)             \

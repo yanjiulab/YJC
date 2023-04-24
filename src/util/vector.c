@@ -1,27 +1,8 @@
-/* Generic vector interface routine
- * Copyright (C) 1997 Kunihiro Ishiguro
- *
- * This file is part of GNU Zebra.
- *
- * GNU Zebra is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
- * Free Software Foundation; either version 2, or (at your option) any
- * later version.
- *
- * GNU Zebra is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program; see the file COPYING; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
+/*
+ * Generic vector interface header.
  */
 
 #include "vector.h"
-
-#include <stdlib.h>
-#include <string.h>
 
 /* Initialize vector : allocate memory and return vector. */
 vector vector_init(unsigned int size) {
@@ -114,12 +95,12 @@ int vector_set_index(vector v, unsigned int i, void *val) {
 
 /* Insert value to specified index slot. */
 int vector_insert(vector v, unsigned int i, void *val) {
-    vector_ensure(v, i);
-    if (v->index[i] == 0) return vector_set_index(v, i, val);
-
+    if (i > v->active) return -1;
+    vector_ensure(v, v->active);
     memmove(&v->index[i + 1], &v->index[i], (v->active - i) * sizeof(void *));
     if (val) v->count++;
     v->index[i] = val;
+    v->active++;
     if (v->active <= i) v->active = i + 1;
     return i;
 }
@@ -232,7 +213,14 @@ void vector_reverse(vector v) {
 
 int vector_int_cmp(const void *p1, const void *p2) { return *(int *)p1 - *(int *)p2; }
 
-int vector_str_cmp(const void *p1, const void *p2) { return strcmp(*(const char **)p1, *(const char **)p2); }
+int vector_str_cmp(const void *p1, const void *p2) {
+    const char *str1 = *(const char **)p1;
+    const char *str2 = *(const char **)p2;
+    if (!str1 && !str2) return 0;
+    if (!str1) return -1;
+    if (!str2) return 1;
+    return strcmp(str1, str2);
+}
 
 int vector_double_cmp(const void *p1, const void *p2) {
     double diff = *(double *)p1 - *(double *)p2;
@@ -247,4 +235,18 @@ void vector_sort(vector v, __compar_fn_t fn) {
         qsort(&v->index[0], v->active, sizeof(void *), vector_int_cmp);
     else
         qsort(&v->index[0], v->active, sizeof(void *), fn);
+}
+
+int vector_find(vector v, void *val, __compar_fn_t fn) {
+    int i;
+    void *var;
+    vector_foreach(v, var, i) {
+        if (fn) {
+            if (fn(&var, &val) == 0) break;
+        } else {
+            if (var == val) break;
+        }
+    }
+    if (i == v->active) i = -1;
+    return i;
 }
