@@ -125,13 +125,13 @@ int vector_insert(vector v, unsigned int i, void *val) {
 }
 
 /* Look up vector.  */
-void *vector_lookup(vector v, unsigned int i) {
+void *vector_get(vector v, unsigned int i) {
     if (i >= v->active) return NULL;
     return v->index[i];
 }
 
 /* Lookup vector, ensure it. */
-void *vector_lookup_ensure(vector v, unsigned int i) {
+void *vector_get_ensure(vector v, unsigned int i) {
     vector_ensure(v, i);
     return v->index[i];
 }

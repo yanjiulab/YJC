@@ -64,8 +64,8 @@ extern void vector_unset(vector v, unsigned int i);
 extern void vector_unset_value(vector v, void *val);
 extern void vector_remove(vector v, unsigned int ix);
 static inline unsigned int vector_count(vector v) { return v->count; }
-extern void *vector_lookup(vector, unsigned int);
-extern void *vector_lookup_ensure(vector, unsigned int);
+extern void *vector_get(vector, unsigned int);
+extern void *vector_get_ensure(vector, unsigned int);
 extern void vector_free(vector v);
 extern vector vector_copy(vector v);
 extern void vector_compact(vector v);
@@ -81,11 +81,9 @@ extern void *vector_pop(vector v);
 /* Advanced operation */
 void vector_swap(vector v, unsigned int i, unsigned int j);
 void vector_reverse(vector v);
-
 int vector_str_cmp(const void *p1, const void *p2);
 int vector_int_cmp(const void *p1, const void *p2);
 int vector_double_cmp(const void *p1, const void *p2);
-
 void vector_sort(vector v, __compar_fn_t fn);
 
 #define vector_foreach(v, var, iter) \
