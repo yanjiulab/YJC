@@ -114,6 +114,11 @@ struct rb_root {
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef int (*rb_cmpfn_t)(struct rb_node *a, struct rb_node *b);
+
+// rb_insert
+// rb_remove
+// rb_search
 
 void rb_insert_color(struct rb_node *node, struct rb_root *root);
 void rb_erase(struct rb_node *node, struct rb_root *root);
