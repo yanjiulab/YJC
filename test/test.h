@@ -63,4 +63,6 @@ void test_graph();
 void test_ringbuf();
 void test_sqlite3();
 
+void test_ptable();
+
 #endif  // !TEST_H
