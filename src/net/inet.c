@@ -61,8 +61,8 @@ char* udphdr_str(udphdr_t* udph) {
             "    |-Source Port      : %d\n"
             "    |-Destination Port : %d\n"
             "    |-Length           : %d\n"
-            "    |-Checksum         : %d\n", ntohs(udph->source), ntohs(udph->dest), ntohs(udph->len),
-            ntohs(udph->check));
+            "    |-Checksum         : %d\n",
+            ntohs(udph->source), ntohs(udph->dest), ntohs(udph->len), ntohs(udph->check));
 #else
     sprintf(buf, "+ UDP, %d -> %d\n", ntohs(udph->source), ntohs(udph->dest));
 #endif
