@@ -1,4 +1,5 @@
 #include "base.h"
+
 #include "concurrency.h"
 
 #ifndef RAND_MAX
@@ -18,6 +19,9 @@ void* ev_malloc(size_t size) {
     if (!ptr) {
         fprintf(stderr, "malloc failed!\n");
         exit(-1);
+    } else {
+        printd("alloc(%p, size=%llu)\tat [%s:%d:%s]\n", ptr, (unsigned long long)size, __FILE__, __LINE__,
+               __FUNCTION__);
     }
     return ptr;
 }

@@ -12,6 +12,8 @@ EXPORT void* ev_calloc(size_t nmemb, size_t size);
 EXPORT void* ev_zalloc(size_t size);
 EXPORT void ev_free(void* ptr);
 
+#define MALLOC(size) ev_malloc(size)
+
 #define EV_ALLOC(ptr, size)                                                                                \
     do {                                                                                                   \
         *(void**)&(ptr) = ev_zalloc(size);                                                                 \
