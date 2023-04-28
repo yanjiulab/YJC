@@ -619,7 +619,7 @@ void eio_alloc_readbuf(eio_t* io, int len) {
         return;
     }
     if (eio_is_alloced_readbuf(io)) {
-        io->readbuf.base = (char*)ev_realloc(io->readbuf.base, len, io->readbuf.len);
+        io->readbuf.base = (char*)ev_zrealloc(io->readbuf.base, len, io->readbuf.len);
     } else {
         EV_ALLOC(io->readbuf.base, len);
     }

@@ -7,12 +7,24 @@
 
 //--------------------alloc/free---------------------------
 EXPORT void* ev_malloc(size_t size);
-EXPORT void* ev_realloc(void* oldptr, size_t newsize, size_t oldsize);
 EXPORT void* ev_calloc(size_t nmemb, size_t size);
 EXPORT void* ev_zalloc(size_t size);
+EXPORT void* ev_realloc(void* oldptr, size_t newsize);
+EXPORT void* ev_zrealloc(void* oldptr, size_t newsize, size_t oldsize);
 EXPORT void ev_free(void* ptr);
 
+#define ALLOC(size) ev_zalloc(size)
+#define ALLOC_SIZEOF(ptr) ALLOC(sizeof(*(ptr)))
 #define MALLOC(size) ev_malloc(size)
+#define CALLOC(n, size) ev_calloc(n, size)
+#define REALLOC(ptr, size) ev_realloc(ptr, size)
+#define ZREALLOC(ptr, nsize, osize) ev_zrealloc(ptr, nsize, osize)
+#define FREE(ptr) EV_FREE(ptr)
+
+EXPORT long ev_alloc_cnt();
+EXPORT long ev_free_cnt();
+INLINE void ev_memcheck(void) { printf("Memcheck => alloc:%ld free:%ld\n", ev_alloc_cnt(), ev_free_cnt()); }
+#define MEMCHECK atexit(ev_memcheck);
 
 #define EV_ALLOC(ptr, size)                                                                                \
     do {                                                                                                   \
@@ -48,11 +60,6 @@ EXPORT void ev_free(void* ptr);
 #define EV_DEFAULT_STACKBUF_SIZE 1024
 #define EV_STACK_ALLOC(ptr, size) STACK_OR_HEAP_ALLOC(ptr, size, EV_DEFAULT_STACKBUF_SIZE)
 #define EV_STACK_FREE(ptr) STACK_OR_HEAP_FREE(ptr)
-
-EXPORT long ev_alloc_cnt();
-EXPORT long ev_free_cnt();
-INLINE void ev_memcheck(void) { printf("Memcheck => alloc:%ld free:%ld\n", ev_alloc_cnt(), ev_free_cnt()); }
-#define EV_MEMCHECK atexit(ev_memcheck);
 
 //--------------------string-------------------------------
 EXPORT char* ev_strupper(char* str);

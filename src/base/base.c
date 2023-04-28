@@ -13,29 +13,12 @@ long ev_alloc_cnt() { return s_alloc_cnt; }
 
 long ev_free_cnt() { return s_free_cnt; }
 
-void* ev_malloc(size_t size) {
+inline void* ev_malloc(size_t size) {
     hatomic_inc(&s_alloc_cnt);
     void* ptr = malloc(size);
     if (!ptr) {
         fprintf(stderr, "malloc failed!\n");
         exit(-1);
-    } else {
-        printd("alloc(%p, size=%llu)\tat [%s:%d:%s]\n", ptr, (unsigned long long)size, __FILE__, __LINE__,
-               __FUNCTION__);
-    }
-    return ptr;
-}
-
-void* ev_realloc(void* oldptr, size_t newsize, size_t oldsize) {
-    hatomic_inc(&s_alloc_cnt);
-    hatomic_inc(&s_free_cnt);
-    void* ptr = realloc(oldptr, newsize);
-    if (!ptr) {
-        fprintf(stderr, "realloc failed!\n");
-        exit(-1);
-    }
-    if (newsize > oldsize) {
-        memset((char*)ptr + oldsize, 0, newsize - oldsize);
     }
     return ptr;
 }
@@ -50,6 +33,18 @@ void* ev_calloc(size_t nmemb, size_t size) {
     return ptr;
 }
 
+void* ev_realloc(void* oldptr, size_t newsize) {
+    hatomic_inc(&s_alloc_cnt);
+    hatomic_inc(&s_free_cnt);
+    void* ptr = realloc(oldptr, newsize);
+
+    if (!ptr) {
+        fprintf(stderr, "realloc failed!\n");
+        exit(-1);
+    }
+    return ptr;
+}
+
 void* ev_zalloc(size_t size) {
     hatomic_inc(&s_alloc_cnt);
     void* ptr = malloc(size);
@@ -58,6 +53,20 @@ void* ev_zalloc(size_t size) {
         exit(-1);
     }
     memset(ptr, 0, size);
+    return ptr;
+}
+
+void* ev_zrealloc(void* oldptr, size_t newsize, size_t oldsize) {
+    hatomic_inc(&s_alloc_cnt);
+    hatomic_inc(&s_free_cnt);
+    void* ptr = realloc(oldptr, newsize);
+    if (!ptr) {
+        fprintf(stderr, "realloc failed!\n");
+        exit(-1);
+    }
+    if (newsize > oldsize) {
+        memset((char*)ptr + oldsize, 0, newsize - oldsize);
+    }
     return ptr;
 }
 

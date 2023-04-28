@@ -37,7 +37,7 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
 
 int main() {
     // memcheck atexit
-    EV_MEMCHECK;
+    MEMCHECK;
     // struct in_addr i;
     // log_info("%.8x", inet_atoi_n("192.168.0.1"));
     // log_info("%.8x", inet_atoi_h("192.168.0.1"));
