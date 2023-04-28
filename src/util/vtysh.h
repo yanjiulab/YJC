@@ -40,6 +40,8 @@ struct cmd_element {
 };
 
 /* helper defines for end-user DEFUN* macros */
+#define DEFUN_CMD_FUNC_DECL(funcname) static int funcname(struct cmd_element *, struct vty *, int, const char *[]);
+
 #define DEFUN_CMD_ELEMENT(funcname, cmdname, cmdstr, helpstr, attrs, dnum) \
     struct cmd_element cmdname = {                                         \
         .string = cmdstr,                                                  \
@@ -48,8 +50,6 @@ struct cmd_element {
         .attr = attrs,                                                     \
         .daemon = dnum,                                                    \
     };
-
-#define DEFUN_CMD_FUNC_DECL(funcname) static int funcname(struct cmd_element *, struct vty *, int, const char *[]);
 
 #define DEFUN_CMD_FUNC_TEXT(funcname)                                                                              \
     static int funcname(struct cmd_element *self __attribute__((unused)), struct vty *vty __attribute__((unused)), \

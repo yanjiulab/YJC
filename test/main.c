@@ -34,7 +34,7 @@ int main(void) {
         // cmocka_unit_test(test_datetime),
         /* Test */
         // cmocka_unit_test(test_graph),
-        cmocka_unit_test(test_ptable),
+        // cmocka_unit_test(test_ptable),
         // cmocka_unit_test(test_ringbuf),
         // cmocka_unit_test(test_base),
         // cmocka_unit_test(null_test_success),
@@ -45,7 +45,7 @@ int main(void) {
         // cmocka_unit_test(test_inet),
         // cmocka_unit_test(test_ev),
         // cmocka_unit_test(test_json),
-        // cmocka_unit_test(test_shell),
+        cmocka_unit_test(test_shell),
         // cmocka_unit_test(test_ev_my),
         // cmocka_unit_test(test_epoll),
         // cmocka_unit_test(test_math),
