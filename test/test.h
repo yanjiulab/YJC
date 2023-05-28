@@ -64,5 +64,6 @@ void test_ringbuf();
 void test_sqlite3();
 
 void test_ptable();
+void test_ncurses();
 
 #endif  // !TEST_H
