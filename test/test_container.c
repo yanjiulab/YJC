@@ -202,7 +202,7 @@ void test_container() {
     for (int j = 0; j < 100; ++j) {
         for (int i = 0; i < 100; ++i) {
             sprintf(map_key[100 * j + i], "192.168.%d.%d", j, i);
-            map_set(&route_map, map_key[j * 100 + i], j * 100 + i);
+            map_insert(&route_map, map_key[j * 100 + i], j * 100 + i);
         }
     }
     end = gettimeofday_us();

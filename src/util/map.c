@@ -124,7 +124,7 @@ void *map_get_(map_base_t *m, const char *key) {
     return next ? (*next)->value : NULL;
 }
 
-int map_set_(map_base_t *m, const char *key, void *value, int vsize) {
+int map_insert_(map_base_t *m, const char *key, void *value, int vsize) {
     int n, err;
     map_node_t **next, *node;
     /* Find & replace existing node */
@@ -186,16 +186,3 @@ const char *map_next_(map_base_t *m, map_iter_t *iter) {
     }
     return (char *)(iter->node + 1);
 }
-
-// void map_dump_(map_base_t *m, const char *format) {
-//     const char *key;
-//     map_iter_t iter = map_iter(m);
-
-//     printf("{");
-//     while ((key = map_next_(m, &iter))) {
-//         printf("%s:", key);
-//         printf(format, *map_get_(m, key));
-//         printf(",");
-//     }
-//     printf("}\n");
-// }
