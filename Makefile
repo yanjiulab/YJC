@@ -99,6 +99,10 @@ leaks: compile
 	@mkdir -p log
 	valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes ./$(OUTPUT)
 
+tleaks: test-build
+	@mkdir -p log
+	valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes ./$(TEST_OUTPUT)
+
 threads: compile
 	@mkdir -p log
 	valgrind --tool=helgrind --log-file="$(HELGRIND)" ./$(OUTPUT)

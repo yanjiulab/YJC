@@ -34,7 +34,7 @@ map.h|哈希表|key 为字符串的哈希表实现
 str.h|字符串|支持字符串去白、分割、构造、数值转换等高级功能
 heap.h|二叉堆|Linux 内核风格堆实现（优先队列）
 rbtree.h|红黑树|Linux 内核红黑树简化实现
-ringbuf.h|循环缓存|TODO
+ringbuf.h|循环缓存|摘自 FRR
 ptable.h|ASCII风格表打印|[marchelzo/libtable](https://github.com/marchelzo/libtable)
 
 ### 工具
@@ -46,6 +46,7 @@ log.h|日志系统|6 个日志等级，支持日志文件
 ini.h|ini 配置文件读取|标准 ini 文件读取
 xml.h|xml 文件生成/解析|TODO
 json.h|json 文件生成/解析|TODO
+protobuf.h|protobuf 相关|TODO，查看protobuf-c
 
 ## TODO
 

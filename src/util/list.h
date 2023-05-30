@@ -67,6 +67,7 @@ static struct list_head *list_new(void) {
     return new_list;
 }
 
+
 /*
  * Insert a new entry between two known consecutive entries.
  *
