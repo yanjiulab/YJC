@@ -356,5 +356,4 @@ void ptable_free(struct ptable *t) {
     free(t->headers);
     free(t->max);
     free(t->fmt);
-    free(t);
 }

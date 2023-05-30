@@ -40,12 +40,12 @@ void fox_show(struct fox* f) { printf("Fox{tail_len=%d,weight=%d,color=%s}\n", f
 void fox_list_show(struct list_head* fox_list) {
     FILE* fp = fopen("log/app.log", "a");
     struct fox* f;
-    // struct ptable t;
-    ptable_t t = ptable_new();
-    ptable_init(t, "TailLen", "%d", "Weight", "%d", "Color", "%s", NULL);
-    list_foreach(f, fox_list, list) { ptable_add(t, f->tail_len, f->weight, f->color); }
-    ptable_print(t, 64, stdout);
-    ptable_free(t);
+    struct ptable t;
+    // ptable_t t = ptable_new();
+    ptable_init(&t, "TailLen", "%d", "Weight", "%d", "Color", "%s", NULL);
+    list_foreach(f, fox_list, list) { ptable_add(&t, f->tail_len, f->weight, f->color); }
+    ptable_print(&t, 60, stdout);
+    ptable_free(&t);
     fclose(fp);
 }
 
@@ -89,5 +89,6 @@ void test_list() {
     // list_foreach_safe(pos, next, foxs, list) {
     //     free(pos);
     // }
-    free(fox);free(foxs);
+    free(fox);
+    free(foxs);
 }
