@@ -38,37 +38,39 @@ void fox_show(struct fox* f) { printf("Fox{tail_len=%d,weight=%d,color=%s}\n", f
 void fox_list_show(struct list_head* fox_list) {
     struct fox* f;
     printf(">>>>>>>>>>>>>>\n");
-    list_for_each_entry(f, fox_list, list) { fox_show(f); }
+    list_foreach(f, fox_list, list) { fox_show(f); }
     printf("<<<<<<<<<<<<<<\n");
 }
 
 void test_list() {
+    struct list_head * foxs = list_new();
+
     // 添加节点
     struct fox* fox;
     fox = fox_new(30, 10, "red");
-    list_add(&fox->list, &fox_list);
+    list_add(&fox->list, foxs);
     fox = fox_new(40, 8, "brown");
-    list_add(&fox->list, &fox_list);
+    list_add(&fox->list, foxs);
     fox = fox_new(20, 7, "yellow");
-    list_add_tail(&fox->list, &fox_list);
+    list_add_tail(&fox->list, foxs);
 
     // 遍历节点
     struct fox* f;
-    list_for_each_entry(f, &fox_list, list) { fox_show(f); }
-    list_for_each_entry_reverse(f, &fox_list, list) { fox_show(f); }
+    list_foreach(f, foxs, list) { fox_show(f); }
+    list_foreach_reverse(f, foxs, list) { fox_show(f); }
 
     // 安全遍历节点（遍历时删除）
     struct fox *pos, *next;
-    list_for_each_entry_safe(pos, next, &fox_list, list) {
+    list_foreach_safe(pos, next, foxs, list) {
         if (pos->weight == 8) list_del(&pos->list);
     }
-    fox_list_show(&fox_list);
-    list_for_each_entry_safe_reverse(pos, next, &fox_list, list) {
+    fox_list_show(foxs);
+    list_foreach_safe_reverse(pos, next, foxs, list) {
         fox_show(pos);
         if (pos->tail_len == 20) list_del(&pos->list);
     }
-    fox_list_show(&fox_list);
+    fox_list_show(foxs);
 
-    printf("list_empty? %s\n", list_empty(&fox_list) ? "empty" : "not empty");
-    printf("list_is_singular? %s\n", list_is_singular(&fox_list) ? "singular" : "not singular");
+    printf("list_empty? %s\n", list_empty(foxs) ? "empty" : "not empty");
+    printf("list_is_singular? %s\n", list_is_singular(foxs) ? "singular" : "not singular");
 }

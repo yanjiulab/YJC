@@ -169,12 +169,12 @@ static inline void list_splice_init(struct list_head *list, struct list_head *he
 #define list_for_each_safe(pos, n, head) for (pos = (head)->next, n = pos->next; pos != (head); pos = n, n = pos->next)
 
 /**
- * list_for_each_entry	-	iterate over list of given type
+ * list_foreach	-	iterate over list of given type
  * @pos:	the type * to use as a loop counter.
  * @head:	the head for your list.
  * @member:	the name of the list_struct within the struct.
  */
-#define list_for_each_entry(pos, head, member)                                         \
+#define list_foreach(pos, head, member)                                         \
     for (pos = list_entry((head)->next, typeof(*pos), member); &pos->member != (head); \
          pos = list_entry(pos->member.next, typeof(*pos), member))
 
@@ -249,7 +249,7 @@ static inline void slist_splice_init(struct slist_head *list, struct slist_node 
 #define slist_for_each_safe(pos, prev, head) \
     for (prev = &(head)->first, pos = prev->next; pos; prev = prev->next == pos ? pos : prev, pos = prev->next)
 
-#define slist_for_each_entry(pos, head, member)                                                               \
+#define slist_foreach(pos, head, member)                                                               \
     for (pos = slist_entry((head)->first.next, typeof(*pos), member); &pos->member != (struct slist_node *)0; \
          pos = slist_entry(pos->member.next, typeof(*pos), member))
 

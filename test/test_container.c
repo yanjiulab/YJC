@@ -30,7 +30,7 @@ struct route_entry* route_new(char* ip, int val) {
 
 struct route_entry* route_search(struct list_head* lhead, char* key) {
     struct route_entry *pos, *next;
-    list_for_each_entry_safe(pos, next, lhead, list) {
+    list_foreach_safe(pos, next, lhead, list) {
         if (STR_EQUAL(pos->ip, key)) {
             // printf("%s:%d\n", pos->ip, pos->val);
             return pos;

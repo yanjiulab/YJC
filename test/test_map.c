@@ -35,5 +35,4 @@ void test_map() {
     }
 
     printf("map size: %d, cap: %d, empty?: %d\n", map_size(m), map_capacity(m), map_empty(m));
-    map_dump(m, "%d");
 }
