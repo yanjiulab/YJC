@@ -1,5 +1,6 @@
 // https://gohalo.me/post/linux-libev.html
 #include <net/ethernet.h>
+#include <net/if.h>
 #include <netinet/in.h>
 #include <stdio.h>
 #include <string.h>
@@ -10,7 +11,6 @@
 #include "inet.h"
 #include "ini.h"
 #include "log.h"
-
 #include "sock.h"
 #include "str.h"
 
@@ -35,7 +35,7 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
     }
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     // memcheck atexit
     MEMCHECK;
     // struct in_addr i;

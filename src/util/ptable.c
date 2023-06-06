@@ -348,7 +348,7 @@ void ptable_free(struct ptable *t) {
         }
     }
 
-    for (i = 0; i < t->cols; ++i) {
+    for (i = 0; i < t->rows; ++i) {
         free(t->data[i]);
     }
 
