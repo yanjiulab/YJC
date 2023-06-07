@@ -60,6 +60,7 @@ void test_list() {
     struct fox* fox;
     fox = fox_new(30, 10, "red");
     list_add(&fox->list, foxs);
+    fox_list_show(foxs);
     fox = fox_new(40, 8, "brown");
     list_add(&fox->list, foxs);
     fox = fox_new(20, 7, "yellow");
@@ -72,23 +73,23 @@ void test_list() {
     list_foreach_reverse(f, foxs, list) { fox_show(f); }
 
     // 安全遍历节点（遍历时删除）
+
     struct fox *pos, *next;
     list_foreach_safe(pos, next, foxs, list) {
         if (pos->weight == 8) list_del(&pos->list);
     }
     fox_list_show(foxs);
-    list_foreach_safe_reverse(pos, next, foxs, list) {
-        fox_show(pos);
-        if (pos->tail_len == 20) list_del(&pos->list);
+
+    struct fox *pos1, *next1;
+    list_foreach_safe_reverse(pos1, next1, foxs, list) {
+        fox_show(pos1);
+        if (pos1->tail_len == 20) list_del(&pos1->list);
     }
     // fox_list_show(foxs);
 
     printf("list_empty? %s\n", list_empty(foxs) ? "empty" : "not empty");
     printf("list_is_singular? %s\n", list_is_singular(foxs) ? "singular" : "not singular");
 
-    // list_foreach_safe(pos, next, foxs, list) {
-    //     free(pos);
-    // }
     free(fox);
     free(foxs);
 }

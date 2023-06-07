@@ -65,5 +65,7 @@ void test_sqlite3();
 
 void test_ptable();
 void test_ncurses();
+void test_vtysh();
 
+void test_udp();
 #endif  // !TEST_H

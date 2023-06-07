@@ -38,14 +38,6 @@ struct list_head {
 };
 #define list_node list_head
 
-// struct hlist_head {
-//     struct hlist_node *first;
-// };
-
-// struct hlist_node {
-//     struct hlist_node *next, **pprev;
-// };
-
 // TODO: <sys/queue.h> defined LIST_HEAD
 #ifndef LIST_HEAD
 #define LIST_HEAD(name) struct list_head name = {&(name), &(name)}

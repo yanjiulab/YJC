@@ -50,7 +50,8 @@ int main(void) {
         // cmocka_unit_test(test_epoll),
         // cmocka_unit_test(test_math),
         // cmocka_unit_test(test_ncurses),
-
+        // cmocka_unit_test(test_vtysh),
+        // cmocka_unit_test(test_udp),
     };
 
     /* Run the tests */
