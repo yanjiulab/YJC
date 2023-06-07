@@ -81,7 +81,7 @@ void test_list() {
         fox_show(pos);
         if (pos->tail_len == 20) list_del(&pos->list);
     }
-    fox_list_show(foxs);
+    // fox_list_show(foxs);
 
     printf("list_empty? %s\n", list_empty(foxs) ? "empty" : "not empty");
     printf("list_is_singular? %s\n", list_is_singular(foxs) ? "singular" : "not singular");

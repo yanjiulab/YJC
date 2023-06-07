@@ -9,4 +9,5 @@ void test_ifi() {
     print_ifi_info(info);
     // printf(sock_itop(ntohl(0xC0A81711)));
     // printf("next:%p\n", info->ifi_next);
+    
 }
