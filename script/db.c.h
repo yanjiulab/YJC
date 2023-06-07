@@ -1,0 +1,12 @@
+int (db_init);
+struct sqlite3* struct (db);
+int (db_close);
+int (db_bindf);
+struct sqlite3_stmt* struct (db_prepare_len);
+struct sqlite3_stmt* struct (db_prepare);
+int (db_run);
+int (db_reset);
+int (db_loadf);
+void (db_finalize);
+int (db_exec);
+int (db_table_dump);
