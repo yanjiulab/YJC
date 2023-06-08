@@ -68,4 +68,6 @@ void test_ncurses();
 void test_vtysh();
 
 void test_udp();
+
+void test_netdev();
 #endif  // !TEST_H

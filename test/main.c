@@ -52,6 +52,7 @@ int main(void) {
         // cmocka_unit_test(test_ncurses),
         // cmocka_unit_test(test_vtysh),
         // cmocka_unit_test(test_udp),
+        cmocka_unit_test(test_netdev),
     };
 
     /* Run the tests */
