@@ -70,4 +70,6 @@ void test_vtysh();
 void test_udp();
 
 void test_netdev();
+
+void test_thread();
 #endif  // !TEST_H

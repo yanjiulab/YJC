@@ -4,7 +4,6 @@
 #include "defs.h"
 #include "event.h"
 #include "platform.h"
-// #include "hsocket.h"
 
 typedef struct select_ctx_s {
     int max_fd;

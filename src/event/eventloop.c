@@ -5,8 +5,6 @@
 #include "event.h"
 #include "iowatcher.h"
 #include "log.h"
-// #include "hmath.h"
-// #include "etime.h"
 #include "concurrency.h"
 #include "sock.h"
 
