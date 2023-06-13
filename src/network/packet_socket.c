@@ -48,7 +48,7 @@ static void packet_socket_setup(struct packet_socket *psock) {
         perror("if_nametoindex");
         exit(EXIT_FAILURE);
     }
-    log_debug("device index: %s -> %d\n", psock->name, psock->index);
+    log_debug("device index: %s -> %d", psock->name, psock->index);
 
     bind_to_interface(psock->packet_fd, psock->index);
 

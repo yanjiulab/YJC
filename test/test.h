@@ -73,4 +73,6 @@ void test_netdev();
 
 void test_thread();
 void test_thpool();
+
+void test_packet_socket();
 #endif  // !TEST_H
