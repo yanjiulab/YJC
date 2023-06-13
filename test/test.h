@@ -72,4 +72,5 @@ void test_udp();
 void test_netdev();
 
 void test_thread();
+void test_thpool();
 #endif  // !TEST_H

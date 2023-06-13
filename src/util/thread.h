@@ -134,92 +134,9 @@ static inline int sem_wait_for(sem_t* sem, unsigned int ms) {
     return sem_timedwait(sem, &ts) != ETIMEDOUT;
 }
 
-/* ---------------------------- thread pool ---------------------------- */
-#define THREAD_POOL_SIZE 5
-
-#define TASK_PRIORITY_LOW 0
-#define TASK_PRIORITY_NORMAL 1
-#define TASK_PRIORITY_HIGH 2
-
-enum { NONE, EMPTY, FULL, TIMEOUT };
-
-typedef struct {
-    task_t* data;
-    int head;
-    int tail;
-    int size;
-    int count;
-} queue_t;
-
-bool queue_init(queue_t* q, int size) {
-    if (q == NULL || size <= 0) {
-        return false;
-    }
-
-    q->data = (task_t*)malloc(sizeof(task_t) * size);
-    q->head = 0;
-    q->tail = 0;
-    q->size = size;
-    q->count = 0;
-
-    return true;
-}
-
-bool queue_push(queue_t* q, task_t* task) {
-    if (q == NULL || task == NULL || q->count >= q->size) {
-        return false;
-    }
-
-    memcpy(&q->data[q->tail], task, sizeof(task_t));
-    q->tail = (q->tail + 1) % q->size;
-    q->count++;
-
-    return true;
-}
-
-bool queue_pop(queue_t* q, task_t* task) {
-    if (q == NULL || task == NULL || q->count <= 0) {
-        return false;
-    }
-
-    memcpy(task, &q->data[q->head], sizeof(task_t));
-    q->head = (q->head + 1) % q->size;
-    q->count--;
-
-    return true;
-}
-
-bool queue_is_empty(queue_t* q) { return (q == NULL || q->count <= 0); }
-
-bool queue_is_full(queue_t* q) { return (q == NULL || q->count >= q->size); }
-
-typedef struct task_t {
-    thread_routine func;  // task executor function
-    void* arg;            // task arguments
-    int priority;         // task priority
-} task_t;
-
-typedef struct {
-    int thread_count;       // 工作线程数目
-    int queue_size;         // 任务队列大小
-    pthread_t* threads;     // 工作线程数组
-    queue_t task_queue;     // 任务队列
-    pthread_mutex_t mutex;  // 互斥锁
-    pthread_cond_t cond;    // 条件变量
-    bool is_shutdown;       // 线程池是否关闭
-    bool is_empty;          // 任务队列是否为空
-    bool is_full;           // 任务队列是否已满
-} thread_pool_t;
-
-thread_pool_t* thread_pool_init(int thread_count, int queue_size);
-void thread_pool_destroy(thread_pool_t* pool);
-
-// return task id or 0 (false)
-int threadpool_task_add();
-int threadpool_task_cancel(thread_pool_t* pool);
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* __THREAD_H__ */
+

@@ -1,22 +1,29 @@
+#include <stdint.h>
 #include <stdio.h>
 
 #include "log.h"
 #include "test.h"
 #include "thread.h"
+#include "datetime.h"
 THREAD_ROUTINE(my_routine) {
-    log_info("new thread: %lu, args addr: %p", thread_id(), NULL);
-    return (void *)1;
+    printf("Thread #%u working on %d\n", (int)pthread_self(), (int)userdata);
 }
 
 void test_thread() {
     log_info("main thread: %lu", thread_id());
 
-    void *rval;
-    thread_t tid = thread_create(my_routine, NULL);
-    thread_join(tid, &rval);
-    log_info("thread %lu exit code %ld", tid, (long)rval);
+    int i;
+    thread_t tids[40];
+    for (i = 0; i < 40; i++) {
+        tids[i] = thread_create(my_routine, (void *)(uintptr_t)i);
+    };
 
-    mutex_t mt = PTHREAD_MUTEX_INITIALIZER;
-    rwlock_t rwl;
+    unsigned long long start = gettimeofday_us();
+    for (i = 0; i < 40; i++) {
+        thread_join(tids[i], NULL);
+    };
+    unsigned long long end = gettimeofday_us();
+
+    printf("Killing, time: %lld us\n", (end - start));
     // rwlock_init(rwl);
 }
