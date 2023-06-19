@@ -72,5 +72,5 @@ def gen_func_decl():
 
 
 if __name__ == "__main__":
-    gen_header_temp('thread')
+    gen_header_temp(sys.argv[1])
     # gen_func_decl()

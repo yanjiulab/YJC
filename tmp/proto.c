@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "inet.h"
-#include "sock.h"
+#include "socket.h"
 
 long tot_recv_num;
 

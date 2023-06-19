@@ -34,7 +34,7 @@ void packet_list_free(struct packet_list *list) {
 /* ---------------------------- packet dump ---------------------------- */
 static void packet_buffer_to_string(FILE *s, struct packet *packet) {
     char *hex = NULL;
-    hex_dump(packet->buffer, packet_end(packet) - packet->buffer, &hex);
+    hex_dump(packet->buffer, packet->buffer_bytes, &hex);
     fputc('\n', s);
     fprintf(s, "%s", hex);
     free(hex);
@@ -47,7 +47,9 @@ int packet_to_string(struct packet *packet, enum dump_format_t format,
     size_t size = 0;
     FILE *s = open_memstream(ascii_string, &size); /* output string */
     int i;
-    fprintf(s, "[NO TCP OR ICMP HEADER]");
+    
+    packet_buffer_to_string(s, packet);
+
     // int header_count = packet_header_count(packet);
 
     // /* Print any encapsulation headers preceding layer 3 and 4 headers. */

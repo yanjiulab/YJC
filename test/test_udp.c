@@ -4,7 +4,7 @@
 #include <sys/ioctl.h>
 
 #include "log.h"
-#include "network/sock.h"
+#include "network/socket.h"
 #include "test.h"
 
 #define UDP_PORT 0x2222

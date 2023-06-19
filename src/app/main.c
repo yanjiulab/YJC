@@ -28,7 +28,7 @@
 #include "inet.h"
 #include "ini.h"
 #include "log.h"
-#include "sock.h"
+#include "socket.h"
 #include "str.h"
 
 void on_idle(eidle_t* idle) {

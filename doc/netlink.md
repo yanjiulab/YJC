@@ -1,0 +1,33 @@
+这段代码定义了一个枚举类型 rtattr_type_t，其中包含了 Netlink Route 子系统中所支持的属性类型。具体说明如下：
+
+- RTA_UNSPEC：未指定类型
+- RTA_DST：目标网络地址
+- RTA_SRC：源网络地址
+- RTA_IIF：路由表项输入网络接口索引
+- RTA_OIF：路由表项输出网络接口索引
+- RTA_GATEWAY：网关地址
+- RTA_PRIORITY：路由表项优先级
+- RTA_PREFSRC：首选源地址
+- RTA_METRICS：度量值
+- RTA_MULTIPATH：多路径
+- RTA_PROTOINFO：协议信息（已不再使用）
+- RTA_FLOW：流量控制
+- RTA_CACHEINFO：缓存信息
+- RTA_SESSION：会话信息（已不再使用）
+- RTA_MP_ALGO：多路径算法（已不再使用）
+- RTA_TABLE：路由表编号
+- RTA_MARK：标记
+- RTA_MFC_STATS：多播转发统计信息
+- RTA_VIA：途经中间节点
+- RTA_NEWDST：新的目标网络地址
+- RTA_PREF：首选路由项
+- RTA_ENCAP_TYPE：封装类型
+- RTA_ENCAP：封装数据
+- RTA_EXPIRES：过期时间
+- RTA_PAD：填充
+- RTA_UID：用户ID
+- RTA_TTL_PROPAGATE：TTL传播
+- RTA_IP_PROTO：IP协议
+- RTA_SPORT：源端口
+- RTA_DPORT：目标端口
+- __RTA_MAX：最大值

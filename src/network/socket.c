@@ -1,4 +1,4 @@
-#include "sock.h"
+#include "socket.h"
 
 const char* socket_strerror(int err) { return strerror(ABS(err)); }
 

@@ -17,6 +17,17 @@
 #include <sys/time.h>
 #include <sys/uio.h>
 #include <unistd.h>
+
+/* Most functions in this codebase return one of these two values to let the
+ * caller know whether there was a problem.
+ */
+enum status_t {
+    STATUS_OK = 0,
+    STATUS_ERR = -1,
+    STATUS_WARN = -2,   /* a non-fatal error or warning */
+    STATUS_TIMEOUT = -3 /* timeout sniffing outbound packet */
+};
+
 /* ---------------------------- packet header ---------------------------- */
 struct packet;
 
@@ -34,26 +45,16 @@ enum header_t {
     HEADER_NUM_TYPES
 };
 
-
-
 /* ---------------------------- packet ---------------------------- */
-
-/* Most functions in this codebase return one of these two values to let the
- * caller know whether there was a problem.
- */
-enum status_t {
-    STATUS_OK = 0,
-    STATUS_ERR = -1,
-    STATUS_WARN = -2,   /* a non-fatal error or warning */
-    STATUS_TIMEOUT = -3 /* timeout sniffing outbound packet */
-};
-
 /* The directions in which a packet may flow. */
 enum direction_t {
     DIRECTION_INVALID,
     DIRECTION_INBOUND,  /* packet coming into the kernel under test */
     DIRECTION_OUTBOUND, /* packet leaving the kernel under test */
 };
+
+/* Maximum number of headers. */
+#define PACKET_MAX_HEADERS	6
 
 /* TCP/UDP/IPv4 packet, including IPv4 header, TCP/UDP header, and data. There
  * may also be a link layer header between the 'buffer' and 'ip'
@@ -67,7 +68,15 @@ struct packet {
     uint32_t l2_header_bytes;   /* bytes in outer hardware/layer-2 header */
     uint32_t ip_bytes;          /* bytes in outermost IP hdrs/payload */
     enum direction_t direction; /* direction packet is traveling */
+
+    /* Metadata about all the headers in the packet, including all
+	 * layers of encapsulation, from outer to inner, starting from
+	 * the outermost IP header at headers[0].
+	 */
+	// struct header headers[PACKET_MAX_HEADERS];
+
     int64_t time_usecs;         /* wall time of receive/send if non-zero */
+
 };
 
 /* A simple list of packets. */

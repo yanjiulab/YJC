@@ -2,7 +2,7 @@
 #include "event.h"
 #include "iowatcher.h"
 #include "log.h"
-#include "sock.h"
+#include "socket.h"
 
 static void __connect_timeout_cb(etimer_t* timer) {
     eio_t* io = (eio_t*)timer->privdata;

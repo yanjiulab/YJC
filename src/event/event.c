@@ -3,7 +3,7 @@
 #include "base.h"
 #include "concurrency.h"
 #include "err.h"
-#include "sock.h"
+#include "socket.h"
 #include "unpack.h"
 #include "log.h"
 

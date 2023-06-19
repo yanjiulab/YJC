@@ -61,6 +61,7 @@ static void packet_socket_setup(struct packet_socket *psock) {
 }
 
 struct packet_socket *packet_socket_new(const char *device_name) {
+    
     struct packet_socket *psock = calloc(1, sizeof(struct packet_socket));
 
     psock->name = strdup(device_name);

@@ -75,4 +75,5 @@ void test_thread();
 void test_thpool();
 
 void test_packet_socket();
+void test_netlink_socket();
 #endif  // !TEST_H

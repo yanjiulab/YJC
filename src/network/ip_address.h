@@ -1,7 +1,13 @@
 #ifndef __IP_ADDRESS_H__
 #define __IP_ADDRESS_H__
+
 #include <netinet/in.h>
 #include <string.h>
+#include <stdbool.h>
+
+/* Length of output buffer for inet_ntop, plus prefix length (e.g. "/128"). */
+#define ADDR_STR_LEN ((INET_ADDRSTRLEN + INET6_ADDRSTRLEN) + 5)
+
 /* IPv4 or IPv6 address. */
 struct ip_address {
     int address_family; /* AF_INET or AF_INET6 */
@@ -94,13 +100,13 @@ extern void ip_to_sockaddr(const struct ip_address *ip, uint16_t port,
 extern void ip_from_sockaddr(const struct sockaddr *address, socklen_t length,
                              struct ip_address *ip, uint16_t *port);
 
-/* Return true iff the address is that of a local interface. */
+/* Return true if the address is that of a local interface. */
 /* Note: this should return bool, but that doesn't compile on NetBSD. */
 extern int is_ip_local(const struct ip_address *ip);
 
 /* Fill in the name of the device configured with the given IP, if
  * any. The dev_name buffer should be at least IFNAMSIZ bytes.
- * Return true iff the IP is found on a local device.
+ * Return true if the IP is found on a local device.
  */
 /* Note: this should return bool, but that doesn't compile on NetBSD. */
 extern int get_ip_device(const struct ip_address *ip, char *dev_name);

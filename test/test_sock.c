@@ -3,7 +3,7 @@
 #include "crc.h"
 #include "inet.h"
 #include "log.h"
-#include "sock.h"
+#include "socket.h"
 #include "test.h"
 
 void test_sock() {

@@ -6,7 +6,7 @@
 #include "iowatcher.h"
 #include "log.h"
 #include "concurrency.h"
-#include "sock.h"
+#include "socket.h"
 
 #if defined(OS_UNIX) && HAVE_EVENTFD
 #include "sys/eventfd.h"

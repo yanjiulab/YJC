@@ -1,10 +1,11 @@
-#ifndef SOCK_H_
-#define SOCK_H_
+#ifndef __SOCKET_H__
+#define __SOCKET_H__
 
 #include <arpa/inet.h>  // inet_*, address
 #include <errno.h>      // errno
 #include <fcntl.h>
-#include <netdb.h>        // dns
+#include <netdb.h>  // dns
+#include <netinet/in.h>
 #include <netinet/tcp.h>  // TCP
 #include <stdbool.h>      // bool
 #include <stdio.h>
@@ -12,7 +13,6 @@
 #include <sys/time.h>
 #include <sys/un.h>  // sockaddr_un
 #include <unistd.h>
-#include <netinet/in.h>
 
 #include "defs.h"
 #include "export.h"
@@ -87,15 +87,18 @@ static inline void sockaddr_print(sockaddr_u* addr) {
 }
 
 #define SOCKADDR_LEN(addr) sockaddr_len((sockaddr_u*)addr)
-#define SOCKADDR_STR(addr, buf) sockaddr_str((sockaddr_u*)addr, buf, sizeof(buf))
+#define SOCKADDR_STR(addr, buf) \
+    sockaddr_str((sockaddr_u*)addr, buf, sizeof(buf))
 #define SOCKADDR_PRINT(addr) sockaddr_print((sockaddr_u*)addr)
 
-//-----------------------------base functions----------------------------------------------
+//-----------------------------base
+// functions----------------------------------------------
 
 // socket -> setsockopt -> bind
 // @param type: SOCK_STREAM(tcp) SOCK_DGRAM(udp)
 // @return sockfd
-EXPORT int Bind(int port, const char* host DEFAULT(ANYADDR), int type DEFAULT(SOCK_STREAM));
+EXPORT int Bind(int port, const char* host DEFAULT(ANYADDR),
+                int type DEFAULT(SOCK_STREAM));
 
 // Bind -> listen
 // @return listenfd
@@ -108,57 +111,67 @@ EXPORT int Connect(const char* host, int port, int nonblock DEFAULT(0));
 EXPORT int ConnectNonblock(const char* host, int port);
 // Connect(host, port, 1) -> select -> blocking
 #define DEFAULT_CONNECT_TIMEOUT 10000  // ms
-EXPORT int ConnectTimeout(const char* host, int port, int ms DEFAULT(DEFAULT_CONNECT_TIMEOUT));
+EXPORT int ConnectTimeout(const char* host, int port,
+                          int ms DEFAULT(DEFAULT_CONNECT_TIMEOUT));
 
 #ifdef ENABLE_UDS
 EXPORT int BindUnix(const char* path, int type DEFAULT(SOCK_STREAM));
 EXPORT int ListenUnix(const char* path);
 EXPORT int ConnectUnix(const char* path, int nonblock DEFAULT(0));
 EXPORT int ConnectUnixNonblock(const char* path);
-EXPORT int ConnectUnixTimeout(const char* path, int ms DEFAULT(DEFAULT_CONNECT_TIMEOUT));
+EXPORT int ConnectUnixTimeout(const char* path,
+                              int ms DEFAULT(DEFAULT_CONNECT_TIMEOUT));
 #endif
 
 EXPORT int Socketpair(int family, int type, int protocol, int sv[2]);
 
 INLINE int tcp_nodelay(int sockfd, int on DEFAULT(1)) {
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on, sizeof(int));
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on,
+                      sizeof(int));
 }
 
 INLINE int tcp_nopush(int sockfd, int on DEFAULT(1)) {
 #ifdef TCP_NOPUSH
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_NOPUSH, (const char*)&on, sizeof(int));
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_NOPUSH, (const char*)&on,
+                      sizeof(int));
 #elif defined(TCP_CORK)
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, (const char*)&on, sizeof(int));
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, (const char*)&on,
+                      sizeof(int));
 #else
     return 0;
 #endif
 }
 
 INLINE int tcp_keepalive(int sockfd, int on DEFAULT(1), int delay DEFAULT(60)) {
-    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on, sizeof(int)) != 0) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on,
+                   sizeof(int)) != 0) {
         return errno;
     }
 
 #ifdef TCP_KEEPALIVE
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPALIVE, (const char*)&delay, sizeof(int));
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPALIVE, (const char*)&delay,
+                      sizeof(int));
 #elif defined(TCP_KEEPIDLE)
     // TCP_KEEPIDLE     => tcp_keepalive_time
     // TCP_KEEPCNT      => tcp_keepalive_probes
     // TCP_KEEPINTVL    => tcp_keepalive_intvl
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (const char*)&delay, sizeof(int));
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (const char*)&delay,
+                      sizeof(int));
 #else
     return 0;
 #endif
 }
 
 INLINE int udp_broadcast(int sockfd, int on DEFAULT(1)) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char*)&on, sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char*)&on,
+                      sizeof(int));
 }
 
 // send timeout
 INLINE int so_sndtimeo(int sockfd, int timeout) {
 #ifdef OS_WIN
-    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout,
+                      sizeof(int));
 #else
     struct timeval tv = {timeout / 1000, (timeout % 1000) * 1000};
     return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
@@ -168,7 +181,8 @@ INLINE int so_sndtimeo(int sockfd, int timeout) {
 // recv timeout
 INLINE int so_rcvtimeo(int sockfd, int timeout) {
 #ifdef OS_WIN
-    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout,
+                      sizeof(int));
 #else
     struct timeval tv = {timeout / 1000, (timeout % 1000) * 1000};
     return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
@@ -177,18 +191,21 @@ INLINE int so_rcvtimeo(int sockfd, int timeout) {
 
 // send buffer size
 INLINE int so_sndbuf(int sockfd, int len) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (const char*)&len, sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (const char*)&len,
+                      sizeof(int));
 }
 
 // recv buffer size
 INLINE int so_rcvbuf(int sockfd, int len) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&len, sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&len,
+                      sizeof(int));
 }
 
 INLINE int so_reuseaddr(int sockfd, int on DEFAULT(1)) {
 #ifdef SO_REUSEADDR
     // NOTE: SO_REUSEADDR allow to reuse sockaddr of TIME_WAIT status
-    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on,
+                      sizeof(int));
 #else
     return 0;
 #endif
@@ -197,7 +214,8 @@ INLINE int so_reuseaddr(int sockfd, int on DEFAULT(1)) {
 INLINE int so_reuseport(int sockfd, int on DEFAULT(1)) {
 #ifdef SO_REUSEPORT
     // NOTE: SO_REUSEPORT allow multiple sockets to bind same port
-    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&on, sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&on,
+                      sizeof(int));
 #else
     return 0;
 #endif
@@ -213,11 +231,13 @@ INLINE int so_linger(int sockfd, int timeout DEFAULT(1)) {
         linger.l_onoff = 0;
         linger.l_linger = 0;
     }
-    // NOTE: SO_LINGER change the default behavior of close, send RST, avoid TIME_WAIT
-    return setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const char*)&linger, sizeof(linger));
+    // NOTE: SO_LINGER change the default behavior of close, send RST, avoid
+    // TIME_WAIT
+    return setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const char*)&linger,
+                      sizeof(linger));
 #else
     return 0;
 #endif
 }
 
-#endif  // !SOCK_H_
+#endif  // !__SOCKET_H__

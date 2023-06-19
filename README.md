@@ -8,8 +8,27 @@
 
 `network` 为网络编程库
 
-net
-netinet
+- socket.h
+- address.h
+- header.h
+- packet.h
+- netdev.h
+- protocol.h
+
+
+### IP 地址
+
+格式|定义|说明
+:---:|:---:|:---:
+IPv4 地址| `struct in_addr v4;` 或者 `uint32_t v4;`|4 字节
+IPv6 地址| `struct in6_addr v6;` |16 字节
+IPv4 字符串|`char *ip_str;` 或者 `char ip_str[]` |一般采用点分十进制，占用 16 字节，如果加上后缀
+IPv6 字符串|`char *ip_str;` 或者 `char ip_str[]` |一般采用点分十六进制，占用 16 字节
+通用套接字地址结构|`struct sockaddr saddr;`|发送、接收、绑定、连接等函数需要使用该类型
+IPv4 套接字地址结构|`struct sockaddr_in6 saddr;`|实际使用 IPv4 通信需要定义的地址，主要包含协议族、端口号、IPv4 地址信息
+IPv6 套接字地址结构|`struct sockaddr_in6 s6addr;`|实际使用 IPv6 通信需要定义的地址，主要包含协议族、端口号、IPv6 地址信息等。
+
+### 数据包
 
 头文件 | 名称 | 说明
 :---:|:---:|:---:
