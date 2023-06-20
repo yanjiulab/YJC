@@ -25,15 +25,16 @@ typedef struct {
     int level;
 } log_Event;
 
+/* Message structure. */
+struct message {
+    int key;
+    const char *str;
+};
+
 typedef void (*log_LogFn)(log_Event *ev);
 typedef void (*log_LockFn)(bool lock, void *udata);
 
-enum { LOG_TRACE,
-       LOG_DEBUG,
-       LOG_INFO,
-       LOG_WARN,
-       LOG_ERROR,
-       LOG_FATAL };
+enum { LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_FATAL };
 
 #define log_trace(...) log_log(LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
 #define log_debug(...) log_log(LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
@@ -48,7 +49,9 @@ void log_set_level(int level);
 void log_set_quiet(bool enable);
 int log_add_callback(log_LogFn fn, void *udata, int level);
 int log_add_fp(FILE *fp, int level);
-
 void log_log(int level, const char *file, int line, const char *fmt, ...);
+
+const char *lookup_msg(const struct message *mz, int kz, const char *nf);
+
 
 #endif
