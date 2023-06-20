@@ -103,3 +103,9 @@ Netlink允许通过序列号来关联回复和请求。需要注意的是，这�
 - RTA_SPORT：源端口
 - RTA_DPORT：目标端口
 - __RTA_MAX：最大值
+
+
+## Route response
+
+- struct rtmsg *rtm; 后面跟着 rtattr
+- struct ndmsg *ndm; 后面跟着 rtattr

@@ -2,8 +2,10 @@
 
 #include <net/if.h>
 
+#include "ethernet.h"
 #include "inet.h"
 #include "log.h"
+#include "ip_address.h"
 
 static void netlink_socket_setup(struct netlink_socket *nlsock, int nl_type) {
     nlsock->nl_fd = socket(PF_NETLINK, SOCK_RAW, nl_type);  // NETLINK_ROUTE
@@ -38,9 +40,11 @@ netlink_socket_t *netlink_socket_new(int nl_type, const char *nl_name) {
 }
 
 void netlink_socket_free(struct netlink_socket *nlsock) {
-    if (nlsock->nl_fd >= 0) close(nlsock->nl_fd);
+    if (nlsock->nl_fd >= 0)
+        close(nlsock->nl_fd);
 
-    if (nlsock->name != NULL) free(nlsock->name);
+    if (nlsock->name != NULL)
+        free(nlsock->name);
 
     memset(nlsock, 0, sizeof(*nlsock)); /* paranoia to catch bugs*/
     free(nlsock);
@@ -141,9 +145,44 @@ int netlink_request(struct netlink_socket *nlsock, void *req) {
     n->nlmsg_pid = nlsock->snl.nl_pid;
     n->nlmsg_seq = ++nlsock->seq;
 
-    if (netlink_sendmsg(nlsock, req, n->nlmsg_len) == -1) return -1;
+    if (netlink_sendmsg(nlsock, req, n->nlmsg_len) == -1)
+        return -1;
 
     return 0;
+}
+
+void netlink_parse_rtattr_flags(struct rtattr **tb, int max, struct rtattr *rta,
+                                int len, unsigned short flags) {
+    unsigned short type;
+
+    memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+    while (RTA_OK(rta, len)) {
+        type = rta->rta_type & ~flags;
+        if ((type <= max) && (!tb[type]))
+            tb[type] = rta;
+        rta = RTA_NEXT(rta, len);
+    }
+}
+
+void netlink_parse_rtattr(struct rtattr **tb, int max, struct rtattr *rta,
+                          int len) {
+    memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+    while (RTA_OK(rta, len)) {
+        if (rta->rta_type <= max)
+            tb[rta->rta_type] = rta;
+        rta = RTA_NEXT(rta, len);
+    }
+}
+
+/**
+ * netlink_parse_rtattr_nested() - Parses a nested route attribute
+ * @tb:         Pointer to array for storing rtattr in.
+ * @max:        Max number to store.
+ * @rta:        Pointer to rtattr to look for nested items in.
+ */
+void netlink_parse_rtattr_nested(struct rtattr **tb, int max,
+                                 struct rtattr *rta) {
+    netlink_parse_rtattr(tb, max, RTA_DATA(rta), RTA_PAYLOAD(rta));
 }
 
 /* Request for specific route information from the kernel */
@@ -198,14 +237,7 @@ int netlink_rtm_parse_route(struct nlmsghdr *nl_header_answer) {
         return;
     }
 
-    memset(tb, 0, sizeof(struct rtattr *) * (RTA_MAX + 1));
-
-    for (struct rtattr *rta = RTM_RTA(r); RTA_OK(rta, len);
-         rta = RTA_NEXT(rta, len)) {
-        if (rta->rta_type <= RTA_MAX) {
-            tb[rta->rta_type] = rta;
-        }
-    }
+    netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
 
     table = r->rtm_table;
     if (tb[RTA_TABLE]) {
@@ -271,8 +303,63 @@ int netlink_rtm_parse_route(struct nlmsghdr *nl_header_answer) {
     return 0;
 }
 
-int netlink_macfdb_table(struct nlmsghdr *nl_header_answer) {
-    print_data(nl_header_answer, nl_header_answer->nlmsg_len);
+int netlink_macfdb_table(struct nlmsghdr *h) {
+    // print_data(h, h->nlmsg_len);
+    // return 0;
+
+    struct ndmsg *ndm;
+
+    struct interface *ifp;
+    struct zebra_if *zif;
+    struct rtattr *tb[NDA_MAX + 1];
+    struct interface *br_if;
+    ether_addr_t mac;
+    // vlanid_t vid = 0;
+    struct in_addr vtep_ip;
+    int vid_present = 0, dst_present = 0;
+    char vid_buf[20];
+    char dst_buf[30];
+    bool sticky;
+    bool local_inactive = false;
+    bool dp_static = false;
+    uint32_t nhg_id = 0;
+
+    ndm = NLMSG_DATA(h);
+    int len = h->nlmsg_len;
+    len -= NLMSG_LENGTH(sizeof(*ndm));
+
+    /* Parse attributes and extract fields of interest. Do basic
+     * validation of the fields.
+     */
+
+    netlink_parse_rtattr_flags(tb, NDA_MAX, NDA_RTA(ndm), len,
+                               NLA_F_NESTED);
+    if (tb[NDA_DST]) {
+        /* TODO: Only IPv4 supported now. */
+        dst_present = 1;
+        memcpy(&vtep_ip.s_addr, RTA_DATA(tb[NDA_DST]),
+               4);
+        char ipstr[ADDR_STR_LEN];
+        inet_ntop(AF_INET, &vtep_ip, ipstr, ADDR_STR_LEN);
+        printf("%s", ipstr);
+    }
+
+    char ifname[IF_NAMESIZE];
+    printf(" dev %s", if_indextoname(ndm->ndm_ifindex, ifname));
+
+    if (tb[NDA_LLADDR]) {
+        memcpy(&mac, RTA_DATA(tb[NDA_LLADDR]), ETH_ALEN);
+        printf(" lladdr %s", ether_addr_to_string(&mac, NULL));
+    }
+
+    // if (tb[NDA_NH_ID]) {
+    //     nhg_id = *(uint32_t *)RTA_DATA(tb[NDA_NH_ID]);
+    //     printf(" nh_id %x", nhg_id);
+    // }
+
+    printf(" state %u", ndm->ndm_state);
+
+    printf("\n");
 }
 
 int netlink_parse_info(struct netlink_socket *nlsock,
@@ -291,16 +378,14 @@ int netlink_parse_info(struct netlink_socket *nlsock,
     char *buf;  // == msg.msg_iov->iov_base
     status = netlink_recvmsg(nlsock->nl_fd, &msg, &buf);
 
-    // printf("netlink recv %d bytes message from port %d\n", status,
-    //        nladdr.nl_pid);
-
     int msglen = status;
     struct nlmsghdr *h;
 
     for (h = (struct nlmsghdr *)buf; NLMSG_OK(h, msglen);
          h = NLMSG_NEXT(h, msglen)) {
         /* Finish of reading. */
-        if (h->nlmsg_type == NLMSG_DONE) break;
+        if (h->nlmsg_type == NLMSG_DONE)
+            break;
 
         /* Error handling. */
         if (h->nlmsg_type == NLMSG_ERROR) {
@@ -323,7 +408,8 @@ int netlink_parse_info(struct netlink_socket *nlsock,
                   h->nlmsg_len, h->nlmsg_seq, h->nlmsg_pid);
 
         /* Ignore messages that maybe sent from others besides the kernel */
-        if (nladdr.nl_pid != 0) continue;
+        if (nladdr.nl_pid != 0)
+            continue;
 
         /* Function to call to read the results */
         if (filter) {

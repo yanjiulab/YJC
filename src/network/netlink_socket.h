@@ -4,6 +4,7 @@
 #define __NETLINK_SOCKET_H__
 
 /* Headers */
+#include <linux/neighbour.h>
 #include <linux/netlink.h>
 #include <linux/rtnetlink.h>
 
@@ -13,6 +14,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define NDA_RTA(r) \
+    ((struct rtattr *)(((char *)(r)) + NLMSG_ALIGN(sizeof(struct ndmsg))))
 
 typedef struct netlink_socket {
     int nl_fd;  /* socket for sending, sniffing timestamped netlinks */
@@ -26,7 +30,6 @@ extern netlink_socket_t *netlink_socket_new(int nl_type, const char *nl_name);
 
 /* Free all the memory used by the netlink socket. */
 extern void netlink_socket_free(struct netlink_socket *netlink_socket);
-
 
 extern int netlink_parse_info(struct netlink_socket *nlsock,
                               int (*filter)(struct nlmsghdr *));
