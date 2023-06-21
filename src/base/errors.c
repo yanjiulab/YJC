@@ -67,7 +67,7 @@ static void err_doit(int errnoflag, const char *fmt, va_list params) {
 
     int n = strlen(buf);
     if (errnoflag) {
-        snprintf(buf + n, MAXLINE - n, " (%s)", strerror(errno_save));
+        snprintf(buf + n, MAXLINE - n, " (%s)", hv_strerror(errno_save));
     }
     strcat(buf, "\n");
 
@@ -90,14 +90,13 @@ const char *hv_strerror(int err) {
         return errmsg;
         FOREACH_ERR(F)
 #undef F
-    default:
-        return "Undefined error";
+        default:
+            return "Undefined error";
     }
 }
 
 /* Wrapper around strerror to handle case where it returns NULL. */
-const char *safe_strerror(int errnum)
-{
-	const char *s = strerror(errnum);
-	return (s != NULL) ? s : "Unknown error";
+const char *safe_strerror(int errnum) {
+    const char *s = strerror(errnum);
+    return (s != NULL) ? s : "Unknown error";
 }

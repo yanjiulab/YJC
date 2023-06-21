@@ -9,7 +9,7 @@ static uint8_t hex_char_to_int(char ch) {
     return 0;
 }
 
-void ether_addr_from_string(const char *str, ether_addr_t *ether) {
+void ether_from_string(const char *str, ether_addr_t *ether) {
     char *p;
     char i, j;
     unsigned char h = 0, l = 0;
@@ -25,7 +25,7 @@ void ether_addr_from_string(const char *str, ether_addr_t *ether) {
     }
 }
 
-char *ether_addr_to_string(ether_addr_t *ether, const char *str) {
+char *ether_to_string(ether_addr_t *ether, const char *str) {
     if (!str) str = calloc(1, ETH_ASLEN);
 
     snprintf(str, ETH_ASLEN, "%.2X:%.2X:%.2X:%.2X:%.2X:%.2X",

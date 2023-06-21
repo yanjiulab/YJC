@@ -7,12 +7,12 @@
 void test_packet_socket() {
     // Ethernet test
     ether_addr_t ea;
-    ether_addr_from_string("00:01-02-03-04-05", &ea);
+    ether_from_string("00:01-02-03-04-05", &ea);
     unsigned a;
     print_data(&ea, sizeof(ea));
 
     char sbuf[ETH_ASLEN];
-    ether_addr_to_string(&ea, sbuf);
+    ether_to_string(&ea, sbuf);
     printf("%s", sbuf);
 
     exit(0);

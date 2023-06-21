@@ -7,18 +7,6 @@ static inline int socket_errno_negative() {
     return err > 0 ? -err : -1;
 }
 
-bool is_ipv4(const char* host) {
-    struct sockaddr_in sin;
-    return inet_pton(AF_INET, host, &sin) == 1;
-}
-
-bool is_ipv6(const char* host) {
-    struct sockaddr_in6 sin6;
-    return inet_pton(AF_INET6, host, &sin6) == 1;
-}
-
-bool is_ipaddr(const char* host) { return is_ipv4(host) || is_ipv6(host); }
-
 int ResolveAddr(const char* host, sockaddr_u* addr) {
     if (inet_pton(AF_INET, host, &addr->sin.sin_addr) == 1) {
         addr->sa.sa_family = AF_INET;  // host is ipv4, so easy ;)

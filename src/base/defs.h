@@ -30,20 +30,6 @@
 #define BITGET(i, n) ((i) & (1u << (n)))
 #endif
 
-/*
-#ifndef CR
-#define CR      '\r'
-#endif
-
-#ifndef LF
-#define LF      '\n'
-#endif
-
-#ifndef CRLF
-#define CRLF    "\r\n"
-#endif
-*/
-
 #define FLOAT_PRECISION 1e-6
 #define FLOAT_EQUAL_ZERO(f) (ABS(f) < FLOAT_PRECISION)
 
@@ -71,7 +57,6 @@ ASCII:
 #define IS_ALPHA(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #endif
 
-// NOTE: IS_NUM conflicts with mysql.h
 #ifndef IS_DIGIT
 #define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 #endif
@@ -89,7 +74,8 @@ ASCII:
 #endif
 
 #ifndef IS_HEX
-#define IS_HEX(c) (IS_DIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
+#define IS_HEX(c) \
+    (IS_DIGIT(c) || ((c) >= 'a' && (c) <= 'f') || ((c) >= 'A' && (c) <= 'F'))
 #endif
 
 #ifndef IS_LOWER
@@ -169,8 +155,9 @@ ASCII:
 #endif
 
 #ifndef MAKE_FOURCC
-#define MAKE_FOURCC(a, b, c, d) \
-    (((uint32)d) | (((uint32)c) << 8) | (((uint32)b) << 16) | (((uint32)a) << 24))
+#define MAKE_FOURCC(a, b, c, d)                               \
+    (((uint32)d) | (((uint32)c) << 8) | (((uint32)b) << 16) | \
+     (((uint32)a) << 24))
 #endif
 
 #ifndef MAX
@@ -182,8 +169,8 @@ ASCII:
 #endif
 
 #ifndef LIMIT
-#define LIMIT(lower, v, upper) ((v) < (lower) ? (lower) : (v) > (upper) ? (upper) \
-                                                                        : (v))
+#define LIMIT(lower, v, upper) \
+    ((v) < (lower) ? (lower) : (v) > (upper) ? (upper) : (v))
 #endif
 
 #ifndef MAX_PATH
@@ -276,8 +263,7 @@ ASCII:
 #define STRINGCAT_HELPER(x, y) x##y
 
 #ifndef offsetof
-#define offsetof(type, member) \
-    ((size_t)(&((type*)0)->member))
+#define offsetof(type, member) ((size_t)(&((type*)0)->member))
 #endif
 
 #ifndef offsetofend
@@ -301,5 +287,16 @@ ASCII:
 #else
 #define printe(...)
 #endif
+
+/* We use kernel-style names for standard integer types. */
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
+typedef unsigned long long u64;
+
+typedef signed char s8;
+typedef signed short s16;
+typedef signed int s32;
+typedef signed long long s64;
 
 #endif  // !DEFS_H

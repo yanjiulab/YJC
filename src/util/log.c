@@ -150,9 +150,7 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
 
 /**
  * Looks up a message in a message list by key.
- *
  * If the message is not found, returns the provided error message.
- *
  * Terminates when it hits a struct message that's all zeros.
  *
  * @param mz the message list
@@ -169,5 +167,36 @@ const char *lookup_msg(const struct message *mz, int kz, const char *nf) {
             rz = pnt->str ? pnt->str : rz;
             break;
         }
+    return rz;
+}
+
+/**
+ * Looks up a message in a key sorted message list by key.
+ * If the message is not found, returns the provided error message.
+ *
+ * for message list size bigger than 10,000
+ * 
+ * @param mz the message list
+ * @param sz the message list size
+ * @param kz the message key
+ * @param nf the message to return if not found
+ * @return the message
+ */
+const char *bs_msg(const struct message *mz, int sz, int kz, const char *nf) {
+    const char *rz = nf ? nf : "(no message found)";
+    int l = 0, r = sz - 2;
+    int m;
+    while (l <= r) {
+        m = (l + r) / 2;
+        if ((mz + m)->key == kz) {
+            rz = (mz + m)->str ? (mz + m)->str : rz;
+            break;
+        } else if ((mz + m)->key > kz) {
+            r = m - 1;
+        } else {
+            l = m + 1;
+        }
+    }
+
     return rz;
 }

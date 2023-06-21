@@ -2,8 +2,8 @@
 #define __IP_ADDRESS_H__
 
 #include <netinet/in.h>
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 
 /* Length of output buffer for inet_ntop, plus prefix length (e.g. "/128"). */
 #define ADDR_STR_LEN ((INET_ADDRSTRLEN + INET6_ADDRSTRLEN) + 5)
@@ -17,6 +17,8 @@ struct ip_address {
         uint8_t bytes[16];
     } ip; /* IP address (network order) */
 };
+
+typedef struct ip_address ip_address_t;
 
 static inline void ip_reset(struct ip_address *ip) {
     memset(ip, 0, sizeof(*ip));
@@ -113,6 +115,10 @@ extern int get_ip_device(const struct ip_address *ip, char *dev_name);
 
 /* Convert dotted decimal netmask to equivalent CIDR prefix length */
 extern int netmask_to_prefix(const char *netmask);
+
+bool is_ipv4(const char* host);
+bool is_ipv6(const char* host);
+bool is_ipaddr(const char* host);
 
 void generate_random_ipv4_addr(char *result, const char *base,
                                const char *netmask);

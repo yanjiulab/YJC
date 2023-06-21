@@ -49,10 +49,6 @@ typedef union {
 #endif
 } sockaddr_u;
 
-bool is_ipv4(const char* host);
-bool is_ipv6(const char* host);
-bool is_ipaddr(const char* host);
-
 // @param host: domain or ip
 // @retval 0:succeed
 int ResolveAddr(const char* host, sockaddr_u* addr);

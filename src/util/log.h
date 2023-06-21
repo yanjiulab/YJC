@@ -25,7 +25,7 @@ typedef struct {
     int level;
 } log_Event;
 
-/* Message structure. */
+/* Message structure used by user */
 struct message {
     int key;
     const char *str;

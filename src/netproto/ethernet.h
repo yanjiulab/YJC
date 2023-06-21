@@ -27,10 +27,10 @@ typedef struct ethhdr ethernet_t;
 /* Ethernet address. */
 typedef struct ether_addr ether_addr_t;
 
-static inline void ether_addr_copy(void *dst, const void *src) {
+static inline void ether_copy(void *dst, const void *src) {
     memcpy(dst, src, sizeof(ether_addr_t));
 }
-void ether_addr_from_string(const char *str, ether_addr_t *ether);
-char *ether_addr_to_string(ether_addr_t *ether, const char *str);
+void ether_from_string(const char *str, ether_addr_t *ether);
+char *ether_to_string(ether_addr_t *ether, const char *str);
 
 #endif /* __ETHERNET_H__ */

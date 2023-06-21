@@ -311,6 +311,18 @@ int is_ip_local(const struct ip_address *ip) {
     return get_ip_device(ip, dev_name);
 }
 
+bool is_ipv4(const char* host) {
+    struct sockaddr_in sin;
+    return inet_pton(AF_INET, host, &sin) == 1;
+}
+
+bool is_ipv6(const char* host) {
+    struct sockaddr_in6 sin6;
+    return inet_pton(AF_INET6, host, &sin6) == 1;
+}
+
+bool is_ipaddr(const char* host) { return is_ipv4(host) || is_ipv6(host); }
+
 int netmask_to_prefix(const char *netmask) {
     int pos;
     struct ip_address mask = ipv4_parse(netmask);
