@@ -14,4 +14,4 @@ int netlink_request_route_add(struct netlink_socket *nlsock, int type,
                               int default_gw, int ifidx);
 int netlink_request_macs(struct netlink_socket *nlsock, int family, int type);
 
-#endif 
+#endif

@@ -153,14 +153,24 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
  * If the message is not found, returns the provided error message.
  * Terminates when it hits a struct message that's all zeros.
  *
+ * Example:
+ * static const struct message rip_msg[] = {{RIP_REQUEST, "REQUEST"},
+                     {RIP_RESPONSE, "RESPONSE"},
+                     {RIP_TRACEON, "TRACEON"},
+                     {RIP_TRACEOFF, "TRACEOFF"},
+                     {RIP_POLL, "POLL"},
+                     {RIP_POLL_ENTRY, "POLL ENTRY"},
+                     {0}};
+    ...
+    command_str = lookup_msg(rip_msg, RIP_REQUEST);
+ *
  * @param mz the message list
  * @param kz the message key
- * @param nf the message to return if not found
  * @return the message
  */
-const char *lookup_msg(const struct message *mz, int kz, const char *nf) {
+const char *lookup_msg(const struct message *mz, int kz) {
     static struct message nt = {0};
-    const char *rz = nf ? nf : "(no message found)";
+    const char *rz = "(no message found)";
     const struct message *pnt;
     for (pnt = mz; memcmp(pnt, &nt, sizeof(struct message)); pnt++)
         if (pnt->key == kz) {
@@ -175,7 +185,7 @@ const char *lookup_msg(const struct message *mz, int kz, const char *nf) {
  * If the message is not found, returns the provided error message.
  *
  * for message list size bigger than 10,000
- * 
+ *
  * @param mz the message list
  * @param sz the message list size
  * @param kz the message key

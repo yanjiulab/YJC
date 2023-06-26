@@ -261,183 +261,183 @@ const char *nlmsg_type2str(uint16_t type) {
     }
 }
 
-const char *nlmsg_flags2str(uint16_t flags, char *buf, size_t buflen)
-{
-	const char *bufp = buf;
+// const char *nlmsg_flags2str(uint16_t flags, char *buf, size_t buflen)
+// {
+// 	const char *bufp = buf;
 
-	*buf = 0;
-	/* Specific flags. */
-	flag_write(flags, NLM_F_REQUEST, "REQUEST", buf, buflen);
-	flag_write(flags, NLM_F_MULTI, "MULTI", buf, buflen);
-	flag_write(flags, NLM_F_ACK, "ACK", buf, buflen);
-	flag_write(flags, NLM_F_ECHO, "ECHO", buf, buflen);
-	flag_write(flags, NLM_F_DUMP, "DUMP", buf, buflen);
+// 	*buf = 0;
+// 	/* Specific flags. */
+// 	flag_write(flags, NLM_F_REQUEST, "REQUEST", buf, buflen);
+// 	flag_write(flags, NLM_F_MULTI, "MULTI", buf, buflen);
+// 	flag_write(flags, NLM_F_ACK, "ACK", buf, buflen);
+// 	flag_write(flags, NLM_F_ECHO, "ECHO", buf, buflen);
+// 	flag_write(flags, NLM_F_DUMP, "DUMP", buf, buflen);
 
-	/* Netlink family type dependent. */
-	flag_write(flags, 0x0100, "(ROOT|REPLACE|CAPPED)", buf, buflen);
-	flag_write(flags, 0x0200, "(MATCH|EXCLUDE|ACK_TLVS)", buf, buflen);
-	flag_write(flags, 0x0400, "(ATOMIC|CREATE)", buf, buflen);
-	flag_write(flags, 0x0800, "(DUMP|APPEND)", buf, buflen);
+// 	/* Netlink family type dependent. */
+// 	flag_write(flags, 0x0100, "(ROOT|REPLACE|CAPPED)", buf, buflen);
+// 	flag_write(flags, 0x0200, "(MATCH|EXCLUDE|ACK_TLVS)", buf, buflen);
+// 	flag_write(flags, 0x0400, "(ATOMIC|CREATE)", buf, buflen);
+// 	flag_write(flags, 0x0800, "(DUMP|APPEND)", buf, buflen);
 
-	return (bufp);
-}
+// 	return (bufp);
+// }
 
-void netlink_dump(void *msg, size_t msglen) {
-    struct nlmsghdr *nlmsg = msg;
-    struct nlmsgerr *nlmsgerr;
-    struct rtgenmsg *rtgen;
-    struct ifaddrmsg *ifa;
-    struct ndmsg *ndm;
-    struct rtmsg *rtm;
-    // struct nhmsg *nhm;
-    // struct netconfmsg *ncm;
-    struct ifinfomsg *ifi;
-    // struct tunnel_msg *tnlm;
-    // struct fib_rule_hdr *frh;
-    char fbuf[128];
-    char ibuf[128];
+// void netlink_dump(void *msg, size_t msglen) {
+//     struct nlmsghdr *nlmsg = msg;
+//     struct nlmsgerr *nlmsgerr;
+//     struct rtgenmsg *rtgen;
+//     struct ifaddrmsg *ifa;
+//     struct ndmsg *ndm;
+//     struct rtmsg *rtm;
+//     // struct nhmsg *nhm;
+//     // struct netconfmsg *ncm;
+//     struct ifinfomsg *ifi;
+//     // struct tunnel_msg *tnlm;
+//     // struct fib_rule_hdr *frh;
+//     char fbuf[128];
+//     char ibuf[128];
 
-next_header:
-    log_debug(
-        "nlmsghdr [len=%u type=(%d) %s flags=(0x%04x) {%s} seq=%u pid=%u]",
-        nlmsg->nlmsg_len, nlmsg->nlmsg_type, nlmsg_type2str(nlmsg->nlmsg_type),
-        nlmsg->nlmsg_flags,
-        nlmsg_flags2str(nlmsg->nlmsg_flags, fbuf, sizeof(fbuf)),
-        nlmsg->nlmsg_seq, nlmsg->nlmsg_pid);
+// next_header:
+//     log_debug(
+//         "nlmsghdr [len=%u type=(%d) %s flags=(0x%04x) {%s} seq=%u pid=%u]",
+//         nlmsg->nlmsg_len, nlmsg->nlmsg_type, nlmsg_type2str(nlmsg->nlmsg_type),
+//         nlmsg->nlmsg_flags,
+//         nlmsg_flags2str(nlmsg->nlmsg_flags, fbuf, sizeof(fbuf)),
+//         nlmsg->nlmsg_seq, nlmsg->nlmsg_pid);
 
-    switch (nlmsg->nlmsg_type) {
-        /* Generic. */
-        case NLMSG_NOOP:
-            break;
-        case NLMSG_ERROR:
-            nlmsgerr = NLMSG_DATA(nlmsg);
-            log_debug("  nlmsgerr [error=(%d) %s]", nlmsgerr->error,
-                       strerror(-nlmsgerr->error));
-            break;
-        case NLMSG_DONE:
-            return;
-        case NLMSG_OVERRUN:
-            break;
+//     switch (nlmsg->nlmsg_type) {
+//         /* Generic. */
+//         case NLMSG_NOOP:
+//             break;
+//         case NLMSG_ERROR:
+//             nlmsgerr = NLMSG_DATA(nlmsg);
+//             log_debug("  nlmsgerr [error=(%d) %s]", nlmsgerr->error,
+//                        strerror(-nlmsgerr->error));
+//             break;
+//         case NLMSG_DONE:
+//             return;
+//         case NLMSG_OVERRUN:
+//             break;
 
-        /* RTM. */
-        case RTM_NEWLINK:
-        case RTM_DELLINK:
-        case RTM_SETLINK:
-            ifi = NLMSG_DATA(nlmsg);
-            log_debug(
-                "  ifinfomsg [family=%d type=(%d) %s index=%d flags=0x%04x "
-                "{%s}]",
-                ifi->ifi_family, ifi->ifi_type, ifi_type2str(ifi->ifi_type),
-                ifi->ifi_index, ifi->ifi_flags,
-                if_flags2str(ifi->ifi_flags, ibuf, sizeof(ibuf)));
-            nllink_dump(ifi, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi)));
-            break;
-        case RTM_GETLINK:
-            rtgen = NLMSG_DATA(nlmsg);
-            log_debug("  rtgen [family=(%d) %s]", rtgen->rtgen_family,
-                       af_type2str(rtgen->rtgen_family));
-            break;
+//         /* RTM. */
+//         case RTM_NEWLINK:
+//         case RTM_DELLINK:
+//         case RTM_SETLINK:
+//             ifi = NLMSG_DATA(nlmsg);
+//             log_debug(
+//                 "  ifinfomsg [family=%d type=(%d) %s index=%d flags=0x%04x "
+//                 "{%s}]",
+//                 ifi->ifi_family, ifi->ifi_type, ifi_type2str(ifi->ifi_type),
+//                 ifi->ifi_index, ifi->ifi_flags,
+//                 if_flags2str(ifi->ifi_flags, ibuf, sizeof(ibuf)));
+//             nllink_dump(ifi, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifi)));
+//             break;
+//         case RTM_GETLINK:
+//             rtgen = NLMSG_DATA(nlmsg);
+//             log_debug("  rtgen [family=(%d) %s]", rtgen->rtgen_family,
+//                        af_type2str(rtgen->rtgen_family));
+//             break;
 
-        case RTM_NEWROUTE:
-        case RTM_DELROUTE:
-        case RTM_GETROUTE:
-            rtm = NLMSG_DATA(nlmsg);
-            log_debug(
-                "  rtmsg [family=(%d) %s dstlen=%d srclen=%d tos=%d table=%d "
-                "protocol=(%d) %s scope=(%d) %s type=(%d) %s flags=0x%04x "
-                "{%s}]",
-                rtm->rtm_family, af_type2str(rtm->rtm_family), rtm->rtm_dst_len,
-                rtm->rtm_src_len, rtm->rtm_tos, rtm->rtm_table,
-                rtm->rtm_protocol, rtm_protocol2str(rtm->rtm_protocol),
-                rtm->rtm_scope, rtm_scope2str(rtm->rtm_scope), rtm->rtm_type,
-                rtm_type2str(rtm->rtm_type), rtm->rtm_flags,
-                rtm_flags2str(rtm->rtm_flags, fbuf, sizeof(fbuf)));
-            nlroute_dump(rtm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*rtm)));
-            break;
+//         case RTM_NEWROUTE:
+//         case RTM_DELROUTE:
+//         case RTM_GETROUTE:
+//             rtm = NLMSG_DATA(nlmsg);
+//             log_debug(
+//                 "  rtmsg [family=(%d) %s dstlen=%d srclen=%d tos=%d table=%d "
+//                 "protocol=(%d) %s scope=(%d) %s type=(%d) %s flags=0x%04x "
+//                 "{%s}]",
+//                 rtm->rtm_family, af_type2str(rtm->rtm_family), rtm->rtm_dst_len,
+//                 rtm->rtm_src_len, rtm->rtm_tos, rtm->rtm_table,
+//                 rtm->rtm_protocol, rtm_protocol2str(rtm->rtm_protocol),
+//                 rtm->rtm_scope, rtm_scope2str(rtm->rtm_scope), rtm->rtm_type,
+//                 rtm_type2str(rtm->rtm_type), rtm->rtm_flags,
+//                 rtm_flags2str(rtm->rtm_flags, fbuf, sizeof(fbuf)));
+//             nlroute_dump(rtm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*rtm)));
+//             break;
 
-        case RTM_NEWNEIGH:
-        case RTM_DELNEIGH:
-            ndm = NLMSG_DATA(nlmsg);
-            log_debug(
-                "  ndm [family=%d (%s) ifindex=%d state=0x%04x {%s} "
-                "flags=0x%04x {%s} type=%d (%s)]",
-                ndm->ndm_family, af_type2str(ndm->ndm_family), ndm->ndm_ifindex,
-                ndm->ndm_state,
-                neigh_state2str(ndm->ndm_state, ibuf, sizeof(ibuf)),
-                ndm->ndm_flags,
-                neigh_flags2str(ndm->ndm_flags, fbuf, sizeof(fbuf)),
-                ndm->ndm_type, rtm_type2str(ndm->ndm_type));
-            nlneigh_dump(ndm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ndm)));
-            break;
+//         case RTM_NEWNEIGH:
+//         case RTM_DELNEIGH:
+//             ndm = NLMSG_DATA(nlmsg);
+//             log_debug(
+//                 "  ndm [family=%d (%s) ifindex=%d state=0x%04x {%s} "
+//                 "flags=0x%04x {%s} type=%d (%s)]",
+//                 ndm->ndm_family, af_type2str(ndm->ndm_family), ndm->ndm_ifindex,
+//                 ndm->ndm_state,
+//                 neigh_state2str(ndm->ndm_state, ibuf, sizeof(ibuf)),
+//                 ndm->ndm_flags,
+//                 neigh_flags2str(ndm->ndm_flags, fbuf, sizeof(fbuf)),
+//                 ndm->ndm_type, rtm_type2str(ndm->ndm_type));
+//             nlneigh_dump(ndm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ndm)));
+//             break;
 
-        // case RTM_NEWRULE:
-        // case RTM_DELRULE:
-        //     frh = NLMSG_DATA(nlmsg);
-        //     log_debug(
-        //         "  frh [family=%d (%s) dst_len=%d src_len=%d tos=%d table=%d "
-        //         "res1=%d res2=%d action=%d (%s) flags=0x%x]",
-        //         frh->family, af_type2str(frh->family), frh->dst_len,
-        //         frh->src_len, frh->tos, frh->table, frh->res1, frh->res2,
-        //         frh->action, frh_action2str(frh->action), frh->flags);
-        //     nlrule_dump(frh, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*frh)));
-        //     break;
+//         // case RTM_NEWRULE:
+//         // case RTM_DELRULE:
+//         //     frh = NLMSG_DATA(nlmsg);
+//         //     log_debug(
+//         //         "  frh [family=%d (%s) dst_len=%d src_len=%d tos=%d table=%d "
+//         //         "res1=%d res2=%d action=%d (%s) flags=0x%x]",
+//         //         frh->family, af_type2str(frh->family), frh->dst_len,
+//         //         frh->src_len, frh->tos, frh->table, frh->res1, frh->res2,
+//         //         frh->action, frh_action2str(frh->action), frh->flags);
+//         //     nlrule_dump(frh, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*frh)));
+//         //     break;
 
-        case RTM_NEWADDR:
-        case RTM_DELADDR:
-            ifa = NLMSG_DATA(nlmsg);
-            log_debug(
-                "  ifa [family=(%d) %s prefixlen=%d flags=0x%04x {%s} scope=%d "
-                "index=%u]",
-                ifa->ifa_family, af_type2str(ifa->ifa_family),
-                ifa->ifa_prefixlen, ifa->ifa_flags,
-                if_flags2str(ifa->ifa_flags, fbuf, sizeof(fbuf)),
-                ifa->ifa_scope, ifa->ifa_index);
-            nlifa_dump(ifa, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
-            break;
+//         case RTM_NEWADDR:
+//         case RTM_DELADDR:
+//             ifa = NLMSG_DATA(nlmsg);
+//             log_debug(
+//                 "  ifa [family=(%d) %s prefixlen=%d flags=0x%04x {%s} scope=%d "
+//                 "index=%u]",
+//                 ifa->ifa_family, af_type2str(ifa->ifa_family),
+//                 ifa->ifa_prefixlen, ifa->ifa_flags,
+//                 if_flags2str(ifa->ifa_flags, fbuf, sizeof(fbuf)),
+//                 ifa->ifa_scope, ifa->ifa_index);
+//             nlifa_dump(ifa, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ifa)));
+//             break;
 
-        // case RTM_NEWNEXTHOP:
-        // case RTM_DELNEXTHOP:
-        // case RTM_GETNEXTHOP:
-        //     nhm = NLMSG_DATA(nlmsg);
-        //     log_debug(
-        //         "  nhm [family=(%d) %s scope=(%d) %s protocol=(%d) %s "
-        //         "flags=0x%08x {%s}]",
-        //         nhm->nh_family, af_type2str(nhm->nh_family), nhm->nh_scope,
-        //         rtm_scope2str(nhm->nh_scope), nhm->nh_protocol,
-        //         rtm_protocol2str(nhm->nh_protocol), nhm->nh_flags,
-        //         nh_flags2str(nhm->nh_flags, fbuf, sizeof(fbuf)));
-        //     nlnh_dump(nhm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*nhm)));
-        //     break;
+//         // case RTM_NEWNEXTHOP:
+//         // case RTM_DELNEXTHOP:
+//         // case RTM_GETNEXTHOP:
+//         //     nhm = NLMSG_DATA(nlmsg);
+//         //     log_debug(
+//         //         "  nhm [family=(%d) %s scope=(%d) %s protocol=(%d) %s "
+//         //         "flags=0x%08x {%s}]",
+//         //         nhm->nh_family, af_type2str(nhm->nh_family), nhm->nh_scope,
+//         //         rtm_scope2str(nhm->nh_scope), nhm->nh_protocol,
+//         //         rtm_protocol2str(nhm->nh_protocol), nhm->nh_flags,
+//         //         nh_flags2str(nhm->nh_flags, fbuf, sizeof(fbuf)));
+//         //     nlnh_dump(nhm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*nhm)));
+//         //     break;
 
-        // case RTM_NEWTUNNEL:
-        // case RTM_DELTUNNEL:
-        // case RTM_GETTUNNEL:
-        //     tnlm = NLMSG_DATA(nlmsg);
-        //     log_debug("  tnlm [family=(%d) %s ifindex=%d ", tnlm->family,
-        //                af_type2str(tnlm->family), tnlm->ifindex);
-        //     nltnl_dump(tnlm, nlmsg->nlmsg_len -
-        //                          NLMSG_LENGTH(sizeof(struct tunnel_msg)));
-        //     break;
+//         // case RTM_NEWTUNNEL:
+//         // case RTM_DELTUNNEL:
+//         // case RTM_GETTUNNEL:
+//         //     tnlm = NLMSG_DATA(nlmsg);
+//         //     log_debug("  tnlm [family=(%d) %s ifindex=%d ", tnlm->family,
+//         //                af_type2str(tnlm->family), tnlm->ifindex);
+//         //     nltnl_dump(tnlm, nlmsg->nlmsg_len -
+//         //                          NLMSG_LENGTH(sizeof(struct tunnel_msg)));
+//         //     break;
 
-        // case RTM_NEWNETCONF:
-        // case RTM_DELNETCONF:
-        //     ncm = NLMSG_DATA(nlmsg);
-        //     log_debug(" ncm [family=%s (%d)]", af_type2str(ncm->ncm_family),
-        //                ncm->ncm_family);
-        //     nlncm_dump(ncm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ncm)));
-        //     break;
+//         // case RTM_NEWNETCONF:
+//         // case RTM_DELNETCONF:
+//         //     ncm = NLMSG_DATA(nlmsg);
+//         //     log_debug(" ncm [family=%s (%d)]", af_type2str(ncm->ncm_family),
+//         //                ncm->ncm_family);
+//         //     nlncm_dump(ncm, nlmsg->nlmsg_len - NLMSG_LENGTH(sizeof(*ncm)));
+//         //     break;
 
-        default:
-            break;
-    }
+//         default:
+//             break;
+//     }
 
-    /*
-     * Try to get the next header. There should only be more
-     * messages if this header was flagged as MULTI, otherwise just
-     * end it here.
-     */
-    nlmsg = NLMSG_NEXT(nlmsg, msglen);
-    if (NLMSG_OK(nlmsg, msglen) == 0) return;
+//     /*
+//      * Try to get the next header. There should only be more
+//      * messages if this header was flagged as MULTI, otherwise just
+//      * end it here.
+//      */
+//     nlmsg = NLMSG_NEXT(nlmsg, msglen);
+//     if (NLMSG_OK(nlmsg, msglen) == 0) return;
 
-    goto next_header;
-}
+//     goto next_header;
+// }

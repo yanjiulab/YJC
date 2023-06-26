@@ -34,6 +34,7 @@ struct packet;
 /* The type of a header in a packet. */
 enum header_t {
     HEADER_NONE,
+    HEADER_ETH,
     HEADER_IPV4,
     HEADER_IPV6,
     HEADER_GRE,
@@ -45,6 +46,24 @@ enum header_t {
     HEADER_NUM_TYPES
 };
 
+/* Metadata about a header in a packet. We support multi-layer encapsulation. */
+struct header {
+    enum header_t type;    /* type of this header */
+    uint32_t header_bytes; /* length of this header */
+    uint32_t total_bytes;  /* length of header plus data inside */
+    union {
+        uint8_t *ptr; /* a pointer to the header bits */
+        struct ipv4 *ipv4;
+        struct ipv6 *ipv6;
+        struct gre *gre;
+        struct mpls *mpls;
+        struct tcp *tcp;
+        struct udp *udp;
+        struct icmpv4 *icmpv4;
+        struct icmpv6 *icmpv6;
+    } h;
+};
+
 /* ---------------------------- packet ---------------------------- */
 /* The directions in which a packet may flow. */
 enum direction_t {
@@ -54,7 +73,7 @@ enum direction_t {
 };
 
 /* Maximum number of headers. */
-#define PACKET_MAX_HEADERS	6
+#define PACKET_MAX_HEADERS 6
 
 /* TCP/UDP/IPv4 packet, including IPv4 header, TCP/UDP header, and data. There
  * may also be a link layer header between the 'buffer' and 'ip'
@@ -63,20 +82,20 @@ enum direction_t {
  * actual amount occupied by the packet data.
  */
 struct packet {
-    uint8_t *buffer;            /* data buffer: full contents of packet */
-    uint32_t buffer_bytes;      /* bytes of space in data buffer */
-    uint32_t l2_header_bytes;   /* bytes in outer hardware/layer-2 header */
-    uint32_t ip_bytes;          /* bytes in outermost IP hdrs/payload */
+    uint8_t *buffer;        /* data buffer: full contents of packet */
+    uint32_t buffer_bytes;  /* bytes of space in data buffer */
+    uint32_t buffer_active; /* bytes of active space in data buffer */
+    // uint32_t l2_header_bytes;   /* bytes in outer hardware/layer-2 header */
+    // uint32_t l2_data_bytes;     /* bytes in outermost IP hdrs/payload */
     enum direction_t direction; /* direction packet is traveling */
 
     /* Metadata about all the headers in the packet, including all
-	 * layers of encapsulation, from outer to inner, starting from
-	 * the outermost IP header at headers[0].
-	 */
-	// struct header headers[PACKET_MAX_HEADERS];
+     * layers of encapsulation, from outer to inner, starting from
+     * the outermost IP header at headers[0].
+     */
+    struct header headers[PACKET_MAX_HEADERS];
 
-    int64_t time_usecs;         /* wall time of receive/send if non-zero */
-
+    int64_t time_usecs; /* wall time of receive/send if non-zero */
 };
 
 /* A simple list of packets. */
@@ -99,6 +118,17 @@ extern void packet_free(struct packet *packet);
 
 /* Create a packet that is a copy of the contents of the given packet. */
 extern struct packet *packet_copy(struct packet *old_packet);
+
+/* Return the number of headers in the given packet. */
+extern int packet_header_count(const struct packet *packet);
+
+/* Attempt to append a new header to the given packet. Return a
+ * pointer to the new header metadata, or NULL if we can't add the
+ * header.
+ */
+extern struct header *packet_append_header(struct packet *packet,
+                                           enum header_t header_type,
+                                           int header_bytes);
 
 /* ---------------------------- packet dump ---------------------------- */
 

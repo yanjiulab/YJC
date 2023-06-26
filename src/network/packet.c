@@ -1,10 +1,13 @@
 #include "packet.h"
 
+#include "defs.h"
+#include "ethernet.h"
+#include "ip.h"
 /* ---------------------------- packet ---------------------------- */
 
 struct packet *packet_new(uint32_t buffer_bytes) {
     struct packet *packet = calloc(1, sizeof(struct packet));
-    packet->buffer = malloc(buffer_bytes);
+    packet->buffer = calloc(1, buffer_bytes);
     packet->buffer_bytes = buffer_bytes;
     return packet;
 }
@@ -31,10 +34,56 @@ void packet_list_free(struct packet_list *list) {
     }
 }
 
+int packet_header_count(const struct packet *packet) {
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(packet->headers); ++i) {
+        if (packet->headers[i].type == HEADER_NONE) break;
+    }
+    return i;
+}
+
+/* Convenience accessors for peeking around in the packet... */
+
+/* Return a pointer to the first byte of the outermost IP header. */
+static inline uint8_t *packet_start(const struct packet *packet) {
+    uint8_t *start = packet->buffer;
+    assert(start != NULL);
+    return start;
+}
+
+/* Return a pointer to the byte beyond the end of the packet. */
+static inline uint8_t *packet_end(const struct packet *packet) {
+    return packet_start(packet) + packet->buffer_active;
+}
+
+struct header *packet_append_header(struct packet *packet,
+                                    enum header_t header_type,
+                                    int header_bytes) {
+    struct header *header = NULL;
+    int num_headers;
+    int bytes_headers = 0;
+
+    for (num_headers = 0; num_headers < ARRAY_SIZE(packet->headers);
+         ++num_headers) {
+        if (packet->headers[num_headers].type == HEADER_NONE) break;
+        bytes_headers += packet->headers[num_headers].header_bytes;
+    }
+
+    assert(num_headers <= PACKET_MAX_HEADERS);
+    if (num_headers == PACKET_MAX_HEADERS) return NULL;
+
+    header = &packet->headers[num_headers];
+    header->h.ptr = packet->buffer + bytes_headers;
+    header->type = header_type;
+    header->header_bytes = header_bytes;
+    header->total_bytes = 0;
+    return header;
+}
 /* ---------------------------- packet dump ---------------------------- */
 static void packet_buffer_to_string(FILE *s, struct packet *packet) {
     char *hex = NULL;
-    hex_dump(packet->buffer, packet->buffer_bytes, &hex);
+    hex_dump(packet->buffer, packet->buffer_active, &hex);
     fputc('\n', s);
     fprintf(s, "%s", hex);
     free(hex);
@@ -47,7 +96,7 @@ int packet_to_string(struct packet *packet, enum dump_format_t format,
     size_t size = 0;
     FILE *s = open_memstream(ascii_string, &size); /* output string */
     int i;
-    
+
     packet_buffer_to_string(s, packet);
 
     // int header_count = packet_header_count(packet);

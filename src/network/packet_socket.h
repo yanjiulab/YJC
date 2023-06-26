@@ -37,7 +37,9 @@ extern void packet_socket_free(struct packet_socket *packet_socket);
 /* Do a blocking sniff (until timeout) of the next packet going over the given
  * device in the given direction, fill in the given packet with the sniffed
  * packet info, and return the number of bytes in the packet in
- * *in_bytes. If we successfully read a matching packet, return
+ * *in_bytes. 
+ * 
+ * If we successfully read a matching packet, return
  * STATUS_OK; If we timed out, return STATUS_TIMEOUT;
  * else return STATUS_ERR (in which case the caller can
  * retry).

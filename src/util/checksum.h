@@ -14,6 +14,8 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
+#define array_size(a) (sizeof(a) / sizeof(*(a)))
+
 #ifdef __cplusplus
 extern "C" {
 #endif

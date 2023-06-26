@@ -61,7 +61,6 @@ static void packet_socket_setup(struct packet_socket *psock) {
 }
 
 struct packet_socket *packet_socket_new(const char *device_name) {
-    
     struct packet_socket *psock = calloc(1, sizeof(struct packet_socket));
 
     psock->name = strdup(device_name);
@@ -121,17 +120,15 @@ int packet_socket_receive(struct packet_socket *psock,
      * and expected_usecs_end computed in verify_time so we wait long
      * enough regardless of the packet time type.
      */
-
     struct timeval sock_timeout = {.tv_sec = timeout_secs, .tv_usec = 0};
-
     if (timeout_secs == TIMEOUT_NONE) sock_timeout.tv_sec = 0;
-
     setsockopt(psock->packet_fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout,
                sizeof(sock_timeout));
 
     /* Read the packet out of our kernel packet socket buffer. */
     *in_bytes = recvfrom(psock->packet_fd, packet->buffer, packet->buffer_bytes,
                          0, (struct sockaddr *)&from, &from_len);
+
     /* Set the socket back to its blocking state. */
     sock_timeout.tv_sec = 0;
     setsockopt(psock->packet_fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout,
@@ -151,14 +148,14 @@ int packet_socket_receive(struct packet_socket *psock,
         }
     }
 
-    /* We only want packets our kernel is sending out. */
     if (direction == DIRECTION_OUTBOUND &&
         from.sll_pkttype != PACKET_OUTGOING) {
-        log_debug("not outbound\n");
+        log_debug("not outbound (%d)", from.sll_pkttype);
         return STATUS_ERR;
     }
+
     if (direction == DIRECTION_INBOUND && from.sll_pkttype != PACKET_HOST) {
-        log_debug("not inbound\n");
+        log_debug("not inbound (%d)", from.sll_pkttype);
         return STATUS_ERR;
     }
 
@@ -168,7 +165,7 @@ int packet_socket_receive(struct packet_socket *psock,
      * device.
      */
     if (from.sll_ifindex != psock->index) {
-        log_debug("not correct index\n");
+        log_debug("not correct index (%d)", from.sll_ifindex);
         return STATUS_ERR;
     }
 
@@ -178,9 +175,14 @@ int packet_socket_receive(struct packet_socket *psock,
         perror("SIOCGSTAMP");
         exit(EXIT_FAILURE);
     }
-    // packet->time_usecs = timeval_to_usecs(&tv);
-    log_debug("sniffed packet sent at %u.%u = %lld", tv.tv_sec, tv.tv_usec,
-              packet->time_usecs);
+
+    if (from.sll_pkttype == PACKET_OUTGOING) {
+        log_debug("sniffed %d bytes packet sent to ifindex %d at %u.%u ",
+                  *in_bytes, from.sll_ifindex, tv.tv_sec, tv.tv_usec);
+    } else {
+        log_debug("sniffed %d bytes packet received from ifindex %d at %u.%u",
+                  *in_bytes, from.sll_ifindex, tv.tv_sec, tv.tv_usec);
+    }
 
     return STATUS_OK;
 }

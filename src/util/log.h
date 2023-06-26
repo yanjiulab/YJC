@@ -25,12 +25,6 @@ typedef struct {
     int level;
 } log_Event;
 
-/* Message structure used by user */
-struct message {
-    int key;
-    const char *str;
-};
-
 typedef void (*log_LogFn)(log_Event *ev);
 typedef void (*log_LockFn)(bool lock, void *udata);
 
@@ -51,7 +45,12 @@ int log_add_callback(log_LogFn fn, void *udata, int level);
 int log_add_fp(FILE *fp, int level);
 void log_log(int level, const char *file, int line, const char *fmt, ...);
 
-const char *lookup_msg(const struct message *mz, int kz, const char *nf);
+/* Message structure used by user */
+struct message {
+    int key;
+    const char *str;
+};
 
+const char *lookup_msg(const struct message *mz, int kz);
 
 #endif

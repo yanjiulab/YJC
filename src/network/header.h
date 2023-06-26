@@ -31,35 +31,35 @@ enum header_t {
 };
 
 /* Metadata about a header in a packet. We support multi-layer encapsulation. */
-struct header {
-    enum header_t type; /* type of this header */
-    u32 header_bytes;   /* length of this header */
-    u32 total_bytes;    /* length of header plus data inside */
-    union {
-        u8 *ptr; /* a pointer to the header bits */
-        struct ipv4 *ipv4;
-        struct ipv6 *ipv6;
-        struct gre *gre;
-        struct mpls *mpls;
-        struct tcp *tcp;
-        struct udp *udp;
-        struct icmpv4 *icmpv4;
-        struct icmpv6 *icmpv6;
-    } h;
-};
+// struct header {
+//     enum header_t type; /* type of this header */
+//     uint32_t header_bytes;   /* length of this header */
+//     uint32_t total_bytes;    /* length of header plus data inside */
+//     union {
+//         uint8_t *ptr; /* a pointer to the header bits */
+//         struct ipv4 *ipv4;
+//         struct ipv6 *ipv6;
+//         struct gre *gre;
+//         struct mpls *mpls;
+//         struct tcp *tcp;
+//         struct udp *udp;
+//         struct icmpv4 *icmpv4;
+//         struct icmpv6 *icmpv6;
+//     } h;
+// };
 
-/* Info for a particular type of header. */
-struct header_type_info {
-    const char *name; /* human-readable protocol name */
-    u8 ip_proto;      /* IP protocol code */
-    u16 eth_proto;    /* Ethernet protocol code */
+// /* Info for a particular type of header. */
+// struct header_type_info {
+//     const char *name; /* human-readable protocol name */
+//     u8 ip_proto;      /* IP protocol code */
+//     u16 eth_proto;    /* Ethernet protocol code */
 
-    /* Call this to finalize the header once we know what's inside... */
-    int (*finish)(struct packet *packet, struct header *header,
-                  struct header *next_inner);
-};
+//     /* Call this to finalize the header once we know what's inside... */
+//     int (*finish)(struct packet *packet, struct header *header,
+//                   struct header *next_inner);
+// };
 
-/* Return the info for the given type of header. */
-extern struct header_type_info *header_type_info(enum header_t header_type);
+// /* Return the info for the given type of header. */
+// extern struct header_type_info *header_type_info(enum header_t header_type);
 
 #endif /* __HEADER_H__ */
