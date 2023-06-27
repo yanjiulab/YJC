@@ -28,9 +28,34 @@ static int parse_ipv6(struct packet *packet, uint8_t *header_start,
 static int parse_layer3_packet_by_proto(struct packet *packet, uint16_t proto,
                                         uint8_t *header_start,
                                         uint8_t *packet_end, char **error);
-// static int parse_layer4(struct packet *packet, uint8_t *header_start,
-//                         int layer4_protocol, int layer4_bytes, uint8_t
-//                         *packet_end, char **error);
+
+static int parse_layer4(struct packet *packet, u8 *layer4_start,
+                        int layer4_protocol, int layer4_bytes, u8 *packet_end,
+                        char **error) {
+    if (layer4_protocol == IPPROTO_TCP) {
+        // return parse_tcp(packet, layer4_start, layer4_bytes, packet_end,
+        // error);
+    } else if (layer4_protocol == IPPROTO_UDP) {
+        // return parse_udp(packet, layer4_start, layer4_bytes, packet_end,
+        // error);
+    } else if (layer4_protocol == IPPROTO_ICMP) {
+        // return parse_icmpv4(packet, layer4_start, layer4_bytes, packet_end,
+        //                     error);
+    } else if (layer4_protocol == IPPROTO_ICMPV6) {
+        // return parse_icmpv6(packet, layer4_start, layer4_bytes, packet_end,
+        //                     error);
+    } else if (layer4_protocol == IPPROTO_GRE) {
+        // return parse_gre(packet, layer4_start, layer4_bytes, packet_end,
+        // error);
+    } else if (layer4_protocol == IPPROTO_IPIP) {
+        // return parse_ipv4(packet, layer4_start, packet_end, error);
+    } else if (layer4_protocol == IPPROTO_IPV6) {
+        // return parse_ipv6(packet, layer4_start, packet_end, error);
+    }
+
+    asprintf(error, "Unknown layer4 packet");
+    return PACKET_UNKNOWN_L4;
+}
 
 static int parse_layer2_packet(struct packet *packet, uint8_t *header_start,
                                uint8_t *packet_end, char **error) {
@@ -151,13 +176,14 @@ int parse_packet(struct packet *packet, int in_bytes, enum packet_layer_t layer,
     else
         assert(!"bad layer");
 
-    if (result != PACKET_BAD) return result;
+    // if (result != PACKET_BAD) return result;
+    
+    if (result == PACKET_OK) return result;
 
     /* Error. Add a packet hex dump to the error string we're returning. */
     hex_dump(packet->buffer, in_bytes, &hex);
     message = *error;
     asprintf(error, "%s: packet of %d bytes:\n%s", message, in_bytes, hex);
-    printf("%s", *error);
     free(message);
     free(hex);
 
@@ -235,8 +261,8 @@ static int parse_ipv4(struct packet *packet, uint8_t *header_start,
     /* Examine the L4 header. */
     const int layer4_bytes = ip_total_bytes - ip_header_bytes;
     const int layer4_protocol = ipv4->protocol;
-    // result = parse_layer4(packet, p, layer4_protocol, layer4_bytes, packet_end,
-    //                       error);
+    result = parse_layer4(packet, p, layer4_protocol, layer4_bytes, packet_end,
+                          error);
 
     // /* If this is the innermost L3 header then this is the primary. */
     // if (!packet->ipv4 && !packet->ipv6) packet->ipv4 = ipv4;
@@ -289,7 +315,7 @@ static int parse_ipv6(struct packet *packet, uint8_t *header_start,
     p += ip_header_bytes;
     assert(p <= packet_end);
 
-     {
+    {
         char src_string[ADDR_STR_LEN];
         char dst_string[ADDR_STR_LEN];
         struct ip_address src_ip, dst_ip;
@@ -302,7 +328,8 @@ static int parse_ipv6(struct packet *packet, uint8_t *header_start,
     /* Examine the L4 header. */
     const int layer4_bytes = ip_total_bytes - ip_header_bytes;
     const int layer4_protocol = ipv6->next_header;
-    // result = parse_layer4(packet, p, layer4_protocol, layer4_bytes, packet_end,
+    // result = parse_layer4(packet, p, layer4_protocol, layer4_bytes,
+    // packet_end,
     //                       error);
 
     // /* If this is the innermost L3 header then this is the primary. */

@@ -37,15 +37,13 @@ void test_packet_socket() {
 
         result = parse_packet(packet, in_bytes, layer, &error);
         // if (result == PACKET_OK) {
-            packet_stringify(packet, DUMP_FULL, &dump, &error);
-            printf("dump = '%s'\n", dump);
+            // packet_stringify(packet, DUMP_FULL, &dump, &error);
+            // printf("dump = '%s'\n", dump);
         // }
 
         packet_free(packet);
         packet = NULL;
 
-        if (result == PACKET_BAD) continue;
-
-        log_debug("parse_result:%d; error parsing packet: %s", result, error);
+        log_debug("parse_result: %d, %s", result, error);
     }
 }
