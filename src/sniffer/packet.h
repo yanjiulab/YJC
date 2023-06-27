@@ -18,43 +18,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-/* ---------------------------- packet header ---------------------------- */
-struct packet;
+#include "packet_header.h"
 
-/* The type of a header in a packet. */
-enum header_t {
-    HEADER_NONE,
-    HEADER_ETH,
-    HEADER_IPV4,
-    HEADER_IPV6,
-    HEADER_GRE,
-    HEADER_MPLS,
-    HEADER_TCP,
-    HEADER_UDP,
-    HEADER_ICMPV4,
-    HEADER_ICMPV6,
-    HEADER_NUM_TYPES
-};
-
-/* Metadata about a header in a packet. We support multi-layer encapsulation. */
-struct header {
-    enum header_t type;    /* type of this header */
-    uint32_t header_bytes; /* length of this header */
-    uint32_t total_bytes;  /* length of header plus data inside */
-    union {
-        uint8_t *ptr; /* a pointer to the header bits */
-        struct ipv4 *ipv4;
-        struct ipv6 *ipv6;
-        struct gre *gre;
-        struct mpls *mpls;
-        struct tcp *tcp;
-        struct udp *udp;
-        struct icmpv4 *icmpv4;
-        struct icmpv6 *icmpv6;
-    } h;
-};
-
-/* ---------------------------- packet ---------------------------- */
 /* The directions in which a packet may flow. */
 enum direction_t {
     DIRECTION_INVALID,
@@ -119,26 +84,5 @@ extern int packet_header_count(const struct packet *packet);
 extern struct header *packet_append_header(struct packet *packet,
                                            enum header_t header_type,
                                            int header_bytes);
-
-/* ---------------------------- packet dump ---------------------------- */
-
-enum dump_format_t {
-    DUMP_SHORT,   /* brief format used in scripts */
-    DUMP_FULL,    /* add local and remote address and port */
-    DUMP_VERBOSE, /* add hex dump */
-};
-
-/* Returns in *ascii_string a human-readable representation of the
- * packet 'packet'. Returns STATUS_OK on success; on failure returns
- * STATUS_ERR and sets error message.
- */
-extern int packet_to_string(struct packet *packet, enum dump_format_t format,
-                            char **ascii_string, char **error);
-extern char *to_printable_string(const char *in, int in_len);
-extern void hex_dump(const uint8_t *buffer, int bytes, char **hex);
-
-/* ---------------------------- packet parse ---------------------------- */
-
-/* ---------------------------- packet generate ---------------------------- */
 
 #endif

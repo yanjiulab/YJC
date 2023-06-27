@@ -12,7 +12,6 @@ platform.h|
 export.h|
 types.h|常用类型|变量以t结尾
 
-
 ## network
 
 `network` 为网络编程基础库
@@ -50,6 +49,15 @@ arp.h|ARP表相关|
 ## sniffer
 
 `sniffer` 为网络数据包嗅探库，主要包括网卡数据包接收（基于 Linux packet socket）、协议解析、数据包处理；
+
+头文件 | 名称 | 说明
+:---:|:---:|:---:
+`packet.h`|数据包结构|定义数据包 metadata
+`packet_socket.h`|链路层套接字操作|嗅探基本机制，提供过滤机制
+`packet_header.h`|数据包头文件集合|定义或引用常用协议的包头定义
+`packet_parser.h`|数据包解析|字节->结构体
+`packet_stringify.h`|数据包字符串化|结构体->字符串
+`packet_generator.h`|数据包构造|根据 API 构造或根据特定字符串语法构造
 
 TODO：支持自定义协议热挂载。
 

@@ -19,8 +19,6 @@
 
 #include "socket.h"
 
-
-
 //-----------------------------headers----------------------------------------------
 typedef struct ethhdr ethhdr_t;
 typedef struct arphdr arphdr_t;
