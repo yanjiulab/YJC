@@ -7,7 +7,7 @@
 #include <sys/socket.h>
 
 #include "ini.h"
-#include "inet.h"
+#include "net_utils.h"
 #include "proto.h"
 #include "socket.h"
 #include "str.h"

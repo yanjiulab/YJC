@@ -25,7 +25,7 @@
 
 #include "base.h"
 #include "eventloop.h"
-#include "inet.h"
+#include "net_utils.h"
 #include "ini.h"
 #include "log.h"
 #include "socket.h"

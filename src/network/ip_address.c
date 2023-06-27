@@ -36,6 +36,7 @@
 
 #include "log.h"
 #include "packet.h"
+#include "defs.h"
 
 /* IPv6 prefix for IPv4-mapped addresses. These are in the
  * ::FFFF:0:0/96 space, i.e. 10 bytes of 0x00 and 2 bytes of 0xFF. See

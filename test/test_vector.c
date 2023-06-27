@@ -1,4 +1,4 @@
-#include "inet.h"
+#include "net_utils.h"
 #include "log.h"
 #include "test.h"
 #include "vector.h"

@@ -1,4 +1,4 @@
-#include "inet.h"
+#include "net_utils.h"
 #define HDRSTR_VERBOSE 1
 char buf[HDRSTRLEN];
 
@@ -9,13 +9,18 @@ char* ethhdr_str(ethhdr_t* eth) {
             "    |-Destination : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n"
             "    |-Source      : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n"
             "    |-Type        : %s (0x%.4x)\n",
-            eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5],
-            eth->h_source[0], eth->h_source[1], eth->h_source[2], eth->h_source[3], eth->h_source[4], eth->h_source[5],
-            "IPv4", ntohs((unsigned short)eth->h_proto));
+            eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3],
+            eth->h_dest[4], eth->h_dest[5], eth->h_source[0], eth->h_source[1],
+            eth->h_source[2], eth->h_source[3], eth->h_source[4],
+            eth->h_source[5], "IPv4", ntohs((unsigned short)eth->h_proto));
 #else
-    sprintf(buf, "+ Ethernet II, %.2X-%.2X-%.2X-%.2X-%.2X-%.2X -> %.2X-%.2X-%.2X-%.2X-%.2X-%.2X (0x%.4x)\n",
-            eth->h_source[0], eth->h_source[1], eth->h_source[2], eth->h_source[3], eth->h_source[4], eth->h_source[5],
-            eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3], eth->h_dest[4], eth->h_dest[5],
+    sprintf(buf,
+            "+ Ethernet II, %.2X-%.2X-%.2X-%.2X-%.2X-%.2X -> "
+            "%.2X-%.2X-%.2X-%.2X-%.2X-%.2X (0x%.4x)\n",
+            eth->h_source[0], eth->h_source[1], eth->h_source[2],
+            eth->h_source[3], eth->h_source[4], eth->h_source[5],
+            eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3],
+            eth->h_dest[4], eth->h_dest[5],
             ntohs((unsigned short)eth->h_proto));
 #endif
     return buf;
@@ -44,12 +49,14 @@ char* iphdr_str(struct iphdr* iph) {
             "    |-Checksum         : %d\n"
             "    |-Source IP        : %s\n"
             "    |-Destination IP   : %s\n",
-            (unsigned int)iph->version, (unsigned int)((iph->ihl) * 4), (unsigned int)iph->tos, ntohs(iph->tot_len),
-            ntohs(iph->id), ntohs(iph->frag_off), (unsigned int)iph->ttl, (unsigned int)iph->protocol,
-            ntohs(iph->check), inet_itoa_n(iph->saddr), inet_itoa_n(iph->daddr));
+            (unsigned int)iph->version, (unsigned int)((iph->ihl) * 4),
+            (unsigned int)iph->tos, ntohs(iph->tot_len), ntohs(iph->id),
+            ntohs(iph->frag_off), (unsigned int)iph->ttl,
+            (unsigned int)iph->protocol, ntohs(iph->check),
+            inet_itoa_n(iph->saddr), inet_itoa_n(iph->daddr));
 #else
-    sprintf(buf, "+ IPv4, %s -> %s (0x%.2x)\n", inet_itoa_n(iph->saddr), inet_itoa_n(iph->daddr),
-            (unsigned int)iph->protocol);
+    sprintf(buf, "+ IPv4, %s -> %s (0x%.2x)\n", inet_itoa_n(iph->saddr),
+            inet_itoa_n(iph->daddr), (unsigned int)iph->protocol);
 #endif
     return buf;
 }
@@ -62,7 +69,8 @@ char* udphdr_str(udphdr_t* udph) {
             "    |-Destination Port : %d\n"
             "    |-Length           : %d\n"
             "    |-Checksum         : %d\n",
-            ntohs(udph->source), ntohs(udph->dest), ntohs(udph->len), ntohs(udph->check));
+            ntohs(udph->source), ntohs(udph->dest), ntohs(udph->len),
+            ntohs(udph->check));
 #else
     sprintf(buf, "+ UDP, %d -> %d\n", ntohs(udph->source), ntohs(udph->dest));
 #endif

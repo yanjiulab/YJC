@@ -1,6 +1,6 @@
 #include "name.h"
 
-#include "inet.h"
+#include "net_utils.h"
 #include "socket.h"
 
 struct addrinfo *host_serv(const char *host, const char *serv, int family, int socktype) {

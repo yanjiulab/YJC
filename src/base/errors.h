@@ -15,6 +15,13 @@ void err_sys(const char *fmt, ...);
 void err_msg(const char *fmt, ...);
 void err_quit(const char *fmt, ...);
 
+#define assert(expr)                                                      \
+    do {                                                                  \
+        if (!(expr))                                                      \
+            err_quit("assertion %s failed at %s line %d", __STRING(expr), \
+                     __FILE__, __LINE__);                                 \
+    } while (0)
+
 #ifndef SYS_NERR
 #define SYS_NERR 133
 #endif
@@ -88,22 +95,23 @@ void err_quit(const char *fmt, ...);
     F(-1021, GETSOCKOPT, "getsockopt() error")
 
 // grpc [4xxx]
-#define FOREACH_ERR_GRPC(F)                                                      \
-    F(4000, GRPC_FIRST, "grpc no error")                                         \
-    F(4001, GRPC_STATUS_CANCELLED, "grpc status: cancelled")                     \
-    F(4002, GRPC_STATUS_UNKNOWN, "grpc unknown error")                           \
-    F(4003, GRPC_STATUS_INVALID_ARGUMENT, "grpc status: invalid argument")       \
-    F(4004, GRPC_STATUS_DEADLINE, "grpc status: deadline")                       \
-    F(4005, GRPC_STATUS_NOT_FOUND, "grpc status: not found")                     \
-    F(4006, GRPC_STATUS_ALREADY_EXISTS, "grpc status: already exists")           \
-    F(4007, GRPC_STATUS_PERMISSION_DENIED, "grpc status: permission denied")     \
-    F(4008, GRPC_STATUS_RESOURCE_EXHAUSTED, "grpc status: resource exhausted")   \
-    F(4009, GRPC_STATUS_FAILED_PRECONDITION, "grpc status: failed precondition") \
-    F(4010, GRPC_STATUS_ABORTED, "grpc status: aborted")                         \
-    F(4011, GRPC_STATUS_OUT_OF_RANGE, "grpc status: out of range")               \
-    F(4012, GRPC_STATUS_UNIMPLEMENTED, "grpc status: unimplemented")             \
-    F(4013, GRPC_STATUS_INTERNAL, "grpc internal error")                         \
-    F(4014, GRPC_STATUS_UNAVAILABLE, "grpc service unavailable")                 \
+#define FOREACH_ERR_GRPC(F)                                                    \
+    F(4000, GRPC_FIRST, "grpc no error")                                       \
+    F(4001, GRPC_STATUS_CANCELLED, "grpc status: cancelled")                   \
+    F(4002, GRPC_STATUS_UNKNOWN, "grpc unknown error")                         \
+    F(4003, GRPC_STATUS_INVALID_ARGUMENT, "grpc status: invalid argument")     \
+    F(4004, GRPC_STATUS_DEADLINE, "grpc status: deadline")                     \
+    F(4005, GRPC_STATUS_NOT_FOUND, "grpc status: not found")                   \
+    F(4006, GRPC_STATUS_ALREADY_EXISTS, "grpc status: already exists")         \
+    F(4007, GRPC_STATUS_PERMISSION_DENIED, "grpc status: permission denied")   \
+    F(4008, GRPC_STATUS_RESOURCE_EXHAUSTED, "grpc status: resource exhausted") \
+    F(4009, GRPC_STATUS_FAILED_PRECONDITION,                                   \
+      "grpc status: failed precondition")                                      \
+    F(4010, GRPC_STATUS_ABORTED, "grpc status: aborted")                       \
+    F(4011, GRPC_STATUS_OUT_OF_RANGE, "grpc status: out of range")             \
+    F(4012, GRPC_STATUS_UNIMPLEMENTED, "grpc status: unimplemented")           \
+    F(4013, GRPC_STATUS_INTERNAL, "grpc internal error")                       \
+    F(4014, GRPC_STATUS_UNAVAILABLE, "grpc service unavailable")               \
     F(4015, GRPC_STATUS_DATA_LOSS, "grpc status: data loss")
 
 #define FOREACH_ERR(F)    \

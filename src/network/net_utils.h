@@ -1,5 +1,5 @@
-#ifndef INET_H_
-#define INET_H_
+#ifndef __NET_UTILS_H__
+#define __NET_UTILS_H__
 
 #include <arpa/inet.h>
 #include <net/if_arp.h>       // ARP
@@ -18,6 +18,9 @@
 #include <sys/un.h>
 
 #include "socket.h"
+
+
+
 //-----------------------------headers----------------------------------------------
 typedef struct ethhdr ethhdr_t;
 typedef struct arphdr arphdr_t;

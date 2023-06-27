@@ -11,7 +11,7 @@
 
 #include <net/if.h>
 #include "ethernet.h"
-#include "inet.h"
+#include "net_utils.h"
 #include "ip_address.h"
 #include "log.h"
 #include "socket.h"

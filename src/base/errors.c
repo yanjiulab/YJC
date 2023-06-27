@@ -27,7 +27,7 @@ void err_sys(const char *fmt, ...) {
     va_start(params, fmt);
     err_doit(1, fmt, params);
     va_end(params);
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 /**
@@ -55,7 +55,7 @@ void err_quit(const char *fmt, ...) {
     va_start(params, fmt);
     err_doit(0, fmt, params);
     va_end(params);
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 static void err_doit(int errnoflag, const char *fmt, va_list params) {

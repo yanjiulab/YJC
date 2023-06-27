@@ -4,7 +4,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "errors.h"
+#include "export.h"
 #include "platform.h"
+#include "types.h"
 
 #ifndef ABS
 #define ABS(n) ((n) > 0 ? (n) : -(n))
@@ -287,16 +290,5 @@ ASCII:
 #else
 #define printe(...)
 #endif
-
-/* We use kernel-style names for standard integer types. */
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
-
-typedef signed char s8;
-typedef signed short s16;
-typedef signed int s32;
-typedef signed long long s64;
 
 #endif  // !DEFS_H

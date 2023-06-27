@@ -18,16 +18,6 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-/* Most functions in this codebase return one of these two values to let the
- * caller know whether there was a problem.
- */
-enum status_t {
-    STATUS_OK = 0,
-    STATUS_ERR = -1,
-    STATUS_WARN = -2,   /* a non-fatal error or warning */
-    STATUS_TIMEOUT = -3 /* timeout sniffing outbound packet */
-};
-
 /* ---------------------------- packet header ---------------------------- */
 struct packet;
 
