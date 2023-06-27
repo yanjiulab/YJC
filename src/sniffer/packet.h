@@ -27,8 +27,20 @@ enum direction_t {
     DIRECTION_OUTBOUND, /* packet leaving the kernel under test */
 };
 
+/* What layer of headers is at the head of the packet? */
+enum packet_layer_t {
+    PACKET_LAYER_3_IP = 0,   /* no layer 2 headers */
+    PACKET_LAYER_2_ETHERNET, /* layer 2 is Ethernet */
+};
+
 /* Maximum number of headers. */
 #define PACKET_MAX_HEADERS 6
+
+/* We allow reading pretty big packets, since some interface MTUs can
+ * be pretty big (the Linux loopback MTU, for example, is typically
+ * around 16KB).
+ */
+static const int PACKET_READ_BYTES = 64 * 1024;
 
 /* TCP/UDP/IPv4 packet, including IPv4 header, TCP/UDP header, and data. There
  * may also be a link layer header between the 'buffer' and 'ip'

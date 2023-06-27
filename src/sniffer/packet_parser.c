@@ -157,6 +157,7 @@ int parse_packet(struct packet *packet, int in_bytes, enum packet_layer_t layer,
     hex_dump(packet->buffer, in_bytes, &hex);
     message = *error;
     asprintf(error, "%s: packet of %d bytes:\n%s", message, in_bytes, hex);
+    printf("%s", *error);
     free(message);
     free(hex);
 

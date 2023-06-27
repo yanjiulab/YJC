@@ -20,11 +20,7 @@ types.h|常用类型|变量以t结尾
 :---:|:---:|:---:
 `socket.h`|基本操作函数封装|
 `ip_address.h`|IP 地址操作|
-`packet.h`|数据包操作|
-`packet_parser.h`|数据包解析|
-`packet_header.h`|常用协议数据包头支持（汇总xx.h）|
 `netdev.h`|网卡操作（添加/删除/读取网卡信息）|基于 ip 命令实现
-`protocol.h`|协议处理头文件（汇总xx模块）|
 
 ### IP 地址
 
