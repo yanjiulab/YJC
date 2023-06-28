@@ -11,12 +11,9 @@
 #include <unistd.h>
 
 #include "checksum.h"
-#include "ethernet.h"
-#include "ip.h"
 #include "ip_address.h"
 #include "log.h"
 #include "packet.h"
-#include "tcp.h"
 
 static int parse_ipv4(struct packet *packet, uint8_t *header_start,
                       uint8_t *packet_end, char **error);
@@ -29,15 +26,98 @@ static int parse_layer3_packet_by_proto(struct packet *packet, uint16_t proto,
                                         uint8_t *header_start,
                                         uint8_t *packet_end, char **error);
 
+/* Parse the TCP header. Return a packet_parse_result_t. */
+static int parse_tcp(struct packet *packet, u8 *layer4_start, int layer4_bytes,
+                     u8 *packet_end, char **error) {
+    struct header *tcp_header = NULL;
+    u8 *p = layer4_start;
+
+    assert(layer4_bytes >= 0);
+    if (layer4_bytes < sizeof(struct tcp)) {
+        asprintf(error, "Truncated TCP header");
+        goto error_out;
+    }
+    packet->tcp = (struct tcp *)p;
+    const int tcp_header_len = packet_tcp_header_len(packet);
+    if (tcp_header_len < sizeof(struct tcp)) {
+        asprintf(error, "TCP data offset too small");
+        goto error_out;
+    }
+    if (tcp_header_len > layer4_bytes) {
+        asprintf(error, "TCP data offset too big");
+        goto error_out;
+    }
+
+    tcp_header = packet_append_header(packet, HEADER_TCP, tcp_header_len);
+    if (tcp_header == NULL) {
+        asprintf(error, "Too many nested headers at TCP header");
+        goto error_out;
+    }
+    tcp_header->total_bytes = layer4_bytes;
+
+    p += layer4_bytes;
+    assert(p <= packet_end);
+
+    log_debug("TCP src port: %d", ntohs(packet->tcp->src_port));
+    log_debug("TCP dst port: %d", ntohs(packet->tcp->dst_port));
+    return PACKET_OK;
+
+error_out:
+    return PACKET_BAD;
+}
+
+/* Parse the UDP header. Return a packet_parse_result_t. */
+static int parse_udp(struct packet *packet, u8 *layer4_start, int layer4_bytes,
+                     u8 *packet_end, char **error) {
+    struct header *udp_header = NULL;
+    u8 *p = layer4_start;
+
+    assert(layer4_bytes >= 0);
+    if (layer4_bytes < sizeof(struct udp)) {
+        asprintf(error, "Truncated UDP header");
+        goto error_out;
+    }
+    packet->udp = (struct udp *)p;
+    const int udp_len = ntohs(packet->udp->len);
+    const int udp_header_len = sizeof(struct udp);
+    if (udp_len < udp_header_len) {
+        asprintf(error, "UDP datagram length too small for UDP header");
+        goto error_out;
+    }
+    if (udp_len < layer4_bytes) {
+        asprintf(error, "UDP datagram length too small");
+        goto error_out;
+    }
+    if (udp_len > layer4_bytes) {
+        asprintf(error, "UDP datagram length too big");
+        goto error_out;
+    }
+
+    udp_header = packet_append_header(packet, HEADER_UDP, udp_header_len);
+    if (udp_header == NULL) {
+        asprintf(error, "Too many nested headers at UDP header");
+        goto error_out;
+    }
+    udp_header->total_bytes = layer4_bytes;
+
+    p += layer4_bytes;
+    assert(p <= packet_end);
+
+    log_debug("UDP src port: %d", ntohs(packet->udp->src_port));
+    log_debug("UDP dst port: %d", ntohs(packet->udp->dst_port));
+    return PACKET_OK;
+
+error_out:
+    return PACKET_BAD;
+}
+
 static int parse_layer4(struct packet *packet, u8 *layer4_start,
                         int layer4_protocol, int layer4_bytes, u8 *packet_end,
                         char **error) {
     if (layer4_protocol == IPPROTO_TCP) {
-        // return parse_tcp(packet, layer4_start, layer4_bytes, packet_end,
-        // error);
+        return parse_tcp(packet, layer4_start, layer4_bytes, packet_end, error);
     } else if (layer4_protocol == IPPROTO_UDP) {
-        // return parse_udp(packet, layer4_start, layer4_bytes, packet_end,
-        // error);
+        return parse_udp(packet, layer4_start, layer4_bytes, packet_end, error);
     } else if (layer4_protocol == IPPROTO_ICMP) {
         // return parse_icmpv4(packet, layer4_start, layer4_bytes, packet_end,
         //                     error);
@@ -177,7 +257,7 @@ int parse_packet(struct packet *packet, int in_bytes, enum packet_layer_t layer,
         assert(!"bad layer");
 
     // if (result != PACKET_BAD) return result;
-    
+
     if (result == PACKET_OK) return result;
 
     /* Error. Add a packet hex dump to the error string we're returning. */

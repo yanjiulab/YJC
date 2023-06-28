@@ -43,19 +43,6 @@ int packet_header_count(const struct packet *packet) {
     return i;
 }
 
-/* Convenience accessors for peeking around in the packet... */
-
-/* Return a pointer to the first byte of the outermost IP header. */
-static inline uint8_t *packet_start(const struct packet *packet) {
-    uint8_t *start = packet->buffer;
-    assert(start != NULL);
-    return start;
-}
-
-/* Return a pointer to the byte beyond the end of the packet. */
-static inline uint8_t *packet_end(const struct packet *packet) {
-    return packet_start(packet) + packet->buffer_active;
-}
 
 struct header *packet_append_header(struct packet *packet,
                                     enum header_t header_type,

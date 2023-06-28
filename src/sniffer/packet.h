@@ -62,6 +62,21 @@ struct packet {
      */
     struct header headers[PACKET_MAX_HEADERS];
 
+    /* The following pointers point into the 'buffer' area. Each
+     * pointer may be NULL if there is no header of that type
+     * present in the packet. In each case these are pointers to
+     * the innermost header of that kind, since that is where most
+     * of the interesting TCP/UDP/IP action is.
+     */
+
+    /* Layer 3 */
+    struct ipv4 *ipv4; /* start of IPv4 header, if present */
+    struct ipv6 *ipv6; /* start of IPv6 header, if present */
+
+    /* Layer 4 */
+    struct tcp *tcp; /* start of TCP header, if present */
+    struct udp *udp; /* start of UDP header, if present */
+
     int64_t time_usecs; /* wall time of receive/send if non-zero */
 };
 
@@ -97,4 +112,29 @@ extern struct header *packet_append_header(struct packet *packet,
                                            enum header_t header_type,
                                            int header_bytes);
 
+/* Convenience accessors for peeking around in the packet... */
+
+/* Return a pointer to the first byte of the outermost IP header. */
+static inline uint8_t *packet_start(const struct packet *packet) {
+    uint8_t *start = packet->buffer;
+    assert(start != NULL);
+    return start;
+}
+
+/* Return a pointer to the byte beyond the end of the packet. */
+static inline uint8_t *packet_end(const struct packet *packet) {
+    return packet_start(packet) + packet->buffer_active;
+}
+
+/* Return the length of the TCP header, including options. */
+static inline int packet_tcp_header_len(const struct packet *packet) {
+    assert(packet->tcp);
+    return packet->tcp->doff * sizeof(u32);
+}
+
+/* Return the length of the UDP header. */
+static inline int packet_udp_header_len(const struct packet *packet) {
+    assert(packet->udp);
+    return sizeof(struct udp);
+}
 #endif

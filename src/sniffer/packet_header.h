@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "assert.h"
+#include "ethernet.h"
 // #include "gre.h"
 // #include "icmp.h"
 // #include "icmpv6.h"

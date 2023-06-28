@@ -34,6 +34,11 @@ extern packet_socket_t *packet_socket_new(const char *device_name);
 /* Free all the memory used by the packet socket. */
 extern void packet_socket_free(struct packet_socket *packet_socket);
 
+/* Add a filter so we only sniff packets we want. */
+// extern void packet_socket_set_filter(struct packet_socket *psock,
+//                                      const struct ip_address *client_live_ip,
+//                                      u16 src_port, u16 dst_port);
+
 /* Do a blocking sniff (until timeout) of the next packet going over the given
  * device in the given direction, fill in the given packet with the sniffed
  * packet info, and return the number of bytes in the packet in
