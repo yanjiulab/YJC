@@ -83,26 +83,23 @@ void packet_socket_free(struct packet_socket *psock) {
 
 /* Add a filter so we only sniff packets we want. */
 void packet_socket_set_filter(struct packet_socket *psock,
-                              struct sock_filter *filter) {
-    // struct sock_fprog bpfcode = {
-    //     .len = sizeof(filter) / sizeof(filter[0]),
-    //     .filter = filter,
-    // };
+                              struct sock_filter *filter, int len) {
+    struct sock_fprog bpfcode = {
+        .len = len,
+        .filter = filter,
+    };
 
-    // if (DEBUG_LOGGING) {
-    //     int i;
-    //     DEBUGP("filter constants:\n");
-    //     for (i = 0; i < bpfcode.len; ++i)
-    //         DEBUGP("{ 0x%02x, %3d, %3d, 0x%08x },\n", bpfcode.filter[i].code,
-    //                bpfcode.filter[i].jt, bpfcode.filter[i].jf,
-    //                bpfcode.filter[i].k);
-    // }
+    log_debug("filter constants:");
+    for (int i = 0; i < bpfcode.len; ++i)
+        log_debug("{ 0x%02x, %3d, %3d, 0x%08x },", bpfcode.filter[i].code,
+                  bpfcode.filter[i].jt, bpfcode.filter[i].jf,
+                  bpfcode.filter[i].k);
 
-    // /* Attach the filter. */
-    // if (setsockopt(psock->packet_fd, SOL_SOCKET, SO_ATTACH_FILTER, &bpfcode,
-    //                sizeof(bpfcode)) < 0) {
-    //     die_perror("setsockopt SOL_SOCKET, SO_ATTACH_FILTER");
-    // }
+    /* Attach the filter. */
+    if (setsockopt(psock->packet_fd, SOL_SOCKET, SO_ATTACH_FILTER, &bpfcode,
+                   sizeof(bpfcode)) < 0) {
+        err_quit("setsockopt SOL_SOCKET, SO_ATTACH_FILTER");
+    }
 }
 
 /**

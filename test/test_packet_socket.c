@@ -8,12 +8,6 @@
 #include "test.h"
 
 void test_packet_socket() {
-    struct sock_filter filter[] = {
-        {0x28, 0, 0, 0x0000000c}, {0x15, 2, 0, 0x00000800},
-        {0x15, 1, 0, 0x00000881}, {0x15, 0, 1, 0x00000885},
-        {0x6, 0, 0, 0x00040000},  {0x6, 0, 0, 0x00000000}};
-    print_data(filter, sizeof(filter));
-    exit(0);
     int num_packets = 0;
     char *error = NULL;
     char *dump = NULL;
@@ -22,6 +16,16 @@ void test_packet_socket() {
     enum packet_layer_t layer = PACKET_LAYER_2_ETHERNET;
     s32 timeout_secs = -1;
     struct packet *packet;
+
+    struct sock_filter filter[] = {
+        {0x28, 0, 0, 0x0000000c}, {0x15, 0, 2, 0x00000800},
+        {0x30, 0, 0, 0x00000017}, {0x15, 6, 7, 0x00000059},
+        {0x15, 0, 6, 0x000086dd}, {0x30, 0, 0, 0x00000014},
+        {0x15, 3, 0, 0x00000059}, {0x15, 0, 3, 0x0000002c},
+        {0x30, 0, 0, 0x00000036}, {0x15, 0, 1, 0x00000059},
+        {0x6, 0, 0, 0x00040000},  {0x6, 0, 0, 0x00000000},
+    };
+    packet_socket_set_filter(psock, filter, ARRAY_SIZE(filter));
 
     while (1) {
         error = NULL;
