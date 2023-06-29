@@ -26,6 +26,8 @@ struct ipv4 {
 
 typedef struct ipv4 ipv4_t;
 
+#define IPPROTO_OSPF 89
+
 /* ----------------------- IP socket option values -------------------- */
 
 /* Oddly enough, Linux distributions are typically missing even some
@@ -76,6 +78,44 @@ static inline int ipv4_header_len(const struct ipv4 *ipv4) {
 #define IP_MF 0x2000      /* more fragments flag */
 #define IP_OFFMASK 0x1FFF /* mask for fragmenting bits */
 
+static inline char *ether_type2str(uint8_t type) {
+    switch (type) {
+        case IPPROTO_ICMP:
+            return "ICMP";
+        case IPPROTO_IGMP:
+            return "IGMP";
+        case IPPROTO_IPIP:
+            return "IPIP";
+        case IPPROTO_TCP:
+            return "TCP";
+        case IPPROTO_UDP:
+            return "UDP";
+        case IPPROTO_IPV6:
+            return "IPv6";
+        case IPPROTO_RSVP:
+            return "RSVP";
+        case IPPROTO_GRE:
+            return "GRE";
+        case IPPROTO_ESP:
+            return "ESP";
+        case IPPROTO_OSPF:
+            return "OSPF";
+        case IPPROTO_MTP:
+            return "MTP";
+        case IPPROTO_PIM:
+            return "PIM";
+        case IPPROTO_SCTP:
+            return "SCTP";
+        case IPPROTO_MPLS:
+            return "MPLS";
+        case IPPROTO_RAW:
+            return "RAW";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+/* IPv6 */
 struct ipv6 {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     __uint8_t traffic_class_hi : 4, version : 4;

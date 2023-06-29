@@ -32,5 +32,6 @@ static inline void ether_copy(void *dst, const void *src) {
 }
 void ether_from_string(const char *str, ether_addr_t *ether);
 char *ether_to_string(ether_addr_t *ether, const char *str);
+const char *ether_type2str(uint16_t type);
 
 #endif /* __ETHERNET_H__ */

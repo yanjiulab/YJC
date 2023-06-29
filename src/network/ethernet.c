@@ -35,3 +35,18 @@ char *ether_to_string(ether_addr_t *ether, const char *str) {
 
     return str;
 }
+
+const char *ether_type2str(uint16_t type) {
+    switch (type) {
+        case ETHERTYPE_IP:
+            return "IPv4";
+        case ETHERTYPE_IPV6:
+            return "IPv6";
+        case ETHERTYPE_ARP:
+            return "ARP";
+        case ETHERTYPE_VLAN:
+            return "802.1Q VLAN";
+        default:
+            return "UNKNOWN";
+    }
+}
