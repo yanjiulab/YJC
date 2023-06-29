@@ -78,8 +78,8 @@ static inline int ipv4_header_len(const struct ipv4 *ipv4) {
 #define IP_MF 0x2000      /* more fragments flag */
 #define IP_OFFMASK 0x1FFF /* mask for fragmenting bits */
 
-static inline char *ether_type2str(uint8_t type) {
-    switch (type) {
+static inline char *ip_proto2str(uint8_t proto) {
+    switch (proto) {
         case IPPROTO_ICMP:
             return "ICMP";
         case IPPROTO_IGMP:
