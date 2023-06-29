@@ -2,6 +2,8 @@
 
 #include "defs.h"
 #include "log.h"
+#include "net_utils.h"
+#include "str.h"
 
 /* Number of bytes to buffer in the packet socket we use for sniffing. */
 static const int PACKET_SOCKET_RCVBUF_BYTES = 2 * 1024 * 1024;
@@ -12,6 +14,29 @@ static void set_receive_buffer_size(int fd, int bytes) {
         perror("setsockopt SOL_SOCKET SO_RCVBUF");
         exit(EXIT_FAILURE);
     }
+}
+
+int verbose_popen(char *cmd, char **rst) {
+    int ret = -1;
+    char cmd_buff[128] = {0};
+    char rst_buff[128];  //= {0};
+    strcpy(cmd_buff, cmd);
+    FILE *ptr;
+    if ((ptr = popen(cmd, "r")) != NULL) {
+        while (fgets(rst_buff, sizeof(rst_buff), ptr) != NULL) {
+            strcat(rst, rst_buff);
+            if (strlen(rst) > sizeof(rst_buff)) {
+                break;
+            }
+        }
+        pclose(ptr);
+        ptr = NULL;
+        ret = 0;
+    } else {
+        ret = -1;
+    }
+
+    return ret;
 }
 
 /* Bind the packet socket with the given fd to the given interface. */
@@ -100,6 +125,35 @@ void packet_socket_set_filter(struct packet_socket *psock,
                    sizeof(bpfcode)) < 0) {
         err_quit("setsockopt SOL_SOCKET, SO_ATTACH_FILTER");
     }
+}
+
+void packet_socket_set_filter_str(struct packet_socket *psock, const char *fs) {
+
+    // check filter string based on tcpdump command
+    char *command = str("tcpdump -i lo %s -ddd", fs);
+    char *result = NULL;
+    int status = system(str("%s > /dev/null 2>&1", command));
+    if (status != 0) {
+        log_debug("error filter string '%s'", fs);
+        return;
+    }
+
+    // parse filter bytecode based on tcpdump command
+    struct sock_filter *filter;
+    char line[64];
+    FILE *ptr = popen(command, "r");
+    if (!ptr) log_info("%p", ptr);
+    fgets(line, sizeof(line), ptr);
+    int len = str2int(str_rtrim(line, '\n'));
+    filter = calloc(len, sizeof(*filter));
+    for (int i = 0; i < len; i++) {
+        sscanf(fgets(line, sizeof(line), ptr), "%d %d %d %d\n",
+               &(filter + i)->code, &(filter + i)->jt, &(filter + i)->jf,
+               &(filter + i)->k);
+    }
+
+    // set filter
+    packet_socket_set_filter(psock, filter, len);
 }
 
 /**

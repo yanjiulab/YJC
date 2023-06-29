@@ -38,6 +38,8 @@ extern void packet_socket_free(struct packet_socket *packet_socket);
 extern void packet_socket_set_filter(struct packet_socket *psock,
                                      struct sock_filter *filter, int len);
 
+extern void packet_socket_set_filter_str(struct packet_socket *psock, const char *fs);
+
 /* Do a blocking sniff (until timeout) of the next packet going over the given
  * device in the given direction, fill in the given packet with the sniffed
  * packet info, and return the number of bytes in the packet in
