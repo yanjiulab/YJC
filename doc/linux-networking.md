@@ -224,16 +224,6 @@ static const struct net_device_ops igb_netdev_ops = {
   - arp
 - nftables
 
-## XFRM
-
-XFRM的正确读音是transform(转换), 这表示内核协议栈收到的IPsec报文需要经过转换才能还原为原始报文；
-
-同样地，要发送的原始报文也需要转换为IPsec报文才能发送出去。
-
-IPsec（Internet协议安全）应该很多人都听过，IPsec是一组协议，他们通过对通信会话中的每个数据包进行身份验证和加密，以确保IP流量的安全。
-
-XFRM框架是IPsec的“基础设施”，IPsec通过XFRM框架实现的。XFRM源自USAGI项目，该项目旨在提供适用于生产环境的IPv6和IPsec协议栈。自内核2.5之后引入了XFRM框架，这个“基础设施”独立于协议簇，包含可同时应用于IPv4和IPv6的通用部分，位于源代码的net/xfrm/目录下。
-
 ## BPF、eBPF、XDP
 
 重构的思路很显然有两个：
