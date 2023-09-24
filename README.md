@@ -89,7 +89,7 @@ ptable.h|ASCII风格表打印|[marchelzo/libtable](https://github.com/marchelzo/
 :---:|:---:|:---:
 args.h|命令行参数解析|TODO
 log.h|日志系统|6 个日志等级，支持日志文件
-ini.h|ini 配置文件读取|标准 ini 文件读取
+iniparser.h|ini 配置文件读取|标准 ini 文件读写
 xml.h|xml 文件生成/解析|TODO
 json.h|json 文件生成/解析|TODO
 protobuf.h|protobuf 相关|TODO，查看protobuf-c

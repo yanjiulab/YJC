@@ -14,7 +14,7 @@
 #include <string.h>
 #include <sys/time.h>
 
-#define STR_EQUAL(s1, s2) (strncmp((s1), (s2), strlen((s2))) == 0)
+#define strmatch(s1, s2) (strncmp((s1), (s2), strlen((s2))) == 0)
 #define STR_SPLIT(in, out, sep) str_split(in, out, sizeof(out) / sizeof(out[0]), sep)
 
 // Prints to an automatically-allocated string. Returns NULL if an encoding error occurs or if sufficient memory cannot

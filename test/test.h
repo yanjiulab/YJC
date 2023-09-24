@@ -76,4 +76,6 @@ void test_thpool();
 
 void test_packet_socket();
 void test_netlink_socket();
+
+void test_cmd();
 #endif  // !TEST_H

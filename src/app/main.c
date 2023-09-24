@@ -3,18 +3,18 @@
 #include <errno.h>
 #include <linux/if_packet.h>
 #include <linux/netlink.h>
-#include <net/ethernet.h>  //For ether_header
+#include <net/ethernet.h> //For ether_header
 #include <net/if.h>
 #include <netdb.h>
-#include <netinet/if_ether.h>  // for ETH_P_ALL
-#include <netinet/ip.h>        //Provides declarations for ip header
-#include <netinet/ip_icmp.h>   //Provides declarations for icmp header
-#include <netinet/tcp.h>       //Provides declarations for tcp header
-#include <netinet/udp.h>       //Provides declarations for udp header
+#include <netinet/if_ether.h> // for ETH_P_ALL
+#include <netinet/ip.h>       //Provides declarations for ip header
+#include <netinet/ip_icmp.h>  //Provides declarations for icmp header
+#include <netinet/tcp.h>      //Provides declarations for tcp header
+#include <netinet/udp.h>      //Provides declarations for udp header
 #include <stdint.h>
-#include <stdio.h>   //For standard things
-#include <stdlib.h>  //malloc
-#include <string.h>  //strlen
+#include <stdio.h>  //For standard things
+#include <stdlib.h> //malloc
+#include <string.h> //strlen
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -25,11 +25,12 @@
 
 #include "base.h"
 #include "eventloop.h"
-#include "net_utils.h"
-#include "ini.h"
+#include "iniparser.h"
 #include "log.h"
+#include "net_utils.h"
 #include "socket.h"
 #include "str.h"
+#include "version.h"
 
 void on_idle(eidle_t* idle) {
     printf("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld\n", LLU(event_id(idle)), event_priority(idle),
@@ -46,13 +47,41 @@ void on_timer(etimer_t* timer) {
 void on_stdin(eio_t* io, void* buf, int readbytes) {
     printf("on_stdin fd=%d readbytes=%d\n", eio_fd(io), readbytes);
     printf("> %s\n", (char*)buf);
-    if (STR_EQUAL((char*)buf, "quit")) {
+    if (strmatch((char*)buf, "quit")) {
         // if (strncmp((char*)buf, "quit", 4) == 0) {
         eloop_stop(event_loop(io));
     }
 }
 
+// ./con config.ini ap asdf
 int main(int argc, char* argv[]) {
+    if (argc != 4) {
+        printf("Usage: ./cfset config.ini section:key val\n");
+        return 0;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        printf("argv[%i]: %s\n", i, argv[i]);
+    }
+
+    dictionary* ini = iniparser_load(argv[1]);
+    iniparser_set(ini, argv[2], argv[3]);
+    // iniparser_dump(ini, stderr);
+
+    FILE* ini_file;
+    if ((ini_file = fopen(argv[1], "w")) == NULL) {
+        fprintf(stderr, "iniparser: cannot create %s\n", argv[1]);
+        return;
+    }
+    iniparser_dump_ini(ini, ini_file);
+    fclose(ini_file);
+    iniparser_freedict(ini);
+    return 0;
+}
+
+int main_old(int argc, char* argv[]) {
+
+    printf("%s", DEFAULT_MOTD);
     // memcheck atexit
     MEMCHECK;
     // struct in_addr i;
