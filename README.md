@@ -12,6 +12,16 @@ platform.h|
 export.h|
 types.h|常用类型|变量以t结尾
 
+## event
+
+`event` 为事件库。
+
+`event_t` 为事件结构体，主要成员包括：
+- 事件所属 eventloop
+- 事件类型
+- 事件回调函数
+- 事件状态
+
 ## network
 
 `network` 为网络编程基础库

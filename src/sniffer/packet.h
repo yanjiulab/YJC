@@ -22,9 +22,14 @@
 
 /* The directions in which a packet may flow. */
 enum direction_t {
-    DIRECTION_INVALID,
-    DIRECTION_INBOUND,  /* packet coming into the kernel under test */
-    DIRECTION_OUTBOUND, /* packet leaving the kernel under test */
+    DIRECTION_HOST,      /* To us.  */
+    DIRECTION_BROADCAST, /* To all.  */
+    DIRECTION_MULTICAST, /* To group.  */
+    DIRECTION_OTHERHOST, /* To someone else.  */
+    DIRECTION_OUTGOING,  /* Originated by us . */
+    DIRECTION_LOOPBACK,
+    DIRECTION_FASTROUTE,
+    DIRECTION_ALL
 };
 
 /* What layer of headers is at the head of the packet? */
@@ -49,13 +54,13 @@ static const int PACKET_READ_BYTES = 64 * 1024;
  * actual amount occupied by the packet data.
  */
 struct packet {
-    uint8_t *buffer;        /* data buffer: full contents of packet */
+    uint8_t* buffer;        /* data buffer: full contents of packet */
     uint32_t buffer_bytes;  /* bytes of space in data buffer */
     uint32_t buffer_active; /* bytes of active space in data buffer */
     // uint32_t l2_header_bytes;   /* bytes in outer hardware/layer-2 header */
     // uint32_t l2_data_bytes;     /* bytes in outermost IP hdrs/payload */
     enum direction_t direction; /* direction packet is traveling */
-
+    uint32_t dev_ifindex;       /* from which network device */
     /* Metadata about all the headers in the packet, including all
      * layers of encapsulation, from outer to inner, starting from
      * the outermost IP header at headers[0].
@@ -70,70 +75,71 @@ struct packet {
      */
 
     /* Layer 3 */
-    struct ipv4 *ipv4; /* start of IPv4 header, if present */
-    struct ipv6 *ipv6; /* start of IPv6 header, if present */
+    struct ipv4* ipv4; /* start of IPv4 header, if present */
+    struct ipv6* ipv6; /* start of IPv6 header, if present */
 
     /* Layer 4 */
-    struct tcp *tcp; /* start of TCP header, if present */
-    struct udp *udp; /* start of UDP header, if present */
+    struct tcp* tcp; /* start of TCP header, if present */
+    struct udp* udp; /* start of UDP header, if present */
 
     int64_t time_usecs; /* wall time of receive/send if non-zero */
+    struct timeval tv;
 };
 
 /* A simple list of packets. */
 struct packet_list {
-    struct packet *packet;    /* the packet content */
-    struct packet_list *next; /* link to next element, or NULL if last */
+    struct packet* packet;    /* the packet content */
+    struct packet_list* next; /* link to next element, or NULL if last */
 };
 
 /* Allocate a packet_list and initialize its fields to NULL. */
-extern struct packet_list *packet_list_new(void);
+extern struct packet_list* packet_list_new(void);
 
 /* Free an entire packet list. */
-extern void packet_list_free(struct packet_list *list);
+extern void packet_list_free(struct packet_list* list);
 
 /* Allocate and initialize a packet. */
-extern struct packet *packet_new(uint32_t buffer_length);
+extern struct packet* packet_new(uint32_t buffer_length);
 
 /* Free all the memory used by the packet. */
-extern void packet_free(struct packet *packet);
+extern void packet_free(struct packet* packet);
 
 /* Create a packet that is a copy of the contents of the given packet. */
-extern struct packet *packet_copy(struct packet *old_packet);
+extern struct packet* packet_copy(struct packet* old_packet);
 
 /* Return the number of headers in the given packet. */
-extern int packet_header_count(const struct packet *packet);
+extern int packet_header_count(const struct packet* packet);
 
 /* Attempt to append a new header to the given packet. Return a
  * pointer to the new header metadata, or NULL if we can't add the
  * header.
  */
-extern struct header *packet_append_header(struct packet *packet,
+extern struct header* packet_append_header(struct packet* packet,
                                            enum header_t header_type,
                                            int header_bytes);
 
 /* Convenience accessors for peeking around in the packet... */
 
 /* Return a pointer to the first byte of the outermost IP header. */
-static inline uint8_t *packet_start(const struct packet *packet) {
-    uint8_t *start = packet->buffer;
+static inline uint8_t* packet_start(const struct packet* packet) {
+    uint8_t* start = packet->buffer;
     assert(start != NULL);
     return start;
 }
 
 /* Return a pointer to the byte beyond the end of the packet. */
-static inline uint8_t *packet_end(const struct packet *packet) {
+static inline uint8_t* packet_end(const struct packet* packet) {
     return packet_start(packet) + packet->buffer_active;
 }
 
 /* Return the length of the TCP header, including options. */
-static inline int packet_tcp_header_len(const struct packet *packet) {
+static inline int packet_tcp_header_len(const struct packet* packet) {
     assert(packet->tcp);
     return packet->tcp->doff * sizeof(u32);
 }
 
 /* Return the length of the UDP header. */
-static inline int packet_udp_header_len(const struct packet *packet) {
+static inline int packet_udp_header_len(const struct packet* packet) {
     assert(packet->udp);
     return sizeof(struct udp);
 }

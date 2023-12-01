@@ -39,7 +39,7 @@ bool str_all_digit(const char *str);
 bool str_contains(const char *str, const char *sub);
 
 /*-------------------------- new string operations ---------------------------------*/
-// Use FIND string to replace the REPLACE string in STR.
+// Use REPLACE string to replace the FIND string in STR.
 char *str_replace(const char *str, const char *find, const char *replace);
 
 /*-------------------------- in place modified operations ---------------------------------*/

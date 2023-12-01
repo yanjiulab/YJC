@@ -16,12 +16,12 @@ static void set_receive_buffer_size(int fd, int bytes) {
     }
 }
 
-int verbose_popen(char *cmd, char **rst) {
+int verbose_popen(char* cmd, char** rst) {
     int ret = -1;
     char cmd_buff[128] = {0};
-    char rst_buff[128];  //= {0};
+    char rst_buff[128]; //= {0};
     strcpy(cmd_buff, cmd);
-    FILE *ptr;
+    FILE* ptr;
     if ((ptr = popen(cmd, "r")) != NULL) {
         while (fgets(rst_buff, sizeof(rst_buff), ptr) != NULL) {
             strcat(rst, rst_buff);
@@ -47,7 +47,7 @@ static void bind_to_interface(int fd, int interface_index) {
     sll.sll_ifindex = interface_index;
     sll.sll_protocol = htons(ETH_P_ALL);
 
-    if (bind(fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
+    if (bind(fd, (struct sockaddr*)&sll, sizeof(sll)) < 0) {
         perror("bind packet socket");
         exit(EXIT_FAILURE);
     }
@@ -60,7 +60,7 @@ static void bind_to_interface(int fd, int interface_index) {
  * bind the socket to a single device so we only receive packets for
  * that device.
  */
-static void packet_socket_setup(struct packet_socket *psock) {
+static void packet_socket_setup(struct packet_socket* psock) {
     struct timeval tv;
 
     psock->packet_fd = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
@@ -86,8 +86,8 @@ static void packet_socket_setup(struct packet_socket *psock) {
     ioctl(psock->packet_fd, SIOCGSTAMP, &tv);
 }
 
-struct packet_socket *packet_socket_new(const char *device_name) {
-    struct packet_socket *psock = calloc(1, sizeof(struct packet_socket));
+struct packet_socket* packet_socket_new(const char* device_name) {
+    struct packet_socket* psock = calloc(1, sizeof(struct packet_socket));
 
     psock->name = strdup(device_name);
     psock->packet_fd = -1;
@@ -97,18 +97,20 @@ struct packet_socket *packet_socket_new(const char *device_name) {
     return psock;
 }
 
-void packet_socket_free(struct packet_socket *psock) {
-    if (psock->packet_fd >= 0) close(psock->packet_fd);
+void packet_socket_free(struct packet_socket* psock) {
+    if (psock->packet_fd >= 0)
+        close(psock->packet_fd);
 
-    if (psock->name != NULL) free(psock->name);
+    if (psock->name != NULL)
+        free(psock->name);
 
     memset(psock, 0, sizeof(*psock)); /* paranoia to catch bugs*/
     free(psock);
 }
 
 /* Add a filter so we only sniff packets we want. */
-void packet_socket_set_filter(struct packet_socket *psock,
-                              struct sock_filter *filter, int len) {
+void packet_socket_set_filter(struct packet_socket* psock,
+                              struct sock_filter* filter, int len) {
     struct sock_fprog bpfcode = {
         .len = len,
         .filter = filter,
@@ -127,11 +129,11 @@ void packet_socket_set_filter(struct packet_socket *psock,
     }
 }
 
-void packet_socket_set_filter_str(struct packet_socket *psock, const char *fs) {
+void packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
 
     // check filter string based on tcpdump command
-    char *command = str("tcpdump -i lo %s -ddd", fs);
-    char *result = NULL;
+    char* command = str("tcpdump -i lo %s -ddd", fs);
+    char* result = NULL;
     int status = system(str("%s > /dev/null 2>&1", command));
     if (status != 0) {
         log_debug("error filter string '%s'", fs);
@@ -139,10 +141,11 @@ void packet_socket_set_filter_str(struct packet_socket *psock, const char *fs) {
     }
 
     // parse filter bytecode based on tcpdump command
-    struct sock_filter *filter;
+    struct sock_filter* filter;
     char line[64];
-    FILE *ptr = popen(command, "r");
-    if (!ptr) log_info("%p", ptr);
+    FILE* ptr = popen(command, "r");
+    if (!ptr)
+        log_info("%p", ptr);
     fgets(line, sizeof(line), ptr);
     int len = str2int(str_rtrim(line, '\n'));
     filter = calloc(len, sizeof(*filter));
@@ -166,7 +169,7 @@ void packet_socket_set_filter_str(struct packet_socket *psock, const char *fs) {
  * ether_frame[1].iov_len = sizeof(ip);
  * result = packet_socket_writev(psock, ether_frame, ARRAY_SIZE(ether_frame));
  */
-int packet_socket_writev(struct packet_socket *psock, const struct iovec *iov,
+int packet_socket_writev(struct packet_socket* psock, const struct iovec* iov,
                          int iovcnt) {
     if (writev(psock->packet_fd, iov, iovcnt) < 0) {
         perror("writev");
@@ -175,7 +178,7 @@ int packet_socket_writev(struct packet_socket *psock, const struct iovec *iov,
     return STATUS_OK;
 }
 
-int packet_socket_send(struct packet_socket *psock, unsigned char *data,
+int packet_socket_send(struct packet_socket* psock, unsigned char* data,
                        int datalen) {
     if (send(psock->packet_fd, data, datalen, 0) < 0) {
         perror("send");
@@ -184,9 +187,9 @@ int packet_socket_send(struct packet_socket *psock, unsigned char *data,
     return STATUS_OK;
 }
 
-int packet_socket_receive(struct packet_socket *psock,
+int packet_socket_receive(struct packet_socket* psock,
                           enum direction_t direction, signed int timeout_secs,
-                          struct packet *packet, int *in_bytes) {
+                          struct packet* packet, int* in_bytes) {
     struct sockaddr_ll from;
     memset(&from, 0, sizeof(from));
     socklen_t from_len = sizeof(from);
@@ -197,13 +200,17 @@ int packet_socket_receive(struct packet_socket *psock,
      * enough regardless of the packet time type.
      */
     struct timeval sock_timeout = {.tv_sec = timeout_secs, .tv_usec = 0};
-    if (timeout_secs == TIMEOUT_NONE) sock_timeout.tv_sec = 0;
+    if (timeout_secs == TIMEOUT_NONE)
+        sock_timeout.tv_sec = 0;
     setsockopt(psock->packet_fd, SOL_SOCKET, SO_RCVTIMEO, &sock_timeout,
                sizeof(sock_timeout));
 
     /* Read the packet out of our kernel packet socket buffer. */
     *in_bytes = recvfrom(psock->packet_fd, packet->buffer, packet->buffer_bytes,
-                         0, (struct sockaddr *)&from, &from_len);
+                         0, (struct sockaddr*)&from, &from_len);
+    packet->buffer_active = *in_bytes;
+    packet->dev_ifindex = from.sll_ifindex;
+    packet->direction = from.sll_pkttype;
 
     /* Set the socket back to its blocking state. */
     sock_timeout.tv_sec = 0;
@@ -224,13 +231,14 @@ int packet_socket_receive(struct packet_socket *psock,
         }
     }
 
-    if (direction == DIRECTION_OUTBOUND &&
-        from.sll_pkttype != PACKET_OUTGOING) {
+    log_info("packet type: %d", from.sll_pkttype);
+
+    if (direction == DIRECTION_OUTGOING && from.sll_pkttype != PACKET_OUTGOING) {
         log_debug("not outbound (%d)", from.sll_pkttype);
         return STATUS_ERR;
     }
 
-    if (direction == DIRECTION_INBOUND && from.sll_pkttype != PACKET_HOST) {
+    if (direction == DIRECTION_HOST && from.sll_pkttype != PACKET_HOST) {
         log_debug("not inbound (%d)", from.sll_pkttype);
         return STATUS_ERR;
     }
@@ -251,6 +259,7 @@ int packet_socket_receive(struct packet_socket *psock,
         perror("SIOCGSTAMP");
         exit(EXIT_FAILURE);
     }
+    packet->tv = tv;
 
     if (from.sll_pkttype == PACKET_OUTGOING) {
         log_debug("sniffed %d bytes packet sent to ifindex %d at %u.%u ",

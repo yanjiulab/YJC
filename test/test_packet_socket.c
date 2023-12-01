@@ -2,23 +2,29 @@
 #include "ip_address.h"
 #include "log.h"
 #include "net_utils.h"
+#include "packet_dump.h"
 #include "packet_parser.h"
 #include "packet_socket.h"
 #include "packet_stringify.h"
 #include "test.h"
+// #include "pcap.h"
 
 void test_packet_socket() {
     int num_packets = 0;
-    char *error = NULL;
-    char *dump = NULL;
-    struct packet_socket *psock = packet_socket_new("ens33");
-    enum direction_t direction = DIRECTION_INVALID;
+    char* error = NULL;
+    char* dump = NULL;
+    struct packet_socket* psock = packet_socket_new("ens33");
+    enum direction_t direction = DIRECTION_ALL;
     enum packet_layer_t layer = PACKET_LAYER_2_ETHERNET;
     s32 timeout_secs = -1;
-    struct packet *packet;
+    struct packet* packet;
 
-    packet_socket_set_filter_str(psock, "proto 89");
-
+    // packet_socket_set_filter_str(psock, "not tcp");
+    FILE* pf = NULL;
+    // printf("pf: %p\n", pf);
+    pf = pcap_file_new("a.pcap");
+    // printf("pf: %p\n", pf);
+    int i = 0;
     while (1) {
         error = NULL;
         int in_bytes = 0;
@@ -26,6 +32,8 @@ void test_packet_socket() {
         packet = packet_new(PACKET_READ_BYTES);
         int rcv_status = packet_socket_receive(psock, direction, timeout_secs,
                                                packet, &in_bytes);
+        // printf("pf: %p\n", pf);
+
         if (rcv_status == STATUS_TIMEOUT) {
             /* Set an error message indicating what occurred. */
             asprintf(&error, "Timed out waiting for packet");
@@ -43,6 +51,13 @@ void test_packet_socket() {
         // packet_stringify(packet, DUMP_FULL, &dump, &error);
         // printf("dump = '%s'\n", dump);
         // }
+        pcap_file_write(pf, packet);
+        i++;
+
+        if (i == 10) {
+            pcap_file_free(pf);
+            return;
+        }
 
         packet_free(packet);
         packet = NULL;

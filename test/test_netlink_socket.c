@@ -1,7 +1,7 @@
 #include "datetime.h"
 #include "ip_address.h"
 #include "log.h"
-#include "netlink_socket.h"
+#include "nl_socket.h"
 #include "rt_netlink.h"
 #include "test.h"
 
@@ -15,8 +15,8 @@ static const struct message rip_msg[] = {{2, "REQUEST"},
 
 void test_netlink_socket() {
     // log_set_level(LOG_DEBUG);
-    netlink_socket_t *nls = netlink_socket_new(NETLINK_ROUTE, "route");
-
+    nl_socket_t *nls = nl_socket_new(NETLINK_ROUTE, "route");
+    
     // netlink_request_route(nls, AF_INET, RTM_GETROUTE);
     // netlink_parse_info(nls, netlink_rtm_parse_route);
 
@@ -32,5 +32,5 @@ void test_netlink_socket() {
     // netlink_request_macs(nls, AF_INET6, RTM_GETNEIGH);
     // netlink_parse_info(nls, netlink_macfdb_table);
 
-    netlink_socket_free(nls);
+    nl_socket_free(nls);
 }

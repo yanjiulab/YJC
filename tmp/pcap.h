@@ -2,7 +2,7 @@
 #define PCAP_H
 
 #include <linux/filter.h>
-
+#include <libpcap.h>
 typedef struct pcap {
     int fd;
     unsigned int bufsize;

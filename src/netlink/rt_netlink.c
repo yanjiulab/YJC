@@ -1,9 +1,9 @@
 #include "rt_netlink.h"
 
-int netlink_rtattr_add(struct nlmsghdr *n, int maxlen, int type,
-                       const void *data, int alen) {
+int netlink_rtattr_add(struct nlmsghdr* n, int maxlen, int type,
+                       const void* data, int alen) {
     int len = RTA_LENGTH(alen);
-    struct rtattr *rta;
+    struct rtattr* rta;
 
     if (NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len) > maxlen) {
         fprintf(stderr, "rtattr_add error: message exceeded bound of %d\n",
@@ -24,23 +24,25 @@ int netlink_rtattr_add(struct nlmsghdr *n, int maxlen, int type,
     return 0;
 }
 
-void netlink_parse_rtattr(struct rtattr **tb, int max, struct rtattr *rta,
+void netlink_parse_rtattr(struct rtattr** tb, int max, struct rtattr* rta,
                           int len) {
-    memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+    memset(tb, 0, sizeof(struct rtattr*) * (max + 1));
     while (RTA_OK(rta, len)) {
-        if (rta->rta_type <= max) tb[rta->rta_type] = rta;
+        if (rta->rta_type <= max)
+            tb[rta->rta_type] = rta;
         rta = RTA_NEXT(rta, len);
     }
 }
 
-void netlink_parse_rtattr_flags(struct rtattr **tb, int max, struct rtattr *rta,
+void netlink_parse_rtattr_flags(struct rtattr** tb, int max, struct rtattr* rta,
                                 int len, unsigned short flags) {
     unsigned short type;
 
-    memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+    memset(tb, 0, sizeof(struct rtattr*) * (max + 1));
     while (RTA_OK(rta, len)) {
         type = rta->rta_type & ~flags;
-        if ((type <= max) && (!tb[type])) tb[type] = rta;
+        if ((type <= max) && (!tb[type]))
+            tb[type] = rta;
         rta = RTA_NEXT(rta, len);
     }
 }
@@ -51,13 +53,13 @@ void netlink_parse_rtattr_flags(struct rtattr **tb, int max, struct rtattr *rta,
  * @max:        Max number to store.
  * @rta:        Pointer to rtattr to look for nested items in.
  */
-void netlink_parse_rtattr_nested(struct rtattr **tb, int max,
-                                 struct rtattr *rta) {
+void netlink_parse_rtattr_nested(struct rtattr** tb, int max,
+                                 struct rtattr* rta) {
     netlink_parse_rtattr(tb, max, RTA_DATA(rta), RTA_PAYLOAD(rta));
 }
 
 /* Request for specific route information from the kernel */
-int netlink_request_route(struct netlink_socket *nlsock, int family, int type) {
+int netlink_request_route(struct nl_socket* nlsock, int family, int type) {
     struct {
         struct nlmsghdr n;
         struct rtmsg rtm;
@@ -73,8 +75,8 @@ int netlink_request_route(struct netlink_socket *nlsock, int family, int type) {
     return netlink_request(nlsock, &req);
 }
 
-int netlink_request_route_add(struct netlink_socket *nlsock, int type,
-                              struct ip_address *dst, ip_address_t *gw,
+int netlink_request_route_add(struct nl_socket* nlsock, int type,
+                              struct ip_address* dst, ip_address_t* gw,
                               int default_gw, int ifidx) {
     struct {
         struct nlmsghdr n;
@@ -135,7 +137,7 @@ int netlink_request_route_add(struct netlink_socket *nlsock, int type,
 }
 
 /* Request for MAC FDB information from the kernel */
-int netlink_request_macs(struct netlink_socket *nlsock, int family, int type) {
+int netlink_request_macs(struct nl_socket* nlsock, int family, int type) {
     struct {
         struct nlmsghdr n;
         struct ifinfomsg ifm;
@@ -155,10 +157,10 @@ int netlink_request_macs(struct netlink_socket *nlsock, int family, int type) {
 }
 
 /******************** parse ******************************/
-int netlink_rtm_parse_route(struct nlmsghdr *nl_header_answer) {
-    struct rtmsg *r = NLMSG_DATA(nl_header_answer);
+int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
+    struct rtmsg* r = NLMSG_DATA(nl_header_answer);
     int len = nl_header_answer->nlmsg_len;
-    struct rtattr *tb[RTA_MAX + 1];
+    struct rtattr* tb[RTA_MAX + 1];
     int table;
     char buf[256];
 
@@ -173,7 +175,7 @@ int netlink_rtm_parse_route(struct nlmsghdr *nl_header_answer) {
 
     table = r->rtm_table;
     if (tb[RTA_TABLE]) {
-        table = *(uint32_t *)RTA_DATA(tb[RTA_TABLE]);
+        table = *(uint32_t*)RTA_DATA(tb[RTA_TABLE]);
     }
 
     if (r->rtm_family != AF_INET && table != RT_TABLE_MAIN) {
@@ -203,7 +205,7 @@ int netlink_rtm_parse_route(struct nlmsghdr *nl_header_answer) {
 
     if (tb[RTA_OIF]) {
         char if_nam_buf[IF_NAMESIZE];
-        int ifidx = *(__u32 *)RTA_DATA(tb[RTA_OIF]);
+        int ifidx = *(__u32*)RTA_DATA(tb[RTA_OIF]);
 
         printf(" dev %s", if_indextoname(ifidx, if_nam_buf));
     }
@@ -226,7 +228,7 @@ int netlink_rtm_parse_route(struct nlmsghdr *nl_header_answer) {
     }
 
     if (tb[RTA_PRIORITY]) {
-        int pri = *(__u32 *)RTA_DATA(tb[RTA_PRIORITY]);
+        int pri = *(__u32*)RTA_DATA(tb[RTA_PRIORITY]);
         printf(" metric %d", pri);
     }
 
@@ -235,13 +237,13 @@ int netlink_rtm_parse_route(struct nlmsghdr *nl_header_answer) {
     return 0;
 }
 
-int netlink_macfdb_table(struct nlmsghdr *h) {
-    struct ndmsg *ndm;
+int netlink_macfdb_table(struct nlmsghdr* h) {
+    struct ndmsg* ndm;
 
-    struct interface *ifp;
-    struct zebra_if *zif;
-    struct rtattr *tb[NDA_MAX + 1];
-    struct interface *br_if;
+    struct interface* ifp;
+    struct zebra_if* zif;
+    struct rtattr* tb[NDA_MAX + 1];
+    struct interface* br_if;
     ether_addr_t mac;
     // vlanid_t vid = 0;
     struct in_addr vtep_ip;
@@ -287,3 +289,4 @@ int netlink_macfdb_table(struct nlmsghdr *h) {
 
     printf("\n");
 }
+

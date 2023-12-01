@@ -1,7 +1,10 @@
-#include "netlink_socket.h"
+#include "nl_socket.h"
 
-static void netlink_socket_setup(struct netlink_socket *nlsock, int nl_type) {
-    nlsock->nl_fd = socket(PF_NETLINK, SOCK_RAW, nl_type);  // NETLINK_ROUTE
+static void nl_socket_setup(struct nl_socket* nlsock, int nl_type) {
+    // Netlink is a datagram-oriented service. Both SOCK_RAW and SOCK_DGRAM are valid values for socket_type.
+    // However, the netlink protocol does not distinguish between datagram and raw sockets.
+    nlsock->nl_fd = socket(PF_NETLINK, SOCK_RAW, nl_type); // e.g. NETLINK_ROUTE
+
     if (nlsock->nl_fd < 0) {
         perror("socket(PF_NETLINK, SOCK_RAW, NETLINK_XX)");
         exit(EXIT_FAILURE);
@@ -9,33 +12,37 @@ static void netlink_socket_setup(struct netlink_socket *nlsock, int nl_type) {
 
     struct sockaddr_nl saddr;
     memset(&saddr, 0, sizeof(saddr));
-    saddr.nl_family = AF_NETLINK;
+    saddr.nl_family = PF_NETLINK;
+    /* multiple netlink sockets will have different nl_pid */
     // saddr.nl_pid = getpid();
+    // saddr.nl_groups = 0;
 
     nlsock->snl = saddr;
 
-    if (bind(nlsock->nl_fd, (struct sockaddr *)&saddr, sizeof(saddr)) < 0) {
+    if (bind(nlsock->nl_fd, (struct sockaddr*)&saddr, sizeof(saddr)) < 0) {
         perror("Failed to bind to netlink socket");
         close(nlsock->nl_fd);
         exit(EXIT_FAILURE);
     }
 }
 
-netlink_socket_t *netlink_socket_new(int nl_type, const char *nl_name) {
-    struct netlink_socket *nlsock = calloc(1, sizeof(struct netlink_socket));
+nl_socket_t* nl_socket_new(int nl_type, const char* nl_name) {
+    struct nl_socket* nlsock = calloc(1, sizeof(struct nl_socket));
 
     nlsock->name = strdup(nl_name);
     nlsock->nl_fd = -1;
 
-    netlink_socket_setup(nlsock, nl_type);
+    nl_socket_setup(nlsock, nl_type);
 
     return nlsock;
 }
 
-void netlink_socket_free(struct netlink_socket *nlsock) {
-    if (nlsock->nl_fd >= 0) close(nlsock->nl_fd);
+void nl_socket_free(struct nl_socket* nlsock) {
+    if (nlsock->nl_fd >= 0)
+        close(nlsock->nl_fd);
 
-    if (nlsock->name != NULL) free(nlsock->name);
+    if (nlsock->name != NULL)
+        free(nlsock->name);
 
     memset(nlsock, 0, sizeof(*nlsock)); /* paranoia to catch bugs*/
     free(nlsock);
@@ -46,8 +53,8 @@ void netlink_socket_free(struct netlink_socket *nlsock) {
  *
  * Returns -1 on error. Otherwise, it returns the number of bytes sent.
  */
-ssize_t netlink_sendmsg(struct netlink_socket *nl, void *buf, size_t buflen) {
-    struct sockaddr_nl snl = {};
+ssize_t netlink_sendmsg(struct nl_socket* nl, void* buf, size_t buflen) {
+    struct sockaddr_nl snl = {}; // message destination
     struct iovec iov = {};
     struct msghdr msg = {};
     ssize_t status;
@@ -79,9 +86,9 @@ ssize_t netlink_sendmsg(struct netlink_socket *nl, void *buf, size_t buflen) {
  *
  * Returns -1 on error, 0 if read would block or the number of bytes received.
  */
-ssize_t netlink_recvmsg(int fd, struct msghdr *msg, char **answer) {
-    struct iovec *iov = msg->msg_iov;
-    char *buf;
+ssize_t netlink_recvmsg(int fd, struct msghdr* msg, char** answer) {
+    struct iovec* iov = msg->msg_iov;
+    char* buf;
     ssize_t len;
 
     iov->iov_base = NULL;
@@ -119,8 +126,8 @@ ssize_t netlink_recvmsg(int fd, struct msghdr *msg, char **answer) {
     return len;
 }
 
-int netlink_request(struct netlink_socket *nlsock, void *req) {
-    struct nlmsghdr *n = (struct nlmsghdr *)req;
+int netlink_request(struct nl_socket* nlsock, void* req) {
+    struct nlmsghdr* n = (struct nlmsghdr*)req;
 
     /* Check netlink socket. */
     if (nlsock->nl_fd < 0) {
@@ -139,8 +146,8 @@ int netlink_request(struct netlink_socket *nlsock, void *req) {
     return 0;
 }
 
-int netlink_parse_info(struct netlink_socket *nlsock,
-                       int (*filter)(struct nlmsghdr *)) {
+int netlink_parse_info(struct nl_socket* nlsock,
+                       int (*filter)(struct nlmsghdr*)) {
     int status;
     int error;
     struct sockaddr_nl nladdr;
@@ -152,16 +159,17 @@ int netlink_parse_info(struct netlink_socket *nlsock,
         .msg_iovlen = 1,
     };
 
-    char *buf;  // == msg.msg_iov->iov_base
+    char* buf; // == msg.msg_iov->iov_base
     status = netlink_recvmsg(nlsock->nl_fd, &msg, &buf);
     print_data(buf, status);
     int msglen = status;
-    struct nlmsghdr *h;
+    struct nlmsghdr* h;  
 
-    for (h = (struct nlmsghdr *)buf; NLMSG_OK(h, msglen);
+    for (h = (struct nlmsghdr*)buf; NLMSG_OK(h, msglen);
          h = NLMSG_NEXT(h, msglen)) {
         /* Finish of reading. */
-        if (h->nlmsg_type == NLMSG_DONE) break;
+        if (h->nlmsg_type == NLMSG_DONE)
+            break;
 
         /* Error handling. */
         if (h->nlmsg_type == NLMSG_ERROR) {
@@ -184,7 +192,8 @@ int netlink_parse_info(struct netlink_socket *nlsock,
                   h->nlmsg_len, h->nlmsg_seq, h->nlmsg_pid);
 
         /* Ignore messages that maybe sent from others besides the kernel */
-        if (nladdr.nl_pid != 0) continue;
+        if (nladdr.nl_pid != 0)
+            continue;
 
         /* Function to call to read the results */
         if (filter) {
@@ -201,63 +210,63 @@ int netlink_parse_info(struct netlink_socket *nlsock,
     return status;
 }
 
-const char *nlmsg_type2str(uint16_t type) {
+const char* nlmsg_type2str(uint16_t type) {
     switch (type) {
-        /* Generic */
-        case NLMSG_NOOP:
-            return "NOOP";
-        case NLMSG_ERROR:
-            return "ERROR";
-        case NLMSG_DONE:
-            return "DONE";
-        case NLMSG_OVERRUN:
-            return "OVERRUN";
+    /* Generic */
+    case NLMSG_NOOP:
+        return "NOOP";
+    case NLMSG_ERROR:
+        return "ERROR";
+    case NLMSG_DONE:
+        return "DONE";
+    case NLMSG_OVERRUN:
+        return "OVERRUN";
 
-        /* RTM */
-        case RTM_NEWLINK:
-            return "NEWLINK";
-        case RTM_DELLINK:
-            return "DELLINK";
-        case RTM_GETLINK:
-            return "GETLINK";
-        case RTM_SETLINK:
-            return "SETLINK";
+    /* RTM */
+    case RTM_NEWLINK:
+        return "NEWLINK";
+    case RTM_DELLINK:
+        return "DELLINK";
+    case RTM_GETLINK:
+        return "GETLINK";
+    case RTM_SETLINK:
+        return "SETLINK";
 
-        case RTM_NEWADDR:
-            return "NEWADDR";
-        case RTM_DELADDR:
-            return "DELADDR";
-        case RTM_GETADDR:
-            return "GETADDR";
+    case RTM_NEWADDR:
+        return "NEWADDR";
+    case RTM_DELADDR:
+        return "DELADDR";
+    case RTM_GETADDR:
+        return "GETADDR";
 
-        case RTM_NEWROUTE:
-            return "NEWROUTE";
-        case RTM_DELROUTE:
-            return "DELROUTE";
-        case RTM_GETROUTE:
-            return "GETROUTE";
+    case RTM_NEWROUTE:
+        return "NEWROUTE";
+    case RTM_DELROUTE:
+        return "DELROUTE";
+    case RTM_GETROUTE:
+        return "GETROUTE";
 
-        case RTM_NEWNEIGH:
-            return "NEWNEIGH";
-        case RTM_DELNEIGH:
-            return "DELNEIGH";
-        case RTM_GETNEIGH:
-            return "GETNEIGH";
+    case RTM_NEWNEIGH:
+        return "NEWNEIGH";
+    case RTM_DELNEIGH:
+        return "DELNEIGH";
+    case RTM_GETNEIGH:
+        return "GETNEIGH";
 
-        case RTM_NEWRULE:
-            return "NEWRULE";
-        case RTM_DELRULE:
-            return "DELRULE";
-        case RTM_GETRULE:
-            return "GETRULE";
+    case RTM_NEWRULE:
+        return "NEWRULE";
+    case RTM_DELRULE:
+        return "DELRULE";
+    case RTM_GETRULE:
+        return "GETRULE";
 
-        case RTM_NEWNETCONF:
-            return "RTM_NEWNETCONF";
-        case RTM_DELNETCONF:
-            return "RTM_DELNETCONF";
+    case RTM_NEWNETCONF:
+        return "RTM_NEWNETCONF";
+    case RTM_DELNETCONF:
+        return "RTM_DELNETCONF";
 
-        default:
-            return "UNKNOWN";
+    default:
+        return "UNKNOWN";
     }
 }
 

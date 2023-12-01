@@ -54,7 +54,7 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
 }
 
 // ./con config.ini ap asdf
-int main(int argc, char* argv[]) {
+int main_old(int argc, char* argv[]) {
     if (argc != 4) {
         printf("Usage: ./cfset config.ini section:key val\n");
         return 0;
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-int main_old(int argc, char* argv[]) {
+int main_old1(int argc, char* argv[]) {
 
     printf("%s", DEFAULT_MOTD);
     // memcheck atexit
@@ -115,23 +115,25 @@ int main_old(int argc, char* argv[]) {
     eloop_run(loop);
     eloop_free(&loop);
     return 0;
+}
 
-    // log_info("hello");
+int main(int argc, char* argv[]) {
+    log_info("hello");
     // if (argc != 2) {
     //     return;
     // }
 
-    // int UDP_PORT = 0x2222;
-    // log_info("%d", UDP_PORT);
+    int UDP_PORT = 0x2222;
+    log_info("%d", UDP_PORT);
 
-    // int fd, rt;
-    // char recvline[1024] = {0};
-    // char sendline[1024] = "test test test\n";
+    int fd, rt;
+    char recvline[1024] = {0};
+    char sendline[1024] = "test test test\n";
 
-    // // 创建 UDP 套接字
-    // fd = socket(PF_INET, SOCK_DGRAM, 0);
+    // 创建 UDP 套接字
+    fd = socket(PF_INET, SOCK_DGRAM, 0);
 
-    // // 绑定网卡
+    // 绑定网卡
     // struct ifreq ifr;
     // memset(&ifr, 0, sizeof(ifr));
     // strncpy(ifr.ifr_name, argv[1], IF_NAMESIZE);
@@ -140,52 +142,34 @@ int main_old(int argc, char* argv[]) {
     //     log_info("%s", strerror(errno));
     // }
 
-    // // 设置接收端口
-    // struct sockaddr_in servaddr;
-    // bzero(&servaddr, sizeof(servaddr));
-    // servaddr.sin_family = PF_INET;
-    // // servaddr.sin_addr.s_addr = inet_addr("192.168.50.10");
-    // servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    // servaddr.sin_port = htons(UDP_PORT);
-    // rt = bind(fd, &servaddr, sizeof(servaddr));
-    // if (rt < 0) {
-    //     log_info("bind: %s", strerror(errno));
-    // }
+    // 设置接收端口
+    struct sockaddr_in servaddr;
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = PF_INET;
+    // servaddr.sin_addr.s_addr = inet_addr("192.168.50.10");
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(UDP_PORT);
 
-    // rt = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &rt, sizeof(rt));
-    // if (rt < 0) {
-    //     log_info("reuse: %s", strerror(errno));
-    // }
+    int opt = 1;
+    rt = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if (rt < 0) {
+        log_info("reuse: %s", strerror(errno));
+    }
 
-    // 添加组
-    // struct sockaddr_in grpaddr;
-    // bzero(&grpaddr, sizeof(grpaddr));
-    // grpaddr.sin_family = PF_INET;
-    // grpaddr.sin_addr.s_addr = inet_addr("224.0.0.9");
-    // memcpy(&mreq.imr_multiaddr, &grpaddr, sizeof(grpaddr));
+    rt = bind(fd, &servaddr, sizeof(servaddr));
+    if (rt < 0) {
+        log_info("bind: %s", strerror(errno));
+    }
 
-    // struct ip_mreq mreq;
-    // bzero(&mreq, sizeof(mreq));
-    // mreq.imr_multiaddr.s_addr = inet_addr("224.0.0.9");
-    // mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-
-    // // ioctl(fd, SIOCGIFADDR, &ifr);
-    // // memcpy(&mreq.imr_interface, &((struct sockaddr_in*)&ifr.ifr_addr)->sin_addr, sizeof(struct in_addr));
-
-    // rt = setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
-    // if (rt < 0) {
-    //     log_info("multi: %s", strerror(errno));
-    // }
-
-    // // 等待数据
-    // struct sockaddr_in cliaddr;
-    // socklen_t addrlen = sizeof(cliaddr);
-    // while (1) {
-    //     int n = recvfrom(fd, recvline, 1024, 0, &cliaddr, &addrlen);
-    //     log_info("RECV:");
-    //     print_data(recvline, n);
-    //     int s = sendto(fd, sendline, 28, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
-    //     log_info("SEND:");
-    //     print_data(sendline, 16);
-    // }
+    // 等待数据
+    struct sockaddr_in cliaddr;
+    socklen_t addrlen = sizeof(cliaddr);
+    while (1) {
+        int n = recvfrom(fd, recvline, 1024, 0, &cliaddr, &addrlen);
+        log_info("RECV:");
+        print_data(recvline, n);
+        int s = sendto(fd, sendline, 28, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+        log_info("SEND:");
+        print_data(sendline, 16);
+    }
 }
