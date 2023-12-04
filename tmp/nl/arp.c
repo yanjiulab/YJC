@@ -13,7 +13,7 @@
 
 /* convert the netlink multicast group number into a bit map */
 /* (  e.g. 4 => 16, 5 => 32  ) */
-static __u32 nl_mgrp(__u32 group) {
+static uint32_t nl_mgrp(uint32_t group) {
     if (group > 31) {
         printf("Netlink: Use setsockopt() for this group: %d\n", group);
 

@@ -83,10 +83,10 @@ void parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len) {
 }
 
 static inline int rtm_get_table(struct rtmsg *r, struct rtattr **tb) {
-    __u32 table = r->rtm_table;
+    uint32_t table = r->rtm_table;
 
     if (tb[RTA_TABLE]) {
-        table = *(__u32 *)RTA_DATA(tb[RTA_TABLE]);
+        table = *(uint32_t *)RTA_DATA(tb[RTA_TABLE]);
     }
 
     return table;
@@ -137,7 +137,7 @@ void print_route(struct nlmsghdr *nl_header_answer) {
 
     if (tb[RTA_OIF]) {
         char if_nam_buf[IF_NAMESIZE];
-        int ifidx = *(__u32 *)RTA_DATA(tb[RTA_OIF]);
+        int ifidx = *(uint32_t *)RTA_DATA(tb[RTA_OIF]);
 
         printf(" dev %s", if_indextoname(ifidx, if_nam_buf));
     }

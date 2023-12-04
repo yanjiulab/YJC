@@ -14,12 +14,12 @@ struct ipv4 {
 #error "Please fix endianness defines"
 #endif
     __uint8_t tos;
-    __be16 tot_len;
-    __be16 id;
-    __be16 frag_off;
+    uint16_t tot_len;
+    uint16_t id;
+    uint16_t frag_off;
     __uint8_t ttl;
     __uint8_t protocol;
-    __sum16 check;
+    uint16_t check;
     struct in_addr src_ip;
     struct in_addr dst_ip;
 };
@@ -120,16 +120,16 @@ struct ipv6 {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     __uint8_t traffic_class_hi : 4, version : 4;
     __uint8_t flow_label_hi : 4, traffic_class_lo : 4;
-    __u16 flow_label_lo;
+    uint16_t flow_label_lo;
 #elif __BYTE_ORDER == __BIG_ENDIAN
     __uint8_t version : 4, traffic_class_hi : 4;
     __uint8_t traffic_class_lo : 4, flow_label_hi : 4;
-    __u16 flow_label_lo;
+    uint16_t flow_label_lo;
 #else
 #error "Please fix endianness defines"
 #endif
 
-    __be16 payload_len;
+    uint16_t payload_len;
     __uint8_t next_header;
     __uint8_t hop_limit;
 

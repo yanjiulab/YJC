@@ -18,7 +18,7 @@ struct arphdr_s {
     unsigned char ar_tip[4];        /* target IP address		*/
 } __attribute__((packed));
 
-typedef arphdr_s arp_t;
+typedef struct arphdr_s arp_t;
 
 /* ARP protocol opcodes. */
 #define ARPOP_REQUEST 1   /* ARP request.  */

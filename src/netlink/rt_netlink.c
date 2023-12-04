@@ -205,7 +205,7 @@ int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
 
     if (tb[RTA_OIF]) {
         char if_nam_buf[IF_NAMESIZE];
-        int ifidx = *(__u32*)RTA_DATA(tb[RTA_OIF]);
+        int ifidx = *(uint32_t*)RTA_DATA(tb[RTA_OIF]);
 
         printf(" dev %s", if_indextoname(ifidx, if_nam_buf));
     }
@@ -228,7 +228,7 @@ int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
     }
 
     if (tb[RTA_PRIORITY]) {
-        int pri = *(__u32*)RTA_DATA(tb[RTA_PRIORITY]);
+        int pri = *(uint32_t*)RTA_DATA(tb[RTA_PRIORITY]);
         printf(" metric %d", pri);
     }
 
