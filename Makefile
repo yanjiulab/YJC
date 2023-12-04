@@ -34,20 +34,21 @@ INCLUDE_DIRECTORY=./include/ ./src/
 SOURCE_DIRECTORY=./src
 # Test Directory
 TEST_DIRECTORY=./test
-# The main file path
-MAIN_FILE= ./src/app/main.c
+# Application name
+APPNAME = main
+APP_DIRECTORY=./src/app
+APP_FILE=$(shell find $(APP_DIRECTORY) -name '*.c')
+MAIN_FILE=$(APP_DIRECTORY)/$(APPNAME).c
 # Inlcude folder
 INCLUDES = $(foreach dir, $(shell find $(INCLUDE_DIRECTORY) -type d -print), $(addprefix -I , $(dir)))
 # Source files
-SOURCES = $(filter-out $(MAIN_FILE), $(shell find $(SOURCE_DIRECTORY) -name '*.c'))
+SOURCES = $(filter-out $(APP_FILE), $(shell find $(SOURCE_DIRECTORY) -name '*.c'))
 # Test cases files
 TESTS = $(shell find $(TEST_DIRECTORY) -name '*.c')
-# Application name
-APPNAME = route
 # Output file name
-OUTPUT = build/$(APPNAME).out
+OUTPUT = build/$(APPNAME)
 # Test Output file
-TEST_OUTPUT = build/$(APPNAME)_test.out
+TEST_OUTPUT = build/$(APPNAME)_test
 # Leaks log file
 LEAKS = log/leaks.log
 # Thread chek log file

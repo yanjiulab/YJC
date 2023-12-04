@@ -53,54 +53,24 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
     }
 }
 
-// ./con config.ini ap asdf
-int main_old(int argc, char* argv[]) {
-    if (argc != 4) {
-        printf("Usage: ./cfset config.ini section:key val\n");
-        return 0;
-    }
-
-    for (int i = 0; i < 4; i++) {
-        printf("argv[%i]: %s\n", i, argv[i]);
-    }
-
-    dictionary* ini = iniparser_load(argv[1]);
-    iniparser_set(ini, argv[2], argv[3]);
-    // iniparser_dump(ini, stderr);
-
-    FILE* ini_file;
-    if ((ini_file = fopen(argv[1], "w")) == NULL) {
-        fprintf(stderr, "iniparser: cannot create %s\n", argv[1]);
-        return;
-    }
-    iniparser_dump_ini(ini, ini_file);
-    fclose(ini_file);
-    iniparser_freedict(ini);
-    return 0;
-}
-
-int main_old1(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
 
     printf("%s", DEFAULT_MOTD);
     // memcheck atexit
     MEMCHECK;
-    // struct in_addr i;
-    // log_info("%.8x", inet_atoi_n("192.168.0.1"));
-    // log_info("%.8x", inet_atoi_h("192.168.0.1"));
-    // log_info("%s, %s", inet_itoa_h(0xc0a81717), inet_itoa_h(0xc0a81718));
-    // log_info("%s", inet_itoa_n(0x0102a8c0));
 
     eloop_t* loop = eloop_new(0);
 
     // test idle and priority
     for (int i = EVENT_LOWEST_PRIORITY; i <= EVENT_HIGHEST_PRIORITY; ++i) {
-        eidle_t* idle = eidle_add(loop, on_idle, 10);
+        eidle_t* idle = eidle_add(loop, on_idle, 1); // repeate times: 1
         event_set_priority(idle, i);
     }
 
     // test timer timeout
-    for (int i = 1; i <= 10; ++i) {
-        etimer_t* timer = etimer_add(loop, on_timer, i * 10000, 3);
+    printf("now: %llu\n", LLU(eloop_now(loop)));
+    for (int i = 1; i <= 3; ++i) {
+        etimer_t* timer = etimer_add(loop, on_timer, i * 1000, 2);
         event_set_userdata(timer, (void*)(intptr_t)i);
     }
 
@@ -115,61 +85,4 @@ int main_old1(int argc, char* argv[]) {
     eloop_run(loop);
     eloop_free(&loop);
     return 0;
-}
-
-int main(int argc, char* argv[]) {
-    log_info("hello");
-    // if (argc != 2) {
-    //     return;
-    // }
-
-    int UDP_PORT = 0x2222;
-    log_info("%d", UDP_PORT);
-
-    int fd, rt;
-    char recvline[1024] = {0};
-    char sendline[1024] = "test test test\n";
-
-    // 创建 UDP 套接字
-    fd = socket(PF_INET, SOCK_DGRAM, 0);
-
-    // 绑定网卡
-    // struct ifreq ifr;
-    // memset(&ifr, 0, sizeof(ifr));
-    // strncpy(ifr.ifr_name, argv[1], IF_NAMESIZE);
-    // rt = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, (char*)&ifr, sizeof(ifr));
-    // if (rt < 0) {
-    //     log_info("%s", strerror(errno));
-    // }
-
-    // 设置接收端口
-    struct sockaddr_in servaddr;
-    bzero(&servaddr, sizeof(servaddr));
-    servaddr.sin_family = PF_INET;
-    // servaddr.sin_addr.s_addr = inet_addr("192.168.50.10");
-    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    servaddr.sin_port = htons(UDP_PORT);
-
-    int opt = 1;
-    rt = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    if (rt < 0) {
-        log_info("reuse: %s", strerror(errno));
-    }
-
-    rt = bind(fd, &servaddr, sizeof(servaddr));
-    if (rt < 0) {
-        log_info("bind: %s", strerror(errno));
-    }
-
-    // 等待数据
-    struct sockaddr_in cliaddr;
-    socklen_t addrlen = sizeof(cliaddr);
-    while (1) {
-        int n = recvfrom(fd, recvline, 1024, 0, &cliaddr, &addrlen);
-        log_info("RECV:");
-        print_data(recvline, n);
-        int s = sendto(fd, sendline, 28, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
-        log_info("SEND:");
-        print_data(sendline, 16);
-    }
 }
