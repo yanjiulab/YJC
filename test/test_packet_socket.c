@@ -2,12 +2,11 @@
 #include "ip_address.h"
 #include "log.h"
 #include "net_utils.h"
-#include "packet_dump.h"
+#include "packet_pcap.h"
 #include "packet_parser.h"
 #include "packet_socket.h"
 #include "packet_stringify.h"
 #include "test.h"
-// #include "pcap.h"
 
 void test_packet_socket() {
     int num_packets = 0;
@@ -22,7 +21,7 @@ void test_packet_socket() {
     // packet_socket_set_filter_str(psock, "not tcp");
     FILE* pf = NULL;
     // printf("pf: %p\n", pf);
-    pf = pcap_file_new("a.pcap");
+    pf = pcap_open("build/a.pcap");
     // printf("pf: %p\n", pf);
     int i = 0;
     while (1) {
@@ -51,11 +50,11 @@ void test_packet_socket() {
         // packet_stringify(packet, DUMP_FULL, &dump, &error);
         // printf("dump = '%s'\n", dump);
         // }
-        pcap_file_write(pf, packet);
+        packet_add_pcap(packet, pf);
         i++;
 
         if (i == 10) {
-            pcap_file_free(pf);
+            pcap_close(pf);
             return;
         }
 

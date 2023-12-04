@@ -1,14 +1,30 @@
-#include "packet_dump.h"
+#include "packet_pcap.h"
 #include <stdbool.h>
 
-FILE* pcap_file_new(char* filename) {
+// TODO: make strict check
+static bool is_valid_pcap(char* filename) {
+    FILE* f = fopen(filename, "rb");
+    if (!f) {
+        perror("open pcap file failed");
+        return;
+    }
+    uint32_t magic;
+    if (fread(&magic, 4, 1, f) != 1) {
+        perror("read pcap file failed");
+    }
+    fclose(f);
+
+    return magic == PCAP_MAGIC ? true : false;
+}
+
+FILE* pcap_open(char* filename) {
     pcap_file_header_t pfh = {0};
     pfh.magic = PCAP_MAGIC;
     pfh.version_major = PCAP_VERSION_MAJOR;
     pfh.version_minor = PCAP_VERSION_MINOR;
     pfh.thiszone = 0;
     pfh.sigfigs = 0;
-    pfh.snaplen = 0x40000;
+    pfh.snaplen = PCAP_SNAPLEN_MAX;
     pfh.linktype = 1;
 
     FILE* pf = fopen(filename, "wb");
@@ -26,20 +42,20 @@ FILE* pcap_file_new(char* filename) {
     return pf;
 }
 
-void pcap_file_free(FILE* pf) {
+void pcap_close(FILE* pf) {
     if (pf) {
         fclose(pf);
         pf = NULL;
     }
 }
 
-int pcap_file_write(FILE* pf, struct packet* p) {
+int packet_add_pcap(struct packet* p, FILE* pf) {
     pcap_pkthdr_t pph = {0};
     pph.ts.tv_sec = p->tv.tv_sec;
     pph.ts.tv_usec = p->tv.tv_usec;
     pph.caplen = p->buffer_active;
     pph.len = pph.caplen;
-    // printf("pf write: %p\n", pf);
+
     if (fwrite(&pph, sizeof(pph), 1, pf) != 1) {
         perror("write pcap file packet header failed");
         return -1;
@@ -53,43 +69,14 @@ int pcap_file_write(FILE* pf, struct packet* p) {
     return 0;
 }
 
-bool is_valid_pcap(char* filename) {
-    FILE* f = fopen(filename, "rb");
-    if (!f) {
-        perror("open pcap file failed");
-        return;
-    }
-    uint32_t magic;
-    if (fread(&magic, 4, 1, f) != 1) {
-        perror("read pcap file failed");
-    }
-
-    printf("%x", magic);
-
-    if (magic == PCAP_MAGIC) {
-        return true;
-    } else {
-        return false;
-    }
-}
-
-int packet_dump_pcap(struct packet* p, char* filename) {
+int packet_to_pcap(struct packet* p, char* filename) {
 
     FILE* pf = NULL;
     if (is_valid_pcap(filename)) {
-        // if pcap file exsit, then append it.
-        printf("valid pcap file.");
         pf = fopen(filename, "ab");
     } else {
-        // new pcap file
-        pf = pcap_file_new(filename);
-        printf("invalid pcap file.");
+        pf = pcap_open(filename);
     }
-
-    pcap_file_write(pf, p);
-
-    pcap_file_free(pf);
-}
-
-int packet_dump_pcap_from_buf(uint8_t* hex, char* filename) {
+    packet_add_pcap(p, pf);
+    pcap_close(pf);
 }
