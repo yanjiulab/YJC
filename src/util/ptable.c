@@ -48,7 +48,7 @@ static void fputnc(int c, size_t n, FILE *f) {
     }
 }
 
-static size_t find_break(char const *s, size_t max, bool *hyphen) {
+static size_t find_break(char *s, size_t max, bool *hyphen) {
     char *c;
     size_t brk, cp;
 

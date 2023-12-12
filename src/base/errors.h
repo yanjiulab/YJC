@@ -10,17 +10,10 @@
 #include "export.h"
 #define MAXLINE 4096
 
-void err_ret(const char *fmt, ...);
-void err_sys(const char *fmt, ...);
-void err_msg(const char *fmt, ...);
-void err_quit(const char *fmt, ...);
-
-#define assert(expr)                                                      \
-    do {                                                                  \
-        if (!(expr))                                                      \
-            err_quit("assertion %s failed at %s line %d", __STRING(expr), \
-                     __FILE__, __LINE__);                                 \
-    } while (0)
+void err_ret(const char* fmt, ...);
+void err_sys(const char* fmt, ...);
+void err_msg(const char* fmt, ...);
+void err_quit(const char* fmt, ...);
 
 #ifndef SYS_NERR
 #define SYS_NERR 133
@@ -119,7 +112,7 @@ void err_quit(const char *fmt, ...);
     FOREACH_ERR_FUNC(F)   \
     FOREACH_ERR_GRPC(F)
 
-#undef ERR_OK  // prevent conflict
+#undef ERR_OK // prevent conflict
 enum {
 #define F(errcode, name, errmsg) ERR_##name = errcode,
     FOREACH_ERR(F)
@@ -127,6 +120,6 @@ enum {
 };
 
 // errcode => errmsg
-EXPORT const char *hv_strerror(int err);
+EXPORT const char* hv_strerror(int err);
 
 #endif

@@ -6,11 +6,12 @@ static bool is_valid_pcap(char* filename) {
     FILE* f = fopen(filename, "rb");
     if (!f) {
         perror("open pcap file failed");
-        return;
+        return false;
     }
     uint32_t magic;
     if (fread(&magic, 4, 1, f) != 1) {
         perror("read pcap file failed");
+        return false;
     }
     fclose(f);
 

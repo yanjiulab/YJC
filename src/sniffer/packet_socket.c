@@ -150,7 +150,7 @@ void packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
     int len = str2int(str_rtrim(line, '\n'));
     filter = calloc(len, sizeof(*filter));
     for (int i = 0; i < len; i++) {
-        sscanf(fgets(line, sizeof(line), ptr), "%d %d %d %d\n",
+        sscanf(fgets(line, sizeof(line), ptr), "%hd %hhd %hhd %d\n",
                &(filter + i)->code, &(filter + i)->jt, &(filter + i)->jf,
                &(filter + i)->k);
     }

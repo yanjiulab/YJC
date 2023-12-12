@@ -1,12 +1,12 @@
 #include "str.h"
 
 // Prints a message to stderr and exits with a non-zero error code.
-static void err(const char *msg) {
+static void err(const char* msg) {
     fprintf(stderr, "Error: %s.\n", msg);
     exit(1);
 }
 
-char *str(const char *fmtstr, ...) {
+char* str(const char* fmtstr, ...) {
     va_list args;
     va_start(args, fmtstr);
 
@@ -16,7 +16,7 @@ char *str(const char *fmtstr, ...) {
     }
 
     va_end(args);
-    char *string = malloc(len + 1);
+    char* string = malloc(len + 1);
 
     if (string == NULL) {
         return NULL;
@@ -29,8 +29,8 @@ char *str(const char *fmtstr, ...) {
     return string;
 }
 
-int str2int(const char *string) {
-    char *endptr;
+int str2int(const char* string) {
+    char* endptr;
     errno = 0;
     long result = strtol(string, &endptr, 0);
     if (errno == ERANGE || result > INT_MAX || result < INT_MIN) {
@@ -42,8 +42,8 @@ int str2int(const char *string) {
     return (int)result;
 }
 
-double str2double(const char *string) {
-    char *endptr;
+double str2double(const char* string) {
+    char* endptr;
     errno = 0;
     double result = strtod(string, &endptr);
     if (errno == ERANGE) {
@@ -55,53 +55,55 @@ double str2double(const char *string) {
     return result;
 }
 
-bool str2bool(const char *str) {
-    if (str == NULL) return false;
+bool str2bool(const char* str) {
+    if (str == NULL)
+        return false;
     int len = strlen(str);
-    if (len == 0) return false;
+    if (len == 0)
+        return false;
     switch (len) {
-        case 1:
-            return *str == '1' || *str == 'y' || *str == 'Y';
-        case 2:
-            return strcasecmp(str, "on") == 0;
-        case 3:
-            return strcasecmp(str, "yes") == 0;
-        case 4:
-            return strcasecmp(str, "true") == 0;
-        case 6:
-            return strcasecmp(str, "enable") == 0;
-        default:
-            return false;
+    case 1:
+        return *str == '1' || *str == 'y' || *str == 'Y';
+    case 2:
+        return strcasecmp(str, "on") == 0;
+    case 3:
+        return strcasecmp(str, "yes") == 0;
+    case 4:
+        return strcasecmp(str, "true") == 0;
+    case 6:
+        return strcasecmp(str, "enable") == 0;
+    default:
+        return false;
     }
 }
 
-size_t str2size(const char *str) {
+size_t str2size(const char* str) {
     size_t size = 0, n = 0;
-    const char *p = str;
+    const char* p = str;
     char c;
     while ((c = *p) != '\0') {
         if (c >= '0' && c <= '9') {
             n = n * 10 + c - '0';
         } else {
             switch (c) {
-                case 'K':
-                case 'k':
-                    n <<= 10;
-                    break;
-                case 'M':
-                case 'm':
-                    n <<= 20;
-                    break;
-                case 'G':
-                case 'g':
-                    n <<= 30;
-                    break;
-                case 'T':
-                case 't':
-                    n <<= 40;
-                    break;
-                default:
-                    break;
+            case 'K':
+            case 'k':
+                n <<= 10;
+                break;
+            case 'M':
+            case 'm':
+                n <<= 20;
+                break;
+            case 'G':
+            case 'g':
+                n <<= 30;
+                break;
+            case 'T':
+            case 't':
+                n <<= 40;
+                break;
+            default:
+                break;
             }
             size += n;
             n = 0;
@@ -111,31 +113,31 @@ size_t str2size(const char *str) {
     return size + n;
 }
 
-time_t str2time(const char *str) {
+time_t str2time(const char* str) {
     time_t time = 0, n = 0;
-    const char *p = str;
+    const char* p = str;
     char c;
     while ((c = *p) != '\0') {
         if (c >= '0' && c <= '9') {
             n = n * 10 + c - '0';
         } else {
             switch (c) {
-                case 's':
-                    break;
-                case 'm':
-                    n *= 60;
-                    break;
-                case 'h':
-                    n *= 60 * 60;
-                    break;
-                case 'd':
-                    n *= 24 * 60 * 60;
-                    break;
-                case 'w':
-                    n *= 7 * 24 * 60 * 60;
-                    break;
-                default:
-                    break;
+            case 's':
+                break;
+            case 'm':
+                n *= 60;
+                break;
+            case 'h':
+                n *= 60 * 60;
+                break;
+            case 'd':
+                n *= 24 * 60 * 60;
+                break;
+            case 'w':
+                n *= 7 * 24 * 60 * 60;
+                break;
+            default:
+                break;
             }
             time += n;
             n = 0;
@@ -145,7 +147,7 @@ time_t str2time(const char *str) {
     return time + n;
 }
 
-uint32_t str_hash(const char *str) {
+uint32_t str_hash(const char* str) {
     uint32_t hash = 2166136261u;
     size_t length = strlen(str);
     for (size_t i = 0; i < length; i++) {
@@ -155,43 +157,48 @@ uint32_t str_hash(const char *str) {
     return hash;
 }
 
-bool str_startswith(const char *str, const char *prefix) {
-    if (!str || !prefix) return false;
+bool str_startswith(const char* str, const char* prefix) {
+    if (!str || !prefix)
+        return false;
 
     size_t lenstr = strlen(str);
     size_t lenprefix = strlen(prefix);
 
-    if (lenprefix > lenstr) return false;
+    if (lenprefix > lenstr)
+        return false;
 
     return strncmp(str, prefix, lenprefix) == 0;
 }
 
-bool str_endswith(const char *str, const char *suffix) {
-    if (!str || !suffix) return false;
+bool str_endswith(const char* str, const char* suffix) {
+    if (!str || !suffix)
+        return false;
 
     size_t lenstr = strlen(str);
     size_t lensuffix = strlen(suffix);
 
-    if (lensuffix > lenstr) return false;
+    if (lensuffix > lenstr)
+        return false;
 
     return strncmp(&str[lenstr - lensuffix], suffix, lensuffix) == 0;
 }
 
-bool str_contains(const char *str, const char *sub) {
+bool str_contains(const char* str, const char* sub) {
     assert(str != NULL && sub != NULL);
     return strstr(str, sub) != NULL;
 }
 
-bool str_all_digit(const char *str) {
+bool str_all_digit(const char* str) {
     for (; *str != '\0'; str++)
-        if (!isdigit((unsigned char)*str)) return false;
+        if (!isdigit((unsigned char)*str))
+            return false;
     return true;
 }
 
 /*-------------------------- new string operations ---------------------------------*/
-char *str_replace(const char *str, const char *find, const char *replace) {
-    char *ch;
-    char *nustr = strdup(str);
+char* str_replace(const char* str, const char* find, const char* replace) {
+    char* ch;
+    char* nustr = strdup(str);
 
     size_t findlen = strlen(find);
     size_t repllen = strlen(replace);
@@ -214,8 +221,8 @@ char *str_replace(const char *str, const char *find, const char *replace) {
 }
 
 /*-------------------------- in place modified operations ---------------------------------*/
-char *str_upper(char *buf) {
-    char *p = buf;
+char* str_upper(char* buf) {
+    char* p = buf;
     while (*p != '\0') {
         if (*p >= 'a' && *p <= 'z') {
             *p &= ~0x20;
@@ -225,8 +232,8 @@ char *str_upper(char *buf) {
     return buf;
 }
 
-char *str_lower(char *buf) {
-    char *p = buf;
+char* str_lower(char* buf) {
+    char* p = buf;
     while (*p != '\0') {
         if (*p >= 'A' && *p <= 'Z') {
             *p |= 0x20;
@@ -236,10 +243,11 @@ char *str_lower(char *buf) {
     return buf;
 }
 
-char *str_reverse(char *buf) {
-    if (buf == NULL) return NULL;
-    char *b = buf;
-    char *e = buf;
+char* str_reverse(char* buf) {
+    if (buf == NULL)
+        return NULL;
+    char* b = buf;
+    char* e = buf;
     while (*e) {
         ++e;
     }
@@ -255,17 +263,17 @@ char *str_reverse(char *buf) {
     return buf;
 }
 
-char *str_rtrim(char *buf, char junk) {
-    char *original = buf + strlen(buf);
+char* str_rtrim(char* buf, char junk) {
+    char* original = buf + strlen(buf);
     while (*--original == junk)
         ;
     *(original + 1) = '\0';
     return buf;
 }
 
-char *str_ltrim(char *buf, char junk) {
-    char *original = buf;
-    char *p = original;
+char* str_ltrim(char* buf, char junk) {
+    char* original = buf;
+    char* p = original;
     int trimmed = 0;
     do {
         if (*original != junk || trimmed) {
@@ -276,31 +284,14 @@ char *str_ltrim(char *buf, char junk) {
     return buf;
 }
 
-char *str_trim(char *buf, char junk) {
+char* str_trim(char* buf, char junk) {
     str_ltrim(str_rtrim(buf, junk), junk);
     return buf;
 }
 
-char *str_random(char *buf, int len) {
-    static char s_characters[] = {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-        'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-        'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
-    };
-
-    if (buf == NULL) buf = (char *)calloc(1, len + 1);
-
-    int i = 0;
-    srand(time(NULL));
-    for (; i < len; i++) {
-        buf[i] = s_characters[rand() % (sizeof(s_characters))];
-    }
-    buf[i] = '\0';
-    return buf;
-}
-
-int str_split(char *in, char **out, int outlen, const char *sep) {
-    if (in == NULL || strlen(in) == 0) return 0;
+int str_split(char* in, char** out, int outlen, const char* sep) {
+    if (in == NULL || strlen(in) == 0)
+        return 0;
     if (sep == NULL || strlen(sep) == 0) {
         *out = in;
         return 1;
@@ -309,17 +300,20 @@ int str_split(char *in, char **out, int outlen, const char *sep) {
     int n;
     char *str, *token, *saveptr;
     for (n = 0, str = in;; n++, str = NULL) {
-        if (n == outlen) break;
+        if (n == outlen)
+            break;
         token = strtok_r(str, sep, &saveptr);
-        if (token == NULL) break;
+        if (token == NULL)
+            break;
         out[n] = token;
     }
 
     return n;
 }
 
-char *str_hex(char *buff, size_t bufsiz, const uint8_t *str, size_t num) {
-    if (bufsiz == 0) return buff;
+char* str_hex(char* buff, size_t bufsiz, const uint8_t* str, size_t num) {
+    if (bufsiz == 0)
+        return buff;
 
     char tmp[3];
 
@@ -332,3 +326,5 @@ char *str_hex(char *buff, size_t bufsiz, const uint8_t *str, size_t num) {
 
     return buff;
 }
+
+

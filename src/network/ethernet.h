@@ -4,7 +4,7 @@
 #define __ETHERNET_H__
 
 #include <net/ethernet.h>
-#include <netinet/ether.h>  // Ethernet
+#include <netinet/ether.h> // Ethernet
 #include <stdio.h>
 
 /* IEEE 802.3 Ethernet magic constants. The frame sizes omit the preamble
@@ -27,11 +27,14 @@ typedef struct ethhdr ethernet_t;
 /* Ethernet address. */
 typedef struct ether_addr ether_addr_t;
 
-static inline void ether_copy(void *dst, const void *src) {
-    memcpy(dst, src, sizeof(ether_addr_t));
-}
-void ether_from_string(const char *str, ether_addr_t *ether);
-char *ether_to_string(ether_addr_t *ether, const char *str);
-const char *ether_type2str(uint16_t type);
+// static inline void ether_copy(void *dst, const void *src) {
+//     memcpy(dst, src, sizeof(ether_addr_t));
+// }
+
+#define ether_copy(dst, src) memcpy(dst, src, sizeof(ether_addr_t))
+
+void ether_from_string(const char* str, ether_addr_t* ether);
+char* ether_to_string(ether_addr_t* ether, const char* str);
+const char* ether_type2str(uint16_t type);
 
 #endif /* __ETHERNET_H__ */

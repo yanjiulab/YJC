@@ -76,7 +76,7 @@ static inline int ipv4_header_len(const struct ipv4 *ipv4) {
 #define IP_RF 0x8000      /* reserved fragment flag */
 #define IP_DF 0x4000      /* don't fragment flag */
 #define IP_MF 0x2000      /* more fragments flag */
-#define IP_OFFMASK 0x1FFF /* mask for fragmenting bits */
+// #define IP_OFFMASK 0x1FFF /* mask for fragmenting bits */
 
 static inline char *ip_proto2str(uint8_t proto) {
     switch (proto) {
