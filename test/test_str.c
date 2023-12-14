@@ -5,7 +5,6 @@ void test_str() {
     char *s = str("Hello %s\n", "World");
     printf(s);
     assert(str_hash("hello") == str_hash("hello"));
-    printf("%s\n", str_random(NULL, 10));
     printf("%s\n", str_replace(s, "World", "String!"));
     printf("%d\n", str2int("1234"));
     printf("%d\n", str2int(" 0x1234"));

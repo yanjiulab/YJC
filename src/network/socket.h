@@ -1,17 +1,17 @@
 #ifndef __SOCKET_H__
 #define __SOCKET_H__
 
-#include <arpa/inet.h>  // inet_*, address
-#include <errno.h>      // errno
+#include <arpa/inet.h> // inet_*, address
+#include <errno.h>     // errno
 #include <fcntl.h>
-#include <netdb.h>  // dns
+#include <netdb.h> // dns
 #include <netinet/in.h>
-#include <netinet/tcp.h>  // TCP
-#include <stdbool.h>      // bool
+#include <netinet/tcp.h> // TCP
+#include <stdbool.h>     // bool
 #include <stdio.h>
 #include <sys/socket.h>
 #include <sys/time.h>
-#include <sys/un.h>  // sockaddr_un
+#include <sys/un.h> // sockaddr_un
 #include <unistd.h>
 
 #include "defs.h"
@@ -73,7 +73,7 @@ INLINE void sockaddr_set_path(sockaddr_u* addr, const char* path) {
     strncpy(addr->sun.sun_path, path, sizeof(addr->sun.sun_path));
 }
 #else
-#define SOCKADDR_STRLEN 64  // ipv4:port | [ipv6]:port
+#define SOCKADDR_STRLEN 64 // ipv4:port | [ipv6]:port
 #endif
 
 static inline void sockaddr_print(sockaddr_u* addr) {
@@ -106,7 +106,7 @@ EXPORT int Connect(const char* host, int port, int nonblock DEFAULT(0));
 // Connect(host, port, 1)
 EXPORT int ConnectNonblock(const char* host, int port);
 // Connect(host, port, 1) -> select -> blocking
-#define DEFAULT_CONNECT_TIMEOUT 10000  // ms
+#define DEFAULT_CONNECT_TIMEOUT 10000 // ms
 EXPORT int ConnectTimeout(const char* host, int port,
                           int ms DEFAULT(DEFAULT_CONNECT_TIMEOUT));
 
@@ -236,4 +236,6 @@ INLINE int so_linger(int sockfd, int timeout DEFAULT(1)) {
 #endif
 }
 
-#endif  // !__SOCKET_H__
+
+
+#endif // !__SOCKET_H__

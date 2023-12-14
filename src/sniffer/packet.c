@@ -18,42 +18,6 @@ void packet_free(struct packet* packet) {
     free(packet);
 }
 
-int packet_header_count(const struct packet* packet) {
-    int i;
-
-    for (i = 0; i < ARRAY_SIZE(packet->headers); ++i) {
-        if (packet->headers[i].type == HEADER_NONE)
-            break;
-    }
-    return i;
-}
-
-struct header* packet_append_header(struct packet* packet,
-                                    enum header_t header_type,
-                                    int header_bytes) {
-    struct header* header = NULL;
-    int num_headers;
-    int bytes_headers = 0;
-
-    for (num_headers = 0; num_headers < ARRAY_SIZE(packet->headers);
-         ++num_headers) {
-        if (packet->headers[num_headers].type == HEADER_NONE)
-            break;
-        bytes_headers += packet->headers[num_headers].header_bytes;
-    }
-
-    assert(num_headers <= PACKET_MAX_HEADERS);
-    if (num_headers == PACKET_MAX_HEADERS)
-        return NULL;
-
-    header = &packet->headers[num_headers];
-    header->h.ptr = packet->buffer + bytes_headers;
-    header->type = header_type;
-    header->header_bytes = header_bytes;
-    header->total_bytes = 0;
-    return header;
-}
-
 /* ---------------------------- packet list---------------------------- */
 struct packet_list* packet_list_new(void) {
     struct packet_list* list = calloc(1, sizeof(struct packet_list));

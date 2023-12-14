@@ -2,8 +2,8 @@
 #include "ip_address.h"
 #include "log.h"
 #include "net_utils.h"
-#include "packet_pcap.h"
 #include "packet_parser.h"
+#include "packet_pcap.h"
 #include "packet_socket.h"
 #include "packet_stringify.h"
 #include "test.h"
@@ -24,6 +24,7 @@ void test_packet_socket() {
     pf = pcap_open("build/a.pcap");
     // printf("pf: %p\n", pf);
     int i = 0;
+
     while (1) {
         error = NULL;
         int in_bytes = 0;
@@ -46,10 +47,11 @@ void test_packet_socket() {
         ++num_packets;
 
         result = parse_packet(packet, in_bytes, layer, &error);
-        // if (result == PACKET_OK) {
-        // packet_stringify(packet, DUMP_FULL, &dump, &error);
-        // printf("dump = '%s'\n", dump);
-        // }
+
+        if (result == PACKET_OK) {
+            packet_stringify(packet, DUMP_VERBOSE, &dump, &error);
+            // printf("dump = '%s'\n", dump);
+        }
         packet_add_pcap(packet, pf);
         i++;
 
@@ -62,6 +64,6 @@ void test_packet_socket() {
         packet = NULL;
 
         log_debug("parse_result: %d", result);
-        log_debug("error: %s", error);
+        printf("%s", dump);
     }
 }

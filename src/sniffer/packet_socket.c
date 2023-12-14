@@ -231,8 +231,6 @@ int packet_socket_receive(struct packet_socket* psock,
         }
     }
 
-    log_info("packet type: %d", from.sll_pkttype);
-
     if (direction == DIRECTION_OUTGOING && from.sll_pkttype != PACKET_OUTGOING) {
         log_debug("not outbound (%d)", from.sll_pkttype);
         return STATUS_ERR;
