@@ -110,7 +110,7 @@ static int parse_layer4(struct packet* packet, u8* layer4_start,
         // return parse_ipv6(packet, layer4_start, packet_end, error);
     }
 
-    asprintf(error, "Unknown layer4 packet");
+    asprintf(error, "Unknown layer4 packet (%d)", layer4_protocol);
     return PACKET_UNKNOWN_L4;
 }
 
@@ -233,9 +233,7 @@ static int parse_ipv6(struct packet* packet, uint8_t* header_start,
     /* Examine the L4 header. */
     const int layer4_bytes = ip_total_bytes - ip_header_bytes;
     const int layer4_protocol = ipv6->next_header;
-    // result = parse_layer4(packet, p, layer4_protocol, layer4_bytes,
-    // packet_end,
-    //                       error);
+    result = parse_layer4(packet, p, layer4_protocol, layer4_bytes, packet_end, error);
 
     // /* If this is the innermost L3 header then this is the primary. */
     // if (!packet->ipv4 && !packet->ipv6) packet->ipv6 = ipv6;

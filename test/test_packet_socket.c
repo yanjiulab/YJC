@@ -12,7 +12,7 @@ void test_packet_socket() {
     int num_packets = 0;
     char* error = NULL;
     char* dump = NULL;
-    struct packet_socket* psock = packet_socket_new("ens33");
+    struct packet_socket* psock = packet_socket_new("ens38");
     enum direction_t direction = DIRECTION_ALL;
     enum packet_layer_t layer = PACKET_LAYER_2_ETHERNET;
     s32 timeout_secs = -1;
@@ -49,21 +49,20 @@ void test_packet_socket() {
         result = parse_packet(packet, in_bytes, layer, &error);
 
         if (result == PACKET_OK) {
-            packet_stringify(packet, DUMP_VERBOSE, &dump, &error);
-            // printf("dump = '%s'\n", dump);
+            packet_stringify(packet, DUMP_FULL, &dump, &error);
+            printf("%s", dump);
+        } else {
+            printf("%s", error);
         }
         packet_add_pcap(packet, pf);
         i++;
 
-        if (i == 10) {
+        if (i == 100) {
             pcap_close(pf);
             return;
         }
 
         packet_free(packet);
         packet = NULL;
-
-        log_debug("parse_result: %d", result);
-        printf("%s", dump);
     }
 }

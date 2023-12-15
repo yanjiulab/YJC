@@ -1,6 +1,7 @@
 #include "packet_stringify.h"
 #include "defs.h"
 #include "ip_address.h"
+#include "str.h"
 
 void hex_dump(const uint8_t* buffer, int bytes, char** hex) {
     size_t size = 0;
@@ -52,7 +53,7 @@ static void endpoints_to_string(FILE* s, const struct packet* packet) {
 
     get_packet_tuple(packet, &tuple);
 
-    fprintf(s, "%s:%u > %s:%u",
+    fprintf(s, "IP %s:%u > %s:%u",
             ip_to_string(&tuple.src.ip, src_string), ntohs(tuple.src.port),
             ip_to_string(&tuple.dst.ip, dst_string), ntohs(tuple.dst.port));
 }
@@ -70,7 +71,8 @@ static int udp_packet_to_string(FILE* s, struct packet* packet,
 
     if (format == DUMP_VERBOSE)
         packet_buffer_to_string(s, packet);
-
+    else
+        fputc('\n', s);
     return result;
 }
 
@@ -139,11 +141,13 @@ static int tcp_packet_to_string(FILE* s, struct packet* packet,
 
     if (format == DUMP_VERBOSE)
         packet_buffer_to_string(s, packet);
+    else
+        fputc('\n', s);
 
     return result;
 }
 
-static int ipv4_header_to_string(FILE* s, struct packet* packet,
+static int ipv4_packet_to_string(FILE* s, struct packet* packet,
                                  enum dump_format_t format, char** error) {
     char src_string[ADDR_STR_LEN];
     char dst_string[ADDR_STR_LEN];
@@ -153,14 +157,14 @@ static int ipv4_header_to_string(FILE* s, struct packet* packet,
     ip_from_ipv4(&ipv4->src_ip, &src_ip);
     ip_from_ipv4(&ipv4->dst_ip, &dst_ip);
 
-    fprintf(s, "+ ipv4, %s > %s: \n",
+    fprintf(s, "IPv4 %s > %s ",
             ip_to_string(&src_ip, src_string),
             ip_to_string(&dst_ip, dst_string));
 
     return STATUS_OK;
 }
 
-static int ipv6_header_to_string(FILE* s, struct packet* packet,
+static int ipv6_packet_to_string(FILE* s, struct packet* packet,
                                  enum dump_format_t format, char** error) {
     char src_string[ADDR_STR_LEN];
     char dst_string[ADDR_STR_LEN];
@@ -170,25 +174,32 @@ static int ipv6_header_to_string(FILE* s, struct packet* packet,
     ip_from_ipv6(&ipv6->src_ip, &src_ip);
     ip_from_ipv6(&ipv6->dst_ip, &dst_ip);
 
-    fprintf(s, "+ ipv6, %s > %s: \n",
+    fprintf(s, "IPv6 %s > %s ",
             ip_to_string(&src_ip, src_string),
             ip_to_string(&dst_ip, dst_string));
 
     return STATUS_OK;
 }
 
-static int ethernet_packet_to_string(FILE* s, ethernet_t* eth) {
+static int eth_packet_to_string(FILE* s, struct packet* packet, enum dump_format_t format) {
 
     int result = STATUS_OK; /* return value */
+    ethernet_t* eth = packet->eth;
+    const char* type = ether_type2str(ntohs((unsigned short)eth->h_proto));
 
     fprintf(s,
-            "> ether, %.2X-%.2X-%.2X-%.2X-%.2X-%.2X -> "
+            "ETH %.2X-%.2X-%.2X-%.2X-%.2X-%.2X > "
             "%.2X-%.2X-%.2X-%.2X-%.2X-%.2X (%s: 0x%.4x)\n",
             eth->h_source[0], eth->h_source[1], eth->h_source[2],
             eth->h_source[3], eth->h_source[4], eth->h_source[5],
             eth->h_dest[0], eth->h_dest[1], eth->h_dest[2], eth->h_dest[3],
-            eth->h_dest[4], eth->h_dest[5], ether_type2str(ntohs((unsigned short)eth->h_proto)),
+            eth->h_dest[4], eth->h_dest[5], type,
             ntohs((unsigned short)eth->h_proto));
+
+    if (strmatch(type, "UNKNOWN")) {
+        if (format == DUMP_VERBOSE)
+            packet_buffer_to_string(s, packet);
+    }
 
     return result;
 }
@@ -201,50 +212,45 @@ int packet_stringify(struct packet* packet, enum dump_format_t format,
     FILE* s = open_memstream(ascii_string, &size); /* output string */
     int i;
 
-    // int header_count = packet_header_count(packet);
     if (packet->eth) {
-        ethernet_packet_to_string(s, packet->eth);
+        if ((format == DUMP_FULL) || (format == DUMP_VERBOSE)) {
+            eth_packet_to_string(s, packet, format);
+        }
     }
 
-    if (packet->ipv4) {
-        ipv4_header_to_string(s, packet, format, error);
-    } else if (packet->ipv6) {
-        ipv6_header_to_string(s, packet, format, error);
-    } else {
+    if ((packet->ipv4 == NULL) && (packet->ipv6 == NULL)) {
         fprintf(s, "[NO IP HEADER]");
-        packet_buffer_to_string(s, packet);
+        if ((format == DUMP_FULL) || (format == DUMP_VERBOSE))
+            packet_buffer_to_string(s, packet);
+        else
+            fputc('\n', s);
+    } else {
+        // ipv4 or ipv6
+        if (packet->tcp != NULL) {
+            if (tcp_packet_to_string(s, packet, format, error))
+                goto out;
+        } else if (packet->udp != NULL) {
+            if (udp_packet_to_string(s, packet, format, error))
+                goto out;
+            // } else if (packet->icmpv4 != NULL) {
+            //     if (icmpv4_packet_to_string(s, packet, format, error))
+            //         goto out;
+            // } else if (packet->icmpv6 != NULL) {
+            //     if (icmpv6_packet_to_string(s, packet, format, error))
+            //         goto out;
+        } else {
+            if (packet->ipv4) {
+                ipv4_packet_to_string(s, packet, format, error);
+            } else {
+                ipv6_packet_to_string(s, packet, format, error);
+            }
+            fprintf(s, "[NO TCP/UDP/ICMP HEADER]");
+            if (format == DUMP_VERBOSE)
+                packet_buffer_to_string(s, packet);
+            else
+                fputc('\n', s);
+        }
     }
-
-    if (packet->tcp) {
-        tcp_packet_to_string(s, packet, format, error);
-    }
-    if (packet->udp) {
-        udp_packet_to_string(s, packet, format, error);
-    }
-
-    // packet_buffer_to_string(s, packet);
-
-    // /* Print any encapsulation headers preceding layer 3 and 4 headers. */
-    // for (i = 0; i < header_count - 2; ++i) {
-    //     if (packet->headers[i].type == HEADER_NONE) break;
-    //     if (encap_header_to_string(s, packet, i, format, error)) goto out;
-    // }
-
-    // if ((packet->ipv4 == NULL) && (packet->ipv6 == NULL)) {
-    //     fprintf(s, "[NO IP HEADER]");
-    // } else {
-    //     if (packet->tcp != NULL) {
-    //         if (tcp_packet_to_string(s, packet, format, error)) goto out;
-    //     } else if (packet->udp != NULL) {
-    //         if (udp_packet_to_string(s, packet, format, error)) goto out;
-    //     } else if (packet->icmpv4 != NULL) {
-    //         if (icmpv4_packet_to_string(s, packet, format, error)) goto out;
-    //     } else if (packet->icmpv6 != NULL) {
-    //         if (icmpv6_packet_to_string(s, packet, format, error)) goto out;
-    //     } else {
-    //         fprintf(s, "[NO TCP OR ICMP HEADER]");
-    //     }
-    // }
 
     result = STATUS_OK;
 

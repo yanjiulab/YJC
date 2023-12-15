@@ -18,8 +18,8 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include "packet_header.h"
 #include "ip_address.h"
+#include "packet_header.h"
 
 /* The directions in which a packet may flow. */
 enum direction_t {
@@ -62,10 +62,13 @@ struct packet {
     uint8_t* buffer;        /* data buffer: full contents of packet */
     uint32_t buffer_bytes;  /* bytes of space in data buffer */
     uint32_t buffer_active; /* bytes of active space in data buffer */
+
     // uint32_t l2_header_bytes;   /* bytes in outer hardware/layer-2 header */
     // uint32_t l2_data_bytes;     /* bytes in outermost IP hdrs/payload */
-    enum direction_t direction; /* direction packet is traveling */
     uint32_t dev_ifindex;       /* from which network device */
+    enum direction_t direction; /* direction packet is traveling */
+    struct timeval tv;          /* wall time of receive/send if non-zero */
+
     /* Metadata about all the headers in the packet, including all
      * layers of encapsulation, from outer to inner, starting from
      * the outermost IP header at headers[0].
@@ -86,9 +89,6 @@ struct packet {
     /* Layer 4 */
     struct tcp* tcp; /* start of TCP header, if present */
     struct udp* udp; /* start of UDP header, if present */
-
-    int64_t time_usecs; /* wall time of receive/send if non-zero */
-    struct timeval tv;
 };
 
 /* A simple list of packets. */

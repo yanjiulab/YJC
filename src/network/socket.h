@@ -236,6 +236,4 @@ INLINE int so_linger(int sockfd, int timeout DEFAULT(1)) {
 #endif
 }
 
-
-
 #endif // !__SOCKET_H__
