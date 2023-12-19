@@ -75,12 +75,12 @@ TODO：支持自定义协议热挂载。
 
 头文件 | 名称 | 说明
 :---:|:---:|:---:
-base64.h|BASE64编解码|标准编解码操作
-checksum.h|Internet校验和|取自 FRR
-crc.h|CRC循环冗余校验|计算法（多项式、初始值、输入字节比特反转、输出比特反转、输出异或），速度没有查表快。
-md5.h|MD5数字摘要|标准 128 位数字摘要实现，支持二进制或字符串输出
-sha1.h|SHA1安全散列算法|标准 160 位安全散列实现，支持二进制或字符串输出
-sha256.h|SHA256安全散列算法|标准 256 位安全散列实现，支持二进制或字符串输出
+base64.h|BASE64 编解码|标准编解码操作
+checksum.h|Internet 校验和|取自 FRR
+crc.h|CRC 循环冗余校验|计算法（多项式、初始值、输入字节比特反转、输出比特反转、输出异或），速度没有查表快。
+md5.h|MD5 数字摘要|标准 128 位数字摘要实现，支持二进制或字符串输出
+sha1.h|SHA1 安全散列算法|标准 160 位安全散列实现，支持二进制或字符串输出
+sha256.h|SHA256 安全散列算法|标准 256 位安全散列实现，支持二进制或字符串输出
 
 ### 数据结构
 
@@ -100,11 +100,11 @@ ptable.h|ASCII风格表打印|[marchelzo/libtable](https://github.com/marchelzo/
 
 头文件 | 名称 | 说明
 :---:|:---:|:---:
-args.h|命令行参数解析|TODO
-log.h|日志系统|6 个日志等级，支持日志文件
-iniparser.h|ini 配置文件读取|标准 ini 文件读写
+args.h|命令行参数解析|[dmulholl/Args](https://github.com/dmulholl/args)
+iniparser.h|ini 配置文件读写|[N.Devillard/iniparser](todo)
 xml.h|xml 文件生成/解析|TODO
 json.h|json 文件生成/解析|TODO
+cmd.h|命令行控制台库|TODO
 protobuf.h|protobuf 相关|TODO，查看protobuf-c
 thread.h|pthread 线程相关|简单包装了常用 API
 thpool.h|基于 pthread 线程的线程池基本实现|[Pithikos/C-Thread-Pool](https://github.com/Pithikos/C-Thread-Pool)

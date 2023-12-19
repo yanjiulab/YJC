@@ -16,9 +16,9 @@ int main(void) {
      */
     const struct CMUnitTest tests[] = {
         // // utils
-        cmocka_unit_test(test_args),
+        // cmocka_unit_test(test_args),
         // cmocka_unit_test(test_log),
-        // cmocka_unit_test(test_ini),
+        cmocka_unit_test(test_iniparser),
         // cmocka_unit_test(test_base64_md5_sha1_sha256),
         // cmocka_unit_test(test_str),
         // cmocka_unit_test(test_str_split),
