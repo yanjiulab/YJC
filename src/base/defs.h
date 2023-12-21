@@ -142,7 +142,7 @@ ASCII:
 #define LOWORD(n) ((WORD)(n & 0xffff))
 #endif
 
-#endif  // _WIN32
+#endif // _WIN32
 
 // MAKEINT64, HIINT, LOINT
 #ifndef MAKEINT64
@@ -172,8 +172,9 @@ ASCII:
 #endif
 
 #ifndef LIMIT
-#define LIMIT(lower, v, upper) \
-    ((v) < (lower) ? (lower) : (v) > (upper) ? (upper) : (v))
+#define LIMIT(lower, v, upper)                         \
+    ((v) < (lower) ? (lower) : (v) > (upper) ? (upper) \
+                                             : (v))
 #endif
 
 #ifndef MAX_PATH
@@ -291,4 +292,11 @@ ASCII:
 #define printe(...)
 #endif
 
-#endif  // !DEFS_H
+/* Flag manipulation macros. */
+#define CHECK_FLAG(V, F) ((V) & (F))
+#define SET_FLAG(V, F) (V) |= (F)
+#define UNSET_FLAG(V, F) (V) &= ~(F)
+#define RESET_FLAG(V) (V) = 0
+#define COND_FLAG(V, F, C) ((C) ? (SET_FLAG(V, F)) : (UNSET_FLAG(V, F)))
+
+#endif // !DEFS_H

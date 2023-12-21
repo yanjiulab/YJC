@@ -18,7 +18,7 @@ int main(void) {
         // // utils
         // cmocka_unit_test(test_args),
         // cmocka_unit_test(test_log),
-        cmocka_unit_test(test_iniparser),
+        // cmocka_unit_test(test_iniparser),
         // cmocka_unit_test(test_base64_md5_sha1_sha256),
         // cmocka_unit_test(test_str),
         // cmocka_unit_test(test_str_split),
@@ -57,7 +57,7 @@ int main(void) {
         // cmocka_unit_test(test_thread),
         // cmocka_unit_test(test_thpool),
         // cmocka_unit_test(test_packet_socket),
-        // cmocka_unit_test(test_netlink_socket)
+        cmocka_unit_test(test_nl_socket),
         // cmocka_unit_test(test_cmd)
     };
 

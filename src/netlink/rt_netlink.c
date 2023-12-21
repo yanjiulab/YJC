@@ -72,7 +72,7 @@ int netlink_request_route(struct nl_socket* nlsock, int family, int type) {
     req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
     req.rtm.rtm_family = family;
 
-    return netlink_request(nlsock, &req);
+    return netlink_send_request(nlsock, &req);
 }
 
 int netlink_request_route_add(struct nl_socket* nlsock, int type,
@@ -133,7 +133,7 @@ int netlink_request_route_add(struct nl_socket* nlsock, int type,
     //     sizeof(int));
     // }
 
-    return netlink_request(nlsock, &req);
+    return netlink_send_request(nlsock, &req);
 }
 
 /* Request for MAC FDB information from the kernel */
@@ -153,7 +153,7 @@ int netlink_request_macs(struct nl_socket* nlsock, int family, int type) {
     // if (master_ifindex)
     //     nl_attr_put32(&req.n, sizeof(req), IFLA_MASTER, master_ifindex);
 
-    return netlink_request(nlsock, &req);
+    return netlink_send_request(nlsock, &req);
 }
 
 /******************** parse ******************************/

@@ -1,4 +1,5 @@
 #include "nl_socket.h"
+#include "nl_debug.h"
 
 static void nl_socket_setup(struct nl_socket* nlsock, int nl_type) {
     // Netlink is a datagram-oriented service. Both SOCK_RAW and SOCK_DGRAM are valid values for socket_type.
@@ -126,7 +127,7 @@ ssize_t netlink_recvmsg(int fd, struct msghdr* msg, char** answer) {
     return len;
 }
 
-int netlink_request(struct nl_socket* nlsock, void* req) {
+int netlink_send_request(struct nl_socket* nlsock, void* req) {
     struct nlmsghdr* n = (struct nlmsghdr*)req;
 
     /* Check netlink socket. */
@@ -139,15 +140,18 @@ int netlink_request(struct nl_socket* nlsock, void* req) {
     n->nlmsg_pid = nlsock->snl.nl_pid;
     n->nlmsg_seq = ++nlsock->seq;
 
-    if (netlink_sendmsg(nlsock, req, n->nlmsg_len) == -1)
+    if (netlink_sendmsg(nlsock, req, n->nlmsg_len) == -1) {
+        log_debug("Send netlink request failed.");
         return -1;
-    else
-        print_data(req, n->nlmsg_len);
+    } else {
+        log_debug("Send %d bytes netlink request to kernel.", n->nlmsg_len);
+        // print_data(req, n->nlmsg_len);
+    }
     return 0;
 }
 
-int netlink_parse_info(struct nl_socket* nlsock,
-                       int (*filter)(struct nlmsghdr*)) {
+int netlink_parse_response(struct nl_socket* nlsock,
+                           int (*filter)(struct nlmsghdr*)) {
     int status;
     int error;
     struct sockaddr_nl nladdr;
@@ -161,9 +165,20 @@ int netlink_parse_info(struct nl_socket* nlsock,
 
     char* buf; // == msg.msg_iov->iov_base
     status = netlink_recvmsg(nlsock->nl_fd, &msg, &buf);
+
+    if (status < 0) {
+        log_debug("Netlink recvmsg failed.");
+        return status;
+    }
+
+    log_debug("Recv %d bytes netlink response from kernel.", status);
+#ifdef DEBUG_NL
+    nl_dump(buf, status);
     print_data(buf, status);
+#endif // DEBUG_NL
+
     int msglen = status;
-    struct nlmsghdr* h;  
+    struct nlmsghdr* h;
 
     for (h = (struct nlmsghdr*)buf; NLMSG_OK(h, msglen);
          h = NLMSG_NEXT(h, msglen)) {
@@ -188,9 +203,6 @@ int netlink_parse_info(struct nl_socket* nlsock,
         }
 
         /* OK we got netlink message. */
-        log_trace("type %s(%u), len=%d, seq=%u, pid=%u", "route", h->nlmsg_type,
-                  h->nlmsg_len, h->nlmsg_seq, h->nlmsg_pid);
-
         /* Ignore messages that maybe sent from others besides the kernel */
         if (nladdr.nl_pid != 0)
             continue;
@@ -208,66 +220,6 @@ int netlink_parse_info(struct nl_socket* nlsock,
     free(buf);
 
     return status;
-}
-
-const char* nlmsg_type2str(uint16_t type) {
-    switch (type) {
-    /* Generic */
-    case NLMSG_NOOP:
-        return "NOOP";
-    case NLMSG_ERROR:
-        return "ERROR";
-    case NLMSG_DONE:
-        return "DONE";
-    case NLMSG_OVERRUN:
-        return "OVERRUN";
-
-    /* RTM */
-    case RTM_NEWLINK:
-        return "NEWLINK";
-    case RTM_DELLINK:
-        return "DELLINK";
-    case RTM_GETLINK:
-        return "GETLINK";
-    case RTM_SETLINK:
-        return "SETLINK";
-
-    case RTM_NEWADDR:
-        return "NEWADDR";
-    case RTM_DELADDR:
-        return "DELADDR";
-    case RTM_GETADDR:
-        return "GETADDR";
-
-    case RTM_NEWROUTE:
-        return "NEWROUTE";
-    case RTM_DELROUTE:
-        return "DELROUTE";
-    case RTM_GETROUTE:
-        return "GETROUTE";
-
-    case RTM_NEWNEIGH:
-        return "NEWNEIGH";
-    case RTM_DELNEIGH:
-        return "DELNEIGH";
-    case RTM_GETNEIGH:
-        return "GETNEIGH";
-
-    case RTM_NEWRULE:
-        return "NEWRULE";
-    case RTM_DELRULE:
-        return "DELRULE";
-    case RTM_GETRULE:
-        return "GETRULE";
-
-    case RTM_NEWNETCONF:
-        return "RTM_NEWNETCONF";
-    case RTM_DELNETCONF:
-        return "RTM_DELNETCONF";
-
-    default:
-        return "UNKNOWN";
-    }
 }
 
 // const char *nlmsg_flags2str(uint16_t flags, char *buf, size_t buflen)

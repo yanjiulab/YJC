@@ -50,8 +50,56 @@ static CMDF_RETURN do_submenu(cmdf_arglist* arglist) {
     cmdf_init("libcmdf-test/submenu> ", SUBMENU_INTRO, NULL, NULL, 0, 1);
 
     /* Register our custom commands */
-    cmdf_register_command(do_hello, "hello", NULL);
-    cmdf_register_command(do_printargs, "printargs", NULL);
+    cmdf_register_command(do_hello, "sub-hello1", NULL);
+    cmdf_register_command(do_hello, "sub-hello2", NULL);
+    cmdf_register_command(do_hello, "sub-hello3", NULL);
+    cmdf_register_command(do_hello, "sub-hello4", NULL);
+    cmdf_register_command(do_hello, "sub-hello5", NULL);
+    cmdf_register_command(do_hello, "sub-hello6", NULL);
+    cmdf_register_command(do_hello, "sub-hello7", NULL);
+    cmdf_register_command(do_hello, "sub-hello8", NULL);
+    cmdf_register_command(do_hello, "sub-hello9", NULL);
+    cmdf_register_command(do_hello, "sub-hello10", NULL);
+    cmdf_register_command(do_hello, "sub-hello11", NULL);
+    cmdf_register_command(do_hello, "sub-hello12", NULL);
+    cmdf_register_command(do_hello, "sub-hello13", NULL);
+    cmdf_register_command(do_hello, "sub-hello14", NULL);
+    cmdf_register_command(do_hello, "sub-hello15", NULL);
+    cmdf_register_command(do_hello, "sub-hello16", NULL);
+    cmdf_register_command(do_hello, "sub-hello17", NULL);
+    cmdf_register_command(do_hello, "sub-hello18", NULL);
+    cmdf_register_command(do_hello, "sub-hello19", NULL);
+    cmdf_register_command(do_hello, "sub-hello20", NULL);
+    cmdf_register_command(do_hello, "sub-hello21", NULL);
+    cmdf_register_command(do_hello, "sub-hello22", NULL);
+    cmdf_register_command(do_hello, "sub-hello23", NULL);
+    cmdf_register_command(do_hello, "sub-hello24", NULL);
+    cmdf_register_command(do_hello, "sub-hello25", NULL);
+    cmdf_register_command(do_hello, "sub-hello26", NULL);
+    cmdf_register_command(do_hello, "sub-hello27", NULL);
+    cmdf_register_command(do_hello, "sub-hello28", NULL);
+    cmdf_register_command(do_hello, "sub-hello29", NULL);
+    cmdf_register_command(do_hello, "sub-hello30", NULL);
+
+    cmdf_commandloop();
+
+    return CMDF_OK;
+}
+
+static CMDF_RETURN do_submenu1(cmdf_arglist* arglist) {
+    cmdf_init("libcmdf-test/submenu1> ", SUBMENU_INTRO, NULL, NULL, 0, 1);
+
+    /* Register our custom commands */
+    cmdf_register_command(do_hello, "sub-hello1", NULL);
+    cmdf_register_command(do_hello, "sub-hello2", NULL);
+    cmdf_register_command(do_hello, "sub-hello3", NULL);
+    cmdf_register_command(do_hello, "sub-hello4", NULL);
+    cmdf_register_command(do_hello, "sub-hello5", NULL);
+    cmdf_register_command(do_hello, "sub-hello6", NULL);
+    cmdf_register_command(do_hello, "sub-hello7", NULL);
+    cmdf_register_command(do_hello, "sub-hello8", NULL);
+    cmdf_register_command(do_hello, "sub-hello9", NULL);
+    cmdf_register_command(do_hello, "sub-hello10", NULL);
 
     cmdf_commandloop();
 
@@ -62,7 +110,28 @@ void test_cmd(void) {
     cmdf_init("libcmdf-test> ", PROG_INTRO, NULL, NULL, 0, 1);
 
     /* Register our custom commands */
-    cmdf_register_command(do_hello, "hello", NULL);
+
     cmdf_register_command(do_submenu, "submenu", NULL);
+    cmdf_register_command(do_submenu1, "submenu1", NULL);
+    cmdf_register_command(do_hello, "hello1", NULL);
+    cmdf_register_command(do_hello, "hello2", NULL);
+    cmdf_register_command(do_hello, "hello3", NULL);
+    cmdf_register_command(do_hello, "hello4", NULL);
+    cmdf_register_command(do_hello, "hello5", NULL);
+    cmdf_register_command(do_hello, "hello6", NULL);
+    cmdf_register_command(do_hello, "hello7", NULL);
+    cmdf_register_command(do_hello, "hello8", NULL);
+    cmdf_register_command(do_hello, "hello9", NULL);
+    cmdf_register_command(do_hello, "hello10", NULL);
+    cmdf_register_command(do_hello, "hello11", NULL);
+    cmdf_register_command(do_hello, "hello12", NULL);
+    cmdf_register_command(do_hello, "hello13", NULL);
+    cmdf_register_command(do_hello, "hello14", NULL);
+    cmdf_register_command(do_hello, "hello15", NULL);
+    cmdf_register_command(do_hello, "hello16", NULL);
+    cmdf_register_command(do_hello, "hello17", NULL);
+    cmdf_register_command(do_hello, "hello18", NULL);
+    cmdf_register_command(do_hello, "hello19", NULL);
+    cmdf_register_command(do_hello, "hello20", NULL);
     cmdf_commandloop();
 }

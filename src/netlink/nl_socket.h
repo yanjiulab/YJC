@@ -63,11 +63,11 @@ ssize_t netlink_recvmsg(int fd, struct msghdr* msg, char** answer);
 /* Issue request message to kernel via netlink socket. GET messages
  * are issued through this interface.
  */
-int netlink_request(struct nl_socket* nlsock, void* req);
+extern int netlink_send_request(struct nl_socket* nlsock, void* req);
 
 /* Parse netlink response */
-extern int netlink_parse_info(struct nl_socket* nlsock,
-                              int (*filter)(struct nlmsghdr*));
+extern int netlink_parse_response(struct nl_socket* nlsock,
+                                  int (*filter)(struct nlmsghdr*));
 
 #ifdef __cplusplus
 }
