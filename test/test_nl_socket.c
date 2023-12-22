@@ -6,18 +6,19 @@
 #include "test.h"
 
 void test_nl_socket() {
-    // log_set_level(LOG_INFO);
+    log_set_level(LOG_INFO);
 
     nl_socket_t* nls = nl_socket_new(NETLINK_ROUTE, "route", 0);
 
     // read ipv4 route table
-    // netlink_route_read(nls);
+    printf("dump `ip route list table all`\n");
+    netlink_route_read(nls);
 
     // read macfdb
-    // netlink_macfdb_read(nls);
+    printf("dump `bridge fdb`\n");
+    netlink_macfdb_read(nls);
 
-
-    // 
+    printf("dump `ip neigh show nud all`\n");
     netlink_neigh_read(nls);
 
     // netlink_parse_info(nls, NULL);
@@ -34,7 +35,6 @@ void test_nl_socket() {
     // netlink_request_route_add(nls, RTM_NEWROUTE, &dst, &gw, 0, 2);
     // netlink_request_route(nls, AF_INET, RTM_GETROUTE);
     // netlink_parse_info(nls, netlink_rtm_parse_route);
-    
 
     nl_socket_free(nls);
 }

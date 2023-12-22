@@ -11,12 +11,17 @@ typedef signed int ifindex_t;
     ((struct rtattr*)(((char*)(h)) + NLMSG_ALIGN(sizeof(struct nhmsg))))
 
 // High-level API
-int netlink_route_read(struct nl_socket* nlsock);
+
+int netlink_route_read(struct nl_socket* nlsock);  // ==> ip route list table all
 int netlink_route_change(struct nl_socket* nlsock);
-int netlink_macfdb_read(struct nl_socket* nlsock); 
-int netlink_neigh_read(struct nl_socket* nlsock); // ==> ip neigh show nud all
+int netlink_macfdb_read(struct nl_socket* nlsock);
+int netlink_neigh_read(struct nl_socket* nlsock);
+int netlink_neigh_update(struct nl_socket* nlsock, int cmd, int ifindex, void* addr, char* lla,
+                         int llalen, ns_id_t ns_id, uint8_t family,
+                         bool permanent, uint8_t protocol);
 
 // Low-level API
+
 int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer);
 int netlink_macfdb_table(struct nlmsghdr* nl_header_answer);
 

@@ -1,4 +1,5 @@
 #include "nl_kernel.h"
+
 #include "nl_debug.h"
 
 static const struct message nlmsg_str[] = {{RTM_NEWROUTE, "RTM_NEWROUTE"},
@@ -38,6 +39,47 @@ static const struct message nlmsg_str[] = {{RTM_NEWROUTE, "RTM_NEWROUTE"},
                                            {RTM_DELVLAN, "RTM_DELVLAN"},
                                            {RTM_GETVLAN, "RTM_GETVLAN"},
                                            {0}};
+static const struct message rtproto_str[] = {
+    {RTPROT_REDIRECT, "redirect"},
+    {RTPROT_KERNEL, "kernel"},
+    {RTPROT_BOOT, "boot"},
+    {RTPROT_STATIC, "static"},
+    {RTPROT_GATED, "GateD"},
+    {RTPROT_RA, "router advertisement"},
+    {RTPROT_MRT, "MRT"},
+    {RTPROT_ZEBRA, "Zebra"},
+#ifdef RTPROT_BIRD
+    {RTPROT_BIRD, "BIRD"},
+#endif /* RTPROT_BIRD */
+    {RTPROT_MROUTED, "mroute"},
+    {RTPROT_BGP, "BGP"},
+    {RTPROT_OSPF, "OSPF"},
+    {RTPROT_ISIS, "IS-IS"},
+    {RTPROT_RIP, "RIP"},
+    // {RTPROT_RIPNG, "RIPNG"},
+    // {RTPROT_ZSTATIC, "static"},
+    {0}};
+
+static const struct message family_str[] = {{AF_INET, "ipv4"},
+                                            {AF_INET6, "ipv6"},
+                                            {AF_BRIDGE, "bridge"},
+                                            {RTNL_FAMILY_IPMR, "ipv4MR"},
+                                            {RTNL_FAMILY_IP6MR, "ipv6MR"},
+                                            {0}};
+
+static const struct message rttype_str[] = {{RTN_UNSPEC, "none"},
+                                            {RTN_UNICAST, "unicast"},
+                                            {RTN_LOCAL, "local"},
+                                            {RTN_BROADCAST, "broadcast"},
+                                            {RTN_ANYCAST, "anycast"},
+                                            {RTN_MULTICAST, "multicast"},
+                                            {RTN_BLACKHOLE, "blackhole"},
+                                            {RTN_UNREACHABLE, "unreachable"},
+                                            {RTN_PROHIBIT, "prohibited"},
+                                            {RTN_THROW, "throw"},
+                                            {RTN_NAT, "nat"},
+                                            {RTN_XRESOLVE, "resolver"},
+                                            {0}};
 
 const char* nl_msg_type_to_str(uint16_t msg_type) {
     return lookup_msg(nlmsg_str, msg_type);
@@ -46,7 +88,7 @@ const char* nl_msg_type_to_str(uint16_t msg_type) {
 static void nl_socket_setup(struct nl_socket* nlsock, int nl_type, int groups) {
     // Netlink is a datagram-oriented service. Both SOCK_RAW and SOCK_DGRAM are valid values for socket_type.
     // However, the netlink protocol does not distinguish between datagram and raw sockets.
-    nlsock->nl_fd = socket(PF_NETLINK, SOCK_RAW, nl_type); // e.g. NETLINK_ROUTE
+    nlsock->nl_fd = socket(PF_NETLINK, SOCK_RAW, nl_type);  // e.g. NETLINK_ROUTE
 
     if (nlsock->nl_fd < 0) {
         perror("socket(PF_NETLINK, SOCK_RAW, NETLINK_XX)");
@@ -101,7 +143,7 @@ int nl_socket_set_groups(struct nl_socket* nlsock, int group) {
  * Returns -1 on error. Otherwise, it returns the number of bytes sent.
  */
 ssize_t netlink_sendmsg(struct nl_socket* nl, void* buf, size_t buflen) {
-    struct sockaddr_nl snl = {}; // message destination
+    struct sockaddr_nl snl = {};  // message destination
     struct iovec iov = {};
     struct msghdr msg = {};
     ssize_t status;
@@ -172,7 +214,7 @@ ssize_t netlink_recvmsg(int fd, struct msghdr* msg, char** answer) {
 
 #ifdef DEBUG_NL
     nl_dump(buf, len);
-#endif // DEBUG_NL
+#endif  // DEBUG_NL
 
     return len;
 }
@@ -216,7 +258,7 @@ int netlink_parse_info(struct nl_socket* nlsock,
             .msg_iov = &iov,
             .msg_iovlen = 1,
         };
-        char* buf; // == msg.msg_iov->iov_base
+        char* buf;  // == msg.msg_iov->iov_base
         status = netlink_recvmsg(nlsock->nl_fd, &msg, &buf);
 
         if (status == -1)

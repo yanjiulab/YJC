@@ -309,7 +309,7 @@ int netlink_macfdb_table(struct nlmsghdr* h) {
     }
 
     if (tb[NDA_NH_ID]) {
-        nhg_id = *(uint32_t *)RTA_DATA(tb[NDA_NH_ID]);
+        nhg_id = *(uint32_t*)RTA_DATA(tb[NDA_NH_ID]);
         printf(" nh_id %x", nhg_id);
     }
 
@@ -317,22 +317,21 @@ int netlink_macfdb_table(struct nlmsghdr* h) {
 
     printf("\n");
 }
-
-/*
+/**
  * MAC forwarding database read using netlink interface.
+ * ==> bridge fdb
  */
-int netlink_macfdb_read(struct nl_socket* nlsock)
-{
-	int ret;
+int netlink_macfdb_read(struct nl_socket* nlsock) {
+    int ret;
 
-	/* Get bridge FDB table. */
-	ret = netlink_request_macs(nlsock, AF_BRIDGE, RTM_GETNEIGH, 0);
-	if (ret < 0)
-		return ret;
-	/* We are reading entire table. */
-	ret = netlink_parse_info(nlsock, netlink_macfdb_table);
+    /* Get bridge FDB table. */
+    ret = netlink_request_macs(nlsock, AF_BRIDGE, RTM_GETNEIGH, 0);
+    if (ret < 0)
+        return ret;
+    /* We are reading entire table. */
+    ret = netlink_parse_info(nlsock, netlink_macfdb_table);
 
-	return ret;
+    return ret;
 }
 
 #define NEIGH_START
@@ -378,8 +377,9 @@ static int netlink_request_neigh(struct nlsock* nlsock, int family,
     return netlink_request(nlsock, &req);
 }
 
-/*
- * IP Neighbor table read using netlink interface. 
+/**
+ * IP Neighbor table read using netlink interface.
+ * ==> ip neigh show nud all
  */
 int netlink_neigh_read(struct nl_socket* nlsock) {
     int ret;
@@ -393,3 +393,62 @@ int netlink_neigh_read(struct nl_socket* nlsock) {
     return ret;
 }
 
+
+static int netlink_neigh_update(struct nl_socket* nlsock, int cmd, int ifindex, void *addr, char *lla,
+				int llalen, ns_id_t ns_id, uint8_t family,
+				bool permanent, uint8_t protocol)
+{
+	struct {
+		struct nlmsghdr n;
+		struct ndmsg ndm;
+		char buf[256];
+	} req;
+
+	memset(&req, 0, sizeof(req));
+
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
+	req.n.nlmsg_flags = NLM_F_CREATE | NLM_F_REQUEST;
+	req.n.nlmsg_type = cmd; // RTM_NEWNEIGH or RTM_DELNEIGH
+	req.n.nlmsg_pid = nlsock->snl.nl_pid;
+
+	req.ndm.ndm_family = family;
+	req.ndm.ndm_ifindex = ifindex;
+	req.ndm.ndm_type = RTN_UNICAST;
+	if (cmd == RTM_NEWNEIGH) {
+		if (!permanent)
+			req.ndm.ndm_state = NUD_REACHABLE;
+		else
+			req.ndm.ndm_state = NUD_PERMANENT;
+	} else
+		req.ndm.ndm_state = NUD_FAILED;
+
+	nl_attr_put(&req.n, sizeof(req), NDA_PROTOCOL, &protocol,
+		    sizeof(protocol));
+	req.ndm.ndm_type = RTN_UNICAST;
+	nl_attr_put(&req.n, sizeof(req), NDA_DST, addr,
+		    family2addrsize(family));
+	if (lla)
+		nl_attr_put(&req.n, sizeof(req), NDA_LLADDR, lla, llalen);
+
+	if (IS_ZEBRA_DEBUG_KERNEL) {
+		char ip_str[INET6_ADDRSTRLEN + 8];
+		struct interface *ifp = if_lookup_by_index_per_ns(
+			zebra_ns_lookup(ns_id), ifindex);
+		if (ifp) {
+			if (family == AF_INET6)
+				snprintfrr(ip_str, sizeof(ip_str), "ipv6 %pI6",
+					   (struct in6_addr *)addr);
+			else
+				snprintfrr(ip_str, sizeof(ip_str), "ipv4 %pI4",
+					   (in_addr_t *)addr);
+			zlog_debug(
+				"%s: %s ifname %s ifindex %u addr %s mac %pEA vrf %s(%u)",
+				__func__, nl_msg_type_to_str(cmd), ifp->name,
+				ifindex, ip_str, (struct ethaddr *)lla,
+				vrf_id_to_name(ifp->vrf->vrf_id),
+				ifp->vrf->vrf_id);
+		}
+	}
+	return netlink_talk(netlink_talk_filter, &req.n, &zns->netlink_cmd, zns,
+			    false);
+}
