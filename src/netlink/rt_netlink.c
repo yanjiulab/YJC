@@ -58,6 +58,87 @@ void netlink_parse_rtattr_nested(struct rtattr** tb, int max,
     netlink_parse_rtattr(tb, max, RTA_DATA(rta), RTA_PAYLOAD(rta));
 }
 
+#define ROUTE_START
+int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
+    struct rtmsg* r = NLMSG_DATA(nl_header_answer);
+    int len = nl_header_answer->nlmsg_len;
+    struct rtattr* tb[RTA_MAX + 1];
+    int table;
+    char buf[256];
+
+    len -= NLMSG_LENGTH(sizeof(*r));
+
+    if (len < 0) {
+        perror("Wrong message length");
+        return;
+    }
+
+    netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
+
+    table = r->rtm_table;
+    if (tb[RTA_TABLE]) {
+        table = *(uint32_t*)RTA_DATA(tb[RTA_TABLE]);
+    }
+
+    // if (r->rtm_family != AF_INET && table != RT_TABLE_MAIN) {
+    //     return;
+    // }
+
+    if (tb[RTA_DST]) {
+        // if ((r->rtm_dst_len != 24) && (r->rtm_dst_len != 16)) {
+        //     return;
+        // }
+
+        printf(
+            "%s/%u",
+            inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_DST]), buf, sizeof(buf)),
+            r->rtm_dst_len);
+
+    } else if (r->rtm_dst_len) {
+        printf("0/%u", r->rtm_dst_len);
+    } else {
+        printf("default");
+    }
+
+    if (tb[RTA_GATEWAY]) {
+        printf(" via %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_GATEWAY]),
+                                    buf, sizeof(buf)));
+    }
+
+    if (tb[RTA_OIF]) {
+        char if_nam_buf[IF_NAMESIZE];
+        int ifidx = *(uint32_t*)RTA_DATA(tb[RTA_OIF]);
+
+        printf(" dev %s", if_indextoname(ifidx, if_nam_buf));
+    }
+
+    if (r->rtm_protocol) {
+        printf(" proto %d", r->rtm_protocol);
+    }
+
+    printf(" scope %d", r->rtm_scope);
+    // printf(" type %d", r->rtm_type); // unicast
+
+    if (tb[RTA_SRC]) {
+        printf(" src %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_SRC]), buf,
+                                    sizeof(buf)));
+    }
+
+    if (tb[RTA_PREFSRC]) {
+        printf(" src %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_PREFSRC]),
+                                    buf, sizeof(buf)));
+    }
+
+    if (tb[RTA_PRIORITY]) {
+        int pri = *(uint32_t*)RTA_DATA(tb[RTA_PRIORITY]);
+        printf(" metric %d", pri);
+    }
+
+    printf("\n");
+
+    return 0;
+}
+
 /* Request for specific route information from the kernel */
 int netlink_request_route(struct nl_socket* nlsock, int family, int type) {
     struct {
@@ -72,7 +153,7 @@ int netlink_request_route(struct nl_socket* nlsock, int family, int type) {
     req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
     req.rtm.rtm_family = family;
 
-    return netlink_send_request(nlsock, &req);
+    return netlink_request(nlsock, &req);
 }
 
 int netlink_request_route_add(struct nl_socket* nlsock, int type,
@@ -133,11 +214,39 @@ int netlink_request_route_add(struct nl_socket* nlsock, int type,
     //     sizeof(int));
     // }
 
-    return netlink_send_request(nlsock, &req);
+    return netlink_request(nlsock, &req);
 }
 
+int netlink_route_read(struct nl_socket* nlsock) {
+    int ret;
+
+    /* Get IPv4 routing table. */
+    ret = netlink_request_route(nlsock, AF_INET, RTM_GETROUTE);
+    if (ret < 0)
+        return ret;
+    ret = netlink_parse_info(nlsock, netlink_rtm_parse_route);
+    if (ret < 0)
+        return ret;
+
+    /* Get IPv6 routing table. */
+    ret = netlink_request_route(nlsock, AF_INET6, RTM_GETROUTE);
+    if (ret < 0)
+        return ret;
+    ret = netlink_parse_info(nlsock, netlink_rtm_parse_route);
+    if (ret < 0)
+        return ret;
+
+    return 0;
+}
+
+int netlink_route_change(struct nl_socket* nlsock) {
+    // TODO
+}
+
+#define MAC_START
+
 /* Request for MAC FDB information from the kernel */
-int netlink_request_macs(struct nl_socket* nlsock, int family, int type) {
+int netlink_request_macs(struct nl_socket* nlsock, int family, int type, ifindex_t master_ifindex) {
     struct {
         struct nlmsghdr n;
         struct ifinfomsg ifm;
@@ -153,88 +262,7 @@ int netlink_request_macs(struct nl_socket* nlsock, int family, int type) {
     // if (master_ifindex)
     //     nl_attr_put32(&req.n, sizeof(req), IFLA_MASTER, master_ifindex);
 
-    return netlink_send_request(nlsock, &req);
-}
-
-/******************** parse ******************************/
-int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
-    struct rtmsg* r = NLMSG_DATA(nl_header_answer);
-    int len = nl_header_answer->nlmsg_len;
-    struct rtattr* tb[RTA_MAX + 1];
-    int table;
-    char buf[256];
-
-    len -= NLMSG_LENGTH(sizeof(*r));
-
-    if (len < 0) {
-        perror("Wrong message length");
-        return;
-    }
-
-    netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
-
-    table = r->rtm_table;
-    if (tb[RTA_TABLE]) {
-        table = *(uint32_t*)RTA_DATA(tb[RTA_TABLE]);
-    }
-
-    if (r->rtm_family != AF_INET && table != RT_TABLE_MAIN) {
-        return;
-    }
-
-    if (tb[RTA_DST]) {
-        if ((r->rtm_dst_len != 24) && (r->rtm_dst_len != 16)) {
-            return;
-        }
-
-        printf(
-            "%s/%u",
-            inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_DST]), buf, sizeof(buf)),
-            r->rtm_dst_len);
-
-    } else if (r->rtm_dst_len) {
-        printf("0/%u", r->rtm_dst_len);
-    } else {
-        printf("default");
-    }
-
-    if (tb[RTA_GATEWAY]) {
-        printf(" via %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_GATEWAY]),
-                                    buf, sizeof(buf)));
-    }
-
-    if (tb[RTA_OIF]) {
-        char if_nam_buf[IF_NAMESIZE];
-        int ifidx = *(uint32_t*)RTA_DATA(tb[RTA_OIF]);
-
-        printf(" dev %s", if_indextoname(ifidx, if_nam_buf));
-    }
-
-    if (r->rtm_protocol) {
-        printf(" proto %d", r->rtm_protocol);
-    }
-
-    printf(" scope %d", r->rtm_scope);
-    // printf(" type %d", r->rtm_type); // unicast
-
-    if (tb[RTA_SRC]) {
-        printf(" src %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_SRC]), buf,
-                                    sizeof(buf)));
-    }
-
-    if (tb[RTA_PREFSRC]) {
-        printf(" src %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_PREFSRC]),
-                                    buf, sizeof(buf)));
-    }
-
-    if (tb[RTA_PRIORITY]) {
-        int pri = *(uint32_t*)RTA_DATA(tb[RTA_PRIORITY]);
-        printf(" metric %d", pri);
-    }
-
-    printf("\n");
-
-    return 0;
+    return netlink_request(nlsock, &req);
 }
 
 int netlink_macfdb_table(struct nlmsghdr* h) {
@@ -280,13 +308,88 @@ int netlink_macfdb_table(struct nlmsghdr* h) {
         printf(" lladdr %s", ether_to_string(&mac, NULL));
     }
 
-    // if (tb[NDA_NH_ID]) {
-    //     nhg_id = *(uint32_t *)RTA_DATA(tb[NDA_NH_ID]);
-    //     printf(" nh_id %x", nhg_id);
-    // }
+    if (tb[NDA_NH_ID]) {
+        nhg_id = *(uint32_t *)RTA_DATA(tb[NDA_NH_ID]);
+        printf(" nh_id %x", nhg_id);
+    }
 
     printf(" state %u", ndm->ndm_state);
 
     printf("\n");
+}
+
+/*
+ * MAC forwarding database read using netlink interface.
+ */
+int netlink_macfdb_read(struct nl_socket* nlsock)
+{
+	int ret;
+
+	/* Get bridge FDB table. */
+	ret = netlink_request_macs(nlsock, AF_BRIDGE, RTM_GETNEIGH, 0);
+	if (ret < 0)
+		return ret;
+	/* We are reading entire table. */
+	ret = netlink_parse_info(nlsock, netlink_macfdb_table);
+
+	return ret;
+}
+
+#define NEIGH_START
+
+static int netlink_neigh_table(struct nlmsghdr* h) {
+    int len;
+    struct ndmsg* ndm;
+
+    if (h->nlmsg_type != RTM_NEWNEIGH)
+        return 0;
+
+    /* Length validity. */
+    len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct ndmsg));
+    if (len < 0)
+        return -1;
+
+    /* We are interested only in AF_INET or AF_INET6 notifications. */
+    ndm = NLMSG_DATA(h);
+    if (ndm->ndm_family != AF_INET && ndm->ndm_family != AF_INET6)
+        return 0;
+
+    // return netlink_neigh_change(h, len);
+}
+
+/* Request for IP neighbor information from the kernel */
+static int netlink_request_neigh(struct nlsock* nlsock, int family,
+                                 int type, ifindex_t ifindex) {
+    struct {
+        struct nlmsghdr n;
+        struct ndmsg ndm;
+        char buf[256];
+    } req;
+
+    /* Form the request, specifying filter (rtattr) if needed. */
+    memset(&req, 0, sizeof(req));
+    req.n.nlmsg_type = type;
+    req.n.nlmsg_flags = NLM_F_ROOT | NLM_F_MATCH | NLM_F_REQUEST;
+    req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
+    req.ndm.ndm_family = family;
+    // if (ifindex)
+    //     nl_attr_put32(&req.n, sizeof(req), NDA_IFINDEX, ifindex);
+
+    return netlink_request(nlsock, &req);
+}
+
+/*
+ * IP Neighbor table read using netlink interface. 
+ */
+int netlink_neigh_read(struct nl_socket* nlsock) {
+    int ret;
+
+    /* Get IP neighbor table. */
+    ret = netlink_request_neigh(nlsock, AF_UNSPEC, RTM_GETNEIGH, 0);
+    if (ret < 0)
+        return ret;
+    ret = netlink_parse_info(nlsock, netlink_neigh_table);
+
+    return ret;
 }
 

@@ -1066,8 +1066,8 @@ next_rta:
                       NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case sizeof(struct in6_addr):
-            log_debug("      %pI6",
-                      (struct in6_addr*)RTA_DATA(rta));
+            log_debug("      " NIP6_FMT,
+                      NIP6(*(struct in6_addr*)RTA_DATA(rta)));
             break;
         default:
             break;
@@ -1141,8 +1141,8 @@ next_rta:
                       NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case sizeof(struct in6_addr):
-            log_debug("      %pI6",
-                      (struct in6_addr*)RTA_DATA(rta));
+            log_debug("      " NIP6_FMT,
+                      NIP6(*(struct in6_addr*)RTA_DATA(rta)));
             break;
         default:
             break;
@@ -1198,8 +1198,8 @@ next_rta:
                       NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case 16:
-            log_debug("      %pI6",
-                      (struct in6_addr*)RTA_DATA(rta));
+            log_debug("      " NIP6_FMT,
+                      NIP6(*(struct in6_addr*)RTA_DATA(rta)));
             break;
         default:
             break;
@@ -1348,8 +1348,8 @@ next_rta:
                       NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case AF_INET6:
-            log_debug("      %pI6",
-                      (struct in6_addr*)RTA_DATA(rta));
+            log_debug("      " NIP6_FMT,
+                      NIP6(*(struct in6_addr*)RTA_DATA(rta)));
             break;
 
         default:
@@ -1406,8 +1406,8 @@ next_rta:
                       NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case sizeof(struct in6_addr):
-            log_debug("      %pI6",
-                      (struct in6_addr*)RTA_DATA(rta));
+            log_debug("      " NIP6_FMT,
+                      NIP6(*(struct in6_addr*)RTA_DATA(rta)));
             break;
         default:
             break;

@@ -1,4 +1,4 @@
-/* nl_socket.h */
+/* nl_kernel.h */
 
 #ifndef __NL_SOCKET_H__
 #define __NL_SOCKET_H__
@@ -32,14 +32,17 @@ typedef struct nl_socket {
     int seq;
 } nl_socket_t;
 
+
+
 /**
  * @brief Allocate and initialize a netlink socket.
  *
  * @param nl_type selects the kernel module or netlink group to communicate with.
  * @param nl_name user-friendly name of the socket.
+ * @param groups set netlink socket address groups.
  * @return nl_socket_t* the pointer of the allocated netlink socket.
  */
-extern nl_socket_t* nl_socket_new(int nl_type, const char* nl_name);
+extern nl_socket_t* nl_socket_new(int nl_type, const char* nl_name, int groups);
 
 /**
  * @brief Free all the memory used by the netlink socket.
@@ -47,6 +50,8 @@ extern nl_socket_t* nl_socket_new(int nl_type, const char* nl_name);
  * @param nl_socket
  */
 extern void nl_socket_free(struct nl_socket* nl_socket);
+
+extern int nl_socket_set_groups(struct nl_socket* nlsock, int group);
 
 /*
  * netlink_sendmsg - send a netlink message of a certain size.
@@ -63,11 +68,25 @@ ssize_t netlink_recvmsg(int fd, struct msghdr* msg, char** answer);
 /* Issue request message to kernel via netlink socket. GET messages
  * are issued through this interface.
  */
-extern int netlink_send_request(struct nl_socket* nlsock, void* req);
+extern int netlink_request(struct nl_socket* nlsock, void* req);
 
-/* Parse netlink response */
-extern int netlink_parse_response(struct nl_socket* nlsock,
-                                  int (*filter)(struct nlmsghdr*));
+/*
+ * Receive message from netlink interface and pass those information
+ *  to the given function.
+ *
+ * nlsock  -> netlink socket information
+ * filter  -> Function to call to read the results
+ */
+extern int netlink_parse_info(struct nl_socket* nlsock,
+                              int (*filter)(struct nlmsghdr*));
+
+/*
+ * Parse a netlink error message
+ *
+ * Returns 1 if this message is acknowledgement, 0 if this error should be
+ * ignored, -1 otherwise.
+ */
+extern int netlink_parse_error(const struct nl_socket* nlsock, struct nlmsghdr* h);
 
 #ifdef __cplusplus
 }
