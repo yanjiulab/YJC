@@ -2,6 +2,8 @@
 #define __NL_DEBUG_H__
 
 /* Netlink debug */
+#include <stdint.h>
+#include <stddef.h>
 
 #define NIPQUAD(addr) ((unsigned char*)&addr)[0], \
                       ((unsigned char*)&addr)[1], \

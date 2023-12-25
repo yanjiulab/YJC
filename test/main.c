@@ -57,7 +57,7 @@ int main(void) {
         // cmocka_unit_test(test_thread),
         // cmocka_unit_test(test_thpool),
         // cmocka_unit_test(test_packet_socket),
-        cmocka_unit_test(test_nl_socket),
+        cmocka_unit_test(test_rt_netlink),
         // cmocka_unit_test(test_cmd)
     };
 

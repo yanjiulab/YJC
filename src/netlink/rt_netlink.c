@@ -24,39 +24,39 @@ int netlink_rtattr_add(struct nlmsghdr* n, int maxlen, int type,
     return 0;
 }
 
-void netlink_parse_rtattr(struct rtattr** tb, int max, struct rtattr* rta,
-                          int len) {
-    memset(tb, 0, sizeof(struct rtattr*) * (max + 1));
-    while (RTA_OK(rta, len)) {
-        if (rta->rta_type <= max)
-            tb[rta->rta_type] = rta;
-        rta = RTA_NEXT(rta, len);
-    }
-}
+// void netlink_parse_rtattr(struct rtattr** tb, int max, struct rtattr* rta,
+//                           int len) {
+//     memset(tb, 0, sizeof(struct rtattr*) * (max + 1));
+//     while (RTA_OK(rta, len)) {
+//         if (rta->rta_type <= max)
+//             tb[rta->rta_type] = rta;
+//         rta = RTA_NEXT(rta, len);
+//     }
+// }
 
-void netlink_parse_rtattr_flags(struct rtattr** tb, int max, struct rtattr* rta,
-                                int len, unsigned short flags) {
-    unsigned short type;
+// void netlink_parse_rtattr_flags(struct rtattr** tb, int max, struct rtattr* rta,
+//                                 int len, unsigned short flags) {
+//     unsigned short type;
 
-    memset(tb, 0, sizeof(struct rtattr*) * (max + 1));
-    while (RTA_OK(rta, len)) {
-        type = rta->rta_type & ~flags;
-        if ((type <= max) && (!tb[type]))
-            tb[type] = rta;
-        rta = RTA_NEXT(rta, len);
-    }
-}
+//     memset(tb, 0, sizeof(struct rtattr*) * (max + 1));
+//     while (RTA_OK(rta, len)) {
+//         type = rta->rta_type & ~flags;
+//         if ((type <= max) && (!tb[type]))
+//             tb[type] = rta;
+//         rta = RTA_NEXT(rta, len);
+//     }
+// }
 
-/**
- * netlink_parse_rtattr_nested() - Parses a nested route attribute
- * @tb:         Pointer to array for storing rtattr in.
- * @max:        Max number to store.
- * @rta:        Pointer to rtattr to look for nested items in.
- */
-void netlink_parse_rtattr_nested(struct rtattr** tb, int max,
-                                 struct rtattr* rta) {
-    netlink_parse_rtattr(tb, max, RTA_DATA(rta), RTA_PAYLOAD(rta));
-}
+// /**
+//  * netlink_parse_rtattr_nested() - Parses a nested route attribute
+//  * @tb:         Pointer to array for storing rtattr in.
+//  * @max:        Max number to store.
+//  * @rta:        Pointer to rtattr to look for nested items in.
+//  */
+// void netlink_parse_rtattr_nested(struct rtattr** tb, int max,
+//                                  struct rtattr* rta) {
+//     netlink_parse_rtattr(tb, max, RTA_DATA(rta), RTA_PAYLOAD(rta));
+// }
 
 #define ROUTE_START
 int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
@@ -140,7 +140,7 @@ int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
 }
 
 /* Request for specific route information from the kernel */
-int netlink_request_route(struct nl_socket* nlsock, int family, int type) {
+int netlink_request_route(struct nlsock* nl, int family, int type) {
     struct {
         struct nlmsghdr n;
         struct rtmsg rtm;
@@ -153,10 +153,10 @@ int netlink_request_route(struct nl_socket* nlsock, int family, int type) {
     req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
     req.rtm.rtm_family = family;
 
-    return netlink_request(nlsock, &req);
+    return netlink_request(nl, &req);
 }
 
-int netlink_request_route_add(struct nl_socket* nlsock, int type,
+int netlink_request_route_add(struct nlsock* nl, int type,
                               struct ip_address* dst, ip_address_t* gw,
                               int default_gw, int ifidx) {
     struct {
@@ -214,39 +214,39 @@ int netlink_request_route_add(struct nl_socket* nlsock, int type,
     //     sizeof(int));
     // }
 
-    return netlink_request(nlsock, &req);
+    return netlink_request(nl, &req);
 }
 
-int netlink_route_read(struct nl_socket* nlsock) {
+int netlink_route_read(struct nlsock* nl) {
     int ret;
 
     /* Get IPv4 routing table. */
-    ret = netlink_request_route(nlsock, AF_INET, RTM_GETROUTE);
+    ret = netlink_request_route(nl, AF_INET, RTM_GETROUTE);
     if (ret < 0)
         return ret;
-    ret = netlink_parse_info(nlsock, netlink_rtm_parse_route);
+    ret = netlink_parse_info(nl, netlink_rtm_parse_route);
     if (ret < 0)
         return ret;
 
     /* Get IPv6 routing table. */
-    ret = netlink_request_route(nlsock, AF_INET6, RTM_GETROUTE);
+    ret = netlink_request_route(nl, AF_INET6, RTM_GETROUTE);
     if (ret < 0)
         return ret;
-    ret = netlink_parse_info(nlsock, netlink_rtm_parse_route);
+    ret = netlink_parse_info(nl, netlink_rtm_parse_route);
     if (ret < 0)
         return ret;
 
     return 0;
 }
 
-int netlink_route_change(struct nl_socket* nlsock) {
+int netlink_route_change(struct nlsock* nl) {
     // TODO
 }
 
 #define MAC_START
 
 /* Request for MAC FDB information from the kernel */
-int netlink_request_macs(struct nl_socket* nlsock, int family, int type, ifindex_t master_ifindex) {
+int netlink_request_macs(struct nlsock* nl, int family, int type, ifindex_t master_ifindex) {
     struct {
         struct nlmsghdr n;
         struct ifinfomsg ifm;
@@ -262,7 +262,7 @@ int netlink_request_macs(struct nl_socket* nlsock, int family, int type, ifindex
     // if (master_ifindex)
     //     nl_attr_put32(&req.n, sizeof(req), IFLA_MASTER, master_ifindex);
 
-    return netlink_request(nlsock, &req);
+    return netlink_request(nl, &req);
 }
 
 int netlink_macfdb_table(struct nlmsghdr* h) {
@@ -321,15 +321,15 @@ int netlink_macfdb_table(struct nlmsghdr* h) {
  * MAC forwarding database read using netlink interface.
  * ==> bridge fdb
  */
-int netlink_macfdb_read(struct nl_socket* nlsock) {
+int netlink_macfdb_read(struct nlsock* nl) {
     int ret;
 
     /* Get bridge FDB table. */
-    ret = netlink_request_macs(nlsock, AF_BRIDGE, RTM_GETNEIGH, 0);
+    ret = netlink_request_macs(nl, AF_BRIDGE, RTM_GETNEIGH, 0);
     if (ret < 0)
         return ret;
     /* We are reading entire table. */
-    ret = netlink_parse_info(nlsock, netlink_macfdb_table);
+    ret = netlink_parse_info(nl, netlink_macfdb_table);
 
     return ret;
 }
@@ -357,7 +357,7 @@ static int netlink_neigh_table(struct nlmsghdr* h) {
 }
 
 /* Request for IP neighbor information from the kernel */
-static int netlink_request_neigh(struct nlsock* nlsock, int family,
+static int netlink_request_neigh(struct nlsock* nl, int family,
                                  int type, ifindex_t ifindex) {
     struct {
         struct nlmsghdr n;
@@ -374,81 +374,82 @@ static int netlink_request_neigh(struct nlsock* nlsock, int family,
     // if (ifindex)
     //     nl_attr_put32(&req.n, sizeof(req), NDA_IFINDEX, ifindex);
 
-    return netlink_request(nlsock, &req);
+    return netlink_request(nl, &req);
 }
 
 /**
  * IP Neighbor table read using netlink interface.
  * ==> ip neigh show nud all
  */
-int netlink_neigh_read(struct nl_socket* nlsock) {
+int netlink_neigh_read(struct nlsock* nl) {
     int ret;
 
     /* Get IP neighbor table. */
-    ret = netlink_request_neigh(nlsock, AF_UNSPEC, RTM_GETNEIGH, 0);
+    ret = netlink_request_neigh(nl, AF_UNSPEC, RTM_GETNEIGH, 0);
     if (ret < 0)
         return ret;
-    ret = netlink_parse_info(nlsock, netlink_neigh_table);
+    ret = netlink_parse_info(nl, netlink_neigh_table);
 
     return ret;
 }
 
+int netlink_neigh_update(struct nlsock* nl, int cmd, int ifindex, void* addr, char* lla,
+                         int llalen, ns_id_t ns_id, uint8_t family,
+                         bool permanent, uint8_t protocol) {
+    struct {
+        struct nlmsghdr n;
+        struct ndmsg ndm;
+        char buf[256];
+    } req;
 
-static int netlink_neigh_update(struct nl_socket* nlsock, int cmd, int ifindex, void *addr, char *lla,
-				int llalen, ns_id_t ns_id, uint8_t family,
-				bool permanent, uint8_t protocol)
-{
-	struct {
-		struct nlmsghdr n;
-		struct ndmsg ndm;
-		char buf[256];
-	} req;
+    memset(&req, 0, sizeof(req));
 
-	memset(&req, 0, sizeof(req));
+    req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
+    req.n.nlmsg_flags = NLM_F_CREATE | NLM_F_REQUEST;
+    req.n.nlmsg_type = cmd; // RTM_NEWNEIGH or RTM_DELNEIGH
+    req.n.nlmsg_pid = nl->snl.nl_pid;
 
-	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
-	req.n.nlmsg_flags = NLM_F_CREATE | NLM_F_REQUEST;
-	req.n.nlmsg_type = cmd; // RTM_NEWNEIGH or RTM_DELNEIGH
-	req.n.nlmsg_pid = nlsock->snl.nl_pid;
+    req.ndm.ndm_family = family;
+    req.ndm.ndm_ifindex = ifindex;
+    req.ndm.ndm_type = RTN_UNICAST;
+    if (cmd == RTM_NEWNEIGH) {
+        if (permanent)
+            req.ndm.ndm_state = NUD_PERMANENT;
+        else
+            req.ndm.ndm_state = NUD_REACHABLE;
+    } else
+        req.ndm.ndm_state = NUD_FAILED;
 
-	req.ndm.ndm_family = family;
-	req.ndm.ndm_ifindex = ifindex;
-	req.ndm.ndm_type = RTN_UNICAST;
-	if (cmd == RTM_NEWNEIGH) {
-		if (!permanent)
-			req.ndm.ndm_state = NUD_REACHABLE;
-		else
-			req.ndm.ndm_state = NUD_PERMANENT;
-	} else
-		req.ndm.ndm_state = NUD_FAILED;
+    nl_attr_put(&req.n, sizeof(req), NDA_PROTOCOL, &protocol, sizeof(protocol));
+    req.ndm.ndm_type = RTN_UNICAST;
+    nl_attr_put(&req.n, sizeof(req), NDA_DST, addr, ip_address_length(family));
+    if (lla)
+        nl_attr_put(&req.n, sizeof(req), NDA_LLADDR, lla, llalen);
 
-	nl_attr_put(&req.n, sizeof(req), NDA_PROTOCOL, &protocol,
-		    sizeof(protocol));
-	req.ndm.ndm_type = RTN_UNICAST;
-	nl_attr_put(&req.n, sizeof(req), NDA_DST, addr,
-		    family2addrsize(family));
-	if (lla)
-		nl_attr_put(&req.n, sizeof(req), NDA_LLADDR, lla, llalen);
+    // if (IS_ZEBRA_DEBUG_KERNEL) {
+    // 	char ip_str[INET6_ADDRSTRLEN + 8];
+    // 	struct interface *ifp = if_lookup_by_index_per_ns(
+    // 		zebra_ns_lookup(ns_id), ifindex);
+    // 	if (ifp) {
+    // 		if (family == AF_INET6)
+    // 			snprintfrr(ip_str, sizeof(ip_str), "ipv6 %pI6",
+    // 				   (struct in6_addr *)addr);
+    // 		else
+    // 			snprintfrr(ip_str, sizeof(ip_str), "ipv4 %pI4",
+    // 				   (in_addr_t *)addr);
+    // 		zlog_debug(
+    // 			"%s: %s ifname %s ifindex %u addr %s mac %pEA vrf %s(%u)",
+    // 			__func__, nl_msg_type_to_str(cmd), ifp->name,
+    // 			ifindex, ip_str, (struct ethaddr *)lla,
+    // 			vrf_id_to_name(ifp->vrf->vrf_id),
+    // 			ifp->vrf->vrf_id);
+    // 	}
+    // }
+    // log_debug("%s: %s ifname %s ifindex %u addr %s mac %pEA vrf %s(%u)",
+    //           __func__, nl_msg_type_to_str(cmd), "lo",
+    //           ifindex, ip_str, (struct ethaddr*)lla,
+    //           vrf_id_to_name(ifp->vrf->vrf_id),
+    //           ifp->vrf->vrf_id);
 
-	if (IS_ZEBRA_DEBUG_KERNEL) {
-		char ip_str[INET6_ADDRSTRLEN + 8];
-		struct interface *ifp = if_lookup_by_index_per_ns(
-			zebra_ns_lookup(ns_id), ifindex);
-		if (ifp) {
-			if (family == AF_INET6)
-				snprintfrr(ip_str, sizeof(ip_str), "ipv6 %pI6",
-					   (struct in6_addr *)addr);
-			else
-				snprintfrr(ip_str, sizeof(ip_str), "ipv4 %pI4",
-					   (in_addr_t *)addr);
-			zlog_debug(
-				"%s: %s ifname %s ifindex %u addr %s mac %pEA vrf %s(%u)",
-				__func__, nl_msg_type_to_str(cmd), ifp->name,
-				ifindex, ip_str, (struct ethaddr *)lla,
-				vrf_id_to_name(ifp->vrf->vrf_id),
-				ifp->vrf->vrf_id);
-		}
-	}
-	return netlink_talk(netlink_talk_filter, &req.n, &zns->netlink_cmd, zns,
-			    false);
+    return netlink_talk(nl, &req.n, NULL);
 }

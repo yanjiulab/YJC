@@ -34,9 +34,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "defs.h"
 #include "log.h"
 #include "packet.h"
-#include "defs.h"
 
 /* IPv6 prefix for IPv4-mapped addresses. These are in the
  * ::FFFF:0:0/96 space, i.e. 10 bytes of 0x00 and 2 bytes of 0xFF. See
@@ -47,61 +47,61 @@ const uint8_t ipv4_mapped_prefix[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF};
 
 int ip_address_length(int address_family) {
     switch (address_family) {
-        case AF_INET:
-            return sizeof(struct in_addr);
-        case AF_INET6:
-            return sizeof(struct in6_addr);
-        default:
-            log_error("ip_address_length: bad address family: %d\n",
-                      address_family);
-            break;
+    case AF_INET:
+        return sizeof(struct in_addr);
+    case AF_INET6:
+        return sizeof(struct in6_addr);
+    default:
+        log_error("ip_address_length: bad address family: %d\n",
+                  address_family);
+        break;
     }
     return 0; /* not reached */
 }
 
 int sockaddr_length(int address_family) {
     switch (address_family) {
-        case AF_INET:
-            return sizeof(struct sockaddr_in);
-        case AF_INET6:
-            return sizeof(struct sockaddr_in6);
-        default:
-            log_error("sockaddr_length: bad address family: %d\n",
-                      address_family);
-            break;
+    case AF_INET:
+        return sizeof(struct sockaddr_in);
+    case AF_INET6:
+        return sizeof(struct sockaddr_in6);
+    default:
+        log_error("sockaddr_length: bad address family: %d\n",
+                  address_family);
+        break;
     }
     return 0; /* not reached */
 }
 
-static void ipv4_init(struct ip_address *ipv4) {
+static void ipv4_init(struct ip_address* ipv4) {
     memset(ipv4, 0, sizeof(*ipv4));
     ipv4->address_family = AF_INET;
 }
 
-static void ipv6_init(struct ip_address *ipv6) {
+static void ipv6_init(struct ip_address* ipv6) {
     memset(ipv6, 0, sizeof(*ipv6));
     ipv6->address_family = AF_INET6;
 }
 
-void ip_from_ipv4(const struct in_addr *ipv4, struct ip_address *ip) {
+void ip_from_ipv4(const struct in_addr* ipv4, struct ip_address* ip) {
     ipv4_init(ip);
     ip->ip.v4 = *ipv4;
 }
 
-void ip_from_ipv6(const struct in6_addr *ipv6, struct ip_address *ip) {
+void ip_from_ipv6(const struct in6_addr* ipv6, struct ip_address* ip) {
     ipv6_init(ip);
     ip->ip.v6 = *ipv6;
 }
 
-void ip_to_ipv4(const struct ip_address *ip, struct in_addr *ipv4) {
+void ip_to_ipv4(const struct ip_address* ip, struct in_addr* ipv4) {
     *ipv4 = ip->ip.v4;
 }
 
-void ip_to_ipv6(const struct ip_address *ip, struct in6_addr *ipv6) {
+void ip_to_ipv6(const struct ip_address* ip, struct in6_addr* ipv6) {
     *ipv6 = ip->ip.v6;
 }
 
-struct ip_address ipv4_parse(const char *ip_string) {
+struct ip_address ipv4_parse(const char* ip_string) {
     struct ip_address ipv4;
     ipv4_init(&ipv4);
 
@@ -111,7 +111,7 @@ struct ip_address ipv4_parse(const char *ip_string) {
     return ipv4;
 }
 
-struct ip_address ipv6_parse(const char *ip_string) {
+struct ip_address ipv6_parse(const char* ip_string) {
     struct ip_address ipv6;
     ipv6_init(&ipv6);
 
@@ -121,24 +121,26 @@ struct ip_address ipv6_parse(const char *ip_string) {
     return ipv6;
 }
 
-int ip_parse(const char *ip_string, struct ip_address *ip) {
+int ip_parse(const char* ip_string, struct ip_address* ip) {
     ipv6_init(ip);
-    if (inet_pton(AF_INET6, ip_string, &ip->ip.v6) == 1) return STATUS_OK;
+    if (inet_pton(AF_INET6, ip_string, &ip->ip.v6) == 1)
+        return STATUS_OK;
 
     ipv4_init(ip);
-    if (inet_pton(AF_INET, ip_string, &ip->ip.v4) == 1) return STATUS_OK;
+    if (inet_pton(AF_INET, ip_string, &ip->ip.v4) == 1)
+        return STATUS_OK;
 
     return STATUS_ERR;
 }
 
-const char *ip_to_string(const struct ip_address *ip, char *buffer) {
+const char* ip_to_string(const struct ip_address* ip, char* buffer) {
     if (!inet_ntop(ip->address_family, &ip->ip, buffer, ADDR_STR_LEN))
         log_error("inet_ntop");
 
     return buffer;
 }
 
-extern int string_to_ip(const char *host, struct ip_address *ip, char **error) {
+extern int string_to_ip(const char* host, struct ip_address* ip, char** error) {
     int status;
     uint16_t port = 0;
     struct addrinfo *results = NULL, *result = NULL;
@@ -173,7 +175,7 @@ struct ip_address ipv6_map_from_ipv4(const struct ip_address ipv4) {
     return ipv6;
 }
 
-int ipv6_map_to_ipv4(const struct ip_address ipv6, struct ip_address *ipv4) {
+int ipv6_map_to_ipv4(const struct ip_address ipv6, struct ip_address* ipv4) {
     if (memcmp(&ipv6.ip.v6.s6_addr, ipv4_mapped_prefix,
                sizeof(ipv4_mapped_prefix)) == 0) {
         ipv4_init(ipv4);
@@ -188,8 +190,8 @@ int ipv6_map_to_ipv4(const struct ip_address ipv6, struct ip_address *ipv4) {
 /* Fill in a sockaddr struct and socklen_t using the given IPv4
  * address and port.
  */
-static void ipv4_to_sockaddr(const struct ip_address *ipv4, uint16_t port,
-                             struct sockaddr *address, socklen_t *length) {
+static void ipv4_to_sockaddr(const struct ip_address* ipv4, uint16_t port,
+                             struct sockaddr* address, socklen_t* length) {
     struct sockaddr_in sa_v4;
     memset(&sa_v4, 0, sizeof(sa_v4));
     sa_v4.sin_family = AF_INET;
@@ -202,8 +204,8 @@ static void ipv4_to_sockaddr(const struct ip_address *ipv4, uint16_t port,
 /* Fill in a sockaddr struct and socklen_t using the given IPv6
  * address and port.
  */
-static void ipv6_to_sockaddr(const struct ip_address *ipv6, uint16_t port,
-                             struct sockaddr *address, socklen_t *length) {
+static void ipv6_to_sockaddr(const struct ip_address* ipv6, uint16_t port,
+                             struct sockaddr* address, socklen_t* length) {
     struct sockaddr_in6 sa_v6;
     memset(&sa_v6, 0, sizeof(sa_v6));
 #ifndef linux
@@ -216,25 +218,25 @@ static void ipv6_to_sockaddr(const struct ip_address *ipv6, uint16_t port,
     memcpy(address, &sa_v6, *length);
 }
 
-void ip_to_sockaddr(const struct ip_address *ip, uint16_t port,
-                    struct sockaddr *address, socklen_t *length) {
+void ip_to_sockaddr(const struct ip_address* ip, uint16_t port,
+                    struct sockaddr* address, socklen_t* length) {
     switch (ip->address_family) {
-        case AF_INET:
-            ipv4_to_sockaddr(ip, port, address, length);
-            break;
-        case AF_INET6:
-            ipv6_to_sockaddr(ip, port, address, length);
-            break;
-        default:
-            log_error("ip_to_sockaddr: bad address family: %d\n",
-                      ip->address_family);
-            break;
+    case AF_INET:
+        ipv4_to_sockaddr(ip, port, address, length);
+        break;
+    case AF_INET6:
+        ipv6_to_sockaddr(ip, port, address, length);
+        break;
+    default:
+        log_error("ip_to_sockaddr: bad address family: %d\n",
+                  ip->address_family);
+        break;
     }
 }
 
 /* Extract and return the IPv4 address and port from the given sockaddr. */
-static void ipv4_from_sockaddr(const struct sockaddr *address, socklen_t length,
-                               struct ip_address *ipv4, uint16_t *port) {
+static void ipv4_from_sockaddr(const struct sockaddr* address, socklen_t length,
+                               struct ip_address* ipv4, uint16_t* port) {
     assert(address->sa_family == AF_INET);
     ipv4_init(ipv4);
 
@@ -246,8 +248,8 @@ static void ipv4_from_sockaddr(const struct sockaddr *address, socklen_t length,
 }
 
 /* Extract and return the IPv6 address and port from the given sockaddr. */
-static void ipv6_from_sockaddr(const struct sockaddr *address, socklen_t length,
-                               struct ip_address *ipv4, uint16_t *port) {
+static void ipv6_from_sockaddr(const struct sockaddr* address, socklen_t length,
+                               struct ip_address* ipv4, uint16_t* port) {
     assert(address->sa_family == AF_INET6);
     ipv6_init(ipv4);
 
@@ -258,37 +260,40 @@ static void ipv6_from_sockaddr(const struct sockaddr *address, socklen_t length,
     *port = ntohs(sa_v6.sin6_port);
 }
 
-void ip_from_sockaddr(const struct sockaddr *address, socklen_t length,
-                      struct ip_address *ip, uint16_t *port) {
+void ip_from_sockaddr(const struct sockaddr* address, socklen_t length,
+                      struct ip_address* ip, uint16_t* port) {
     switch (address->sa_family) {
-        case AF_INET:
-            ipv4_from_sockaddr(address, length, ip, port);
-            break;
-        case AF_INET6:
-            ipv6_from_sockaddr(address, length, ip, port);
-            break;
-        default:
-            log_error("ip_from_sockaddr: bad address family: %d\n",
-                      address->sa_family);
-            break;
+    case AF_INET:
+        ipv4_from_sockaddr(address, length, ip, port);
+        break;
+    case AF_INET6:
+        ipv6_from_sockaddr(address, length, ip, port);
+        break;
+    default:
+        log_error("ip_from_sockaddr: bad address family: %d\n",
+                  address->sa_family);
+        break;
     }
 }
 
-int get_ip_device(const struct ip_address *ip, char *dev_name) {
+int get_ip_device(const struct ip_address* ip, char* dev_name) {
     struct ifaddrs *ifaddr_list, *ifaddr;
     bool is_local = false;
 
-    if (getifaddrs(&ifaddr_list)) log_error("getifaddrs");
+    if (getifaddrs(&ifaddr_list))
+        log_error("getifaddrs");
 
     for (ifaddr = ifaddr_list; ifaddr != NULL; ifaddr = ifaddr->ifa_next) {
         int family;
         struct ip_address interface_ip;
         uint16_t port;
 
-        if (ifaddr->ifa_addr == NULL) continue;
+        if (ifaddr->ifa_addr == NULL)
+            continue;
 
         family = ifaddr->ifa_addr->sa_family;
-        if (family != ip->address_family) continue;
+        if (family != ip->address_family)
+            continue;
 
         ip_from_sockaddr(ifaddr->ifa_addr, sockaddr_length(family),
                          &interface_ip, &port);
@@ -306,7 +311,7 @@ int get_ip_device(const struct ip_address *ip, char *dev_name) {
     return is_local;
 }
 
-int is_ip_local(const struct ip_address *ip) {
+int is_ip_local(const struct ip_address* ip) {
     char dev_name[IFNAMSIZ];
 
     return get_ip_device(ip, dev_name);
@@ -324,28 +329,30 @@ bool is_ipv6(const char* host) {
 
 bool is_ipaddr(const char* host) { return is_ipv4(host) || is_ipv6(host); }
 
-int netmask_to_prefix(const char *netmask) {
+int netmask_to_prefix(const char* netmask) {
     int pos;
     struct ip_address mask = ipv4_parse(netmask);
     uint32_t mask_addr = ntohl(mask.ip.v4.s_addr);
     int prefix_len = 0;
 
     for (pos = 31; pos >= 0; --pos) {
-        if (!(mask_addr & (1 << pos))) break;
+        if (!(mask_addr & (1 << pos)))
+            break;
         ++prefix_len;
     }
     return prefix_len;
 }
 
-static int urandom_read(void *buffer, int sz) {
+static int urandom_read(void* buffer, int sz) {
     static int fd_urandom = -1;
 
-    if (fd_urandom == -1) fd_urandom = open("/dev/urandom", O_RDONLY);
+    if (fd_urandom == -1)
+        fd_urandom = open("/dev/urandom", O_RDONLY);
     return read(fd_urandom, buffer, sz);
 }
 
-void generate_random_ipv4_addr(char *result, const char *base,
-                               const char *netmask) {
+void generate_random_ipv4_addr(char* result, const char* base,
+                               const char* netmask) {
     int prefix_len = netmask_to_prefix(netmask);
     struct ip_address addr = ipv4_parse(base);
 
@@ -360,9 +367,11 @@ void generate_random_ipv4_addr(char *result, const char *base,
                 /* .0 is reserved for network address.
                  * .1 is reserved for the gateway
                  */
-                if (rnd < 2) rnd = 2;
+                if (rnd < 2)
+                    rnd = 2;
                 /* .255.255 is reserved for net broadcast */
-                if (rnd == mask) rnd--;
+                if (rnd == mask)
+                    rnd--;
             }
             addr.ip.v4.s_addr |= htonl(rnd);
         }
@@ -374,7 +383,7 @@ void generate_random_ipv4_addr(char *result, const char *base,
  * There is no need to fully use RFC 4193 range.
  * ( fd3d:fa7b:d17d::/48 in unique local address space )
  */
-void generate_random_ipv6_addr(char *result, const char *base, int prefixlen) {
+void generate_random_ipv6_addr(char* result, const char* base, int prefixlen) {
     struct ip_address addr = ipv6_parse(base);
     unsigned int mask = ~0U, rnd = 0;
 
@@ -383,8 +392,11 @@ void generate_random_ipv6_addr(char *result, const char *base, int prefixlen) {
         mask = (1U << (128 - prefixlen)) - 1;
         rnd &= mask;
     }
-    if (!rnd) rnd++;
-    if (rnd == mask) rnd--;
+    if (!rnd)
+        rnd++;
+    if (rnd == mask)
+        rnd--;
     addr.ip.v6.s6_addr32[3] |= htonl(rnd);
     ip_to_string(&addr, result);
 }
+

@@ -5,18 +5,20 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 typedef uint32_t ns_id_t;
 
 /* the default NS ID */
 #define NS_UNKNOWN UINT32_MAX
 
 /* Default netns directory (Linux) */
-#define NS_RUN_DIR         "/var/run/netns"
+#define NS_RUN_DIR "/var/run/netns"
 
 #ifdef HAVE_NETNS
-#define NS_DEFAULT_NAME    "/proc/self/ns/net"
-#else  /* !HAVE_NETNS */
-#define NS_DEFAULT_NAME    "default-netns"
+#define NS_DEFAULT_NAME "/proc/self/ns/net"
+#else /* !HAVE_NETNS */
+#define NS_DEFAULT_NAME "default-netns"
 #endif /* HAVE_NETNS */
 
 // struct ns {
@@ -75,7 +77,6 @@ typedef uint32_t ns_id_t;
 //  */
 // extern void ns_add_hook(int type, int (*)(struct ns *));
 
-
 // /*
 //  * NS initializer/destructor
 //  */
@@ -86,7 +87,6 @@ typedef uint32_t ns_id_t;
 //  * parameter is the default ns_id
 //  */
 // extern void ns_init_management(ns_id_t ns_id, ns_id_t internal_ns_idx);
-
 
 // /*
 //  * NS utilities
@@ -136,7 +136,7 @@ typedef uint32_t ns_id_t;
 //  */
 // extern void ns_init(void);
 
-// #define NS_DEFAULT 0
+#define NS_DEFAULT 0
 
 // /* API that can be used to change from NS */
 // extern int ns_switchback_to_initial(void);

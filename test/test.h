@@ -3,7 +3,9 @@
 #include <assert.h>
 
 void test_rt_netlink();
-void test_nl_socket();
+void test_nl_kernel();
+void test_nl_debug();
+void test_nl();
 void test_event();
 void test_iowatcher();
 void test_eventloop();
@@ -30,10 +32,12 @@ void test_ethernet();
 void test_udp();
 void test_raw_socket();
 void test_ip();
+void test_ns();
 void test_tcp();
 void test_arp();
 void test_socket();
 void test_netdev();
+void test_network();
 void test_frratomic();
 void test_thpool();
 void test_concurrency();
@@ -55,7 +59,6 @@ void test_memory();
 void test_db();
 void test_sha1();
 void test_crc();
-void test_ini();
 void test_log();
 void test_json_parser();
 void test_ecmd();

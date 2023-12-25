@@ -545,6 +545,14 @@ const char* neigh_rta2str(int type) {
         return "MASTER";
     case NDA_LINK_NETNSID:
         return "LINK_NETNSID";
+    case NDA_SRC_VNI:
+        return "SRC_VNI";
+    case NDA_PROTOCOL:
+        return "PROTOCOL";
+    case NDA_NH_ID:
+        return "NH_ID";
+    case NDA_FDB_EXT_ATTRS:
+        return "FDB_EXT_ATTRS";
     default:
         return "UNKNOWN";
     }
