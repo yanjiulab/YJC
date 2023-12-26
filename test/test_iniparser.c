@@ -49,10 +49,10 @@ void test_iniparser() {
     ini = iniparser_load("config.ini");
     if (ini == NULL) {
         fprintf(stderr, "cannot parse file\n");
-        return -1;
+        return;
     }
     iniparser_dump(ini, stdout);
     iniparser_freedict(ini);
 
-    return 0;
+    return;
 }

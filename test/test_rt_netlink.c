@@ -5,7 +5,7 @@
 void test_neigh(nl_socket_t* nls) {
     // test ipv4
     int ifindex = 3;
-    ip_address_t peer;
+    ipaddr_t peer;
     string_to_ip("10.10.10.0", &peer, NULL);
     char* lla = "123456";
     int llalen = 6;
@@ -14,7 +14,7 @@ void test_neigh(nl_socket_t* nls) {
     netlink_neigh_update(nls, RTM_DELNEIGH, ifindex, &(peer.ip.v4), lla, llalen, 0, peer.address_family, true, RTPROT_STATIC);
 
     // test ipv6
-    ip_address_t peer6;
+    ipaddr_t peer6;
     string_to_ip("fe80::226:8b9b:60ee:a010", &peer6, NULL);
     lla = "654321";
     netlink_neigh_update(nls, RTM_NEWNEIGH, ifindex, &(peer6.ip.v6), lla, llalen, 0, peer6.address_family, true, RTPROT_STATIC);
@@ -31,7 +31,7 @@ void test_route(nl_socket_t* nls) {
     // test notification
     // read ipv4 route table
     // printf("dump `ip route list table all`\n");
-    // netlink_route_read(nls);
+    netlink_route_read(nls);
 
     // printf("dump `ip neigh show nud all`\n");
     // netlink_neigh_read(nls);
@@ -41,9 +41,9 @@ void test_route(nl_socket_t* nls) {
     // netlink_request_route(nls, AF_INET6, RTM_GETROUTE);
     // netlink_parse_info(nls, NULL);
 
-    // ip_address_t dst;
+    // ipaddr_t dst;
     // string_to_ip("10.10.10.0", &dst, NULL);
-    // ip_address_t gw;
+    // ipaddr_t gw;
     // string_to_ip("12.2.2.2", &gw, NULL);
     // print_data(&dst, sizeof(dst));
 

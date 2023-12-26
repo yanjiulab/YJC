@@ -15,18 +15,18 @@ struct netdev_info {
 struct netdev_info* netdev_get_info();
 char* netdev_get_hwaddr(const char* ifname);
 
-char* netdev_get_ip_address(const char* ifname);
+char* netdev_get_ipaddr(const char* ifname);
 
 /* Add the given IP address, with the given subnet/prefix length,
  * to the given device.
  */
-extern void netdev_add_ip_address(const char* dev_name, const char* ip,
+extern void netdev_add_ipaddr(const char* dev_name, const char* ip,
                                   int prefix_len);
 
 /* Delete the given IP address, with the given subnet/prefix length,
  * from the given device.
  */
-extern void netdev_del_ip_address(const char* dev_name, const char* ip,
+extern void netdev_del_ipaddr(const char* dev_name, const char* ip,
                                   int prefix_len);
 
 /* See if the given IP address, with the given subnet/prefix length,
@@ -34,7 +34,7 @@ extern void netdev_del_ip_address(const char* dev_name, const char* ip,
  * anything.  If not, delete it from any device it's currently on, and
  * add it to the given network device.
  */
-extern void netdev_setup_ip_address(const char* dev_name, const char* ip,
+extern void netdev_setup_ipaddr(const char* dev_name, const char* ip,
                                     int prefix_len);
 
 #endif

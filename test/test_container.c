@@ -7,7 +7,7 @@
 #include "map.h"
 #include "list.h"
 #include "log.h"
-#include "rbtree.h"
+#include "linux_rbtree.h"
 #include "str.h"
 #include "test.h"
 

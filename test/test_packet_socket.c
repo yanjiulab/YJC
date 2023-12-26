@@ -1,5 +1,5 @@
 #include "ethernet.h"
-#include "ip_address.h"
+#include "ipaddr.h"
 #include "log.h"
 #include "net_utils.h"
 #include "packet_parser.h"

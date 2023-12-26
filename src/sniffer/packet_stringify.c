@@ -1,6 +1,6 @@
 #include "packet_stringify.h"
 #include "defs.h"
-#include "ip_address.h"
+#include "ipaddr.h"
 #include "str.h"
 
 void hex_dump(const uint8_t* buffer, int bytes, char** hex) {
@@ -151,7 +151,7 @@ static int ipv4_packet_to_string(FILE* s, struct packet* packet,
                                  enum dump_format_t format, char** error) {
     char src_string[ADDR_STR_LEN];
     char dst_string[ADDR_STR_LEN];
-    struct ip_address src_ip, dst_ip;
+    struct ipaddr src_ip, dst_ip;
     const struct ipv4* ipv4 = packet->ipv4;
 
     ip_from_ipv4(&ipv4->src_ip, &src_ip);
@@ -168,7 +168,7 @@ static int ipv6_packet_to_string(FILE* s, struct packet* packet,
                                  enum dump_format_t format, char** error) {
     char src_string[ADDR_STR_LEN];
     char dst_string[ADDR_STR_LEN];
-    struct ip_address src_ip, dst_ip;
+    struct ipaddr src_ip, dst_ip;
     const struct ipv6* ipv6 = packet->ipv6;
 
     ip_from_ipv6(&ipv6->src_ip, &src_ip);
@@ -184,7 +184,7 @@ static int ipv6_packet_to_string(FILE* s, struct packet* packet,
 static int eth_packet_to_string(FILE* s, struct packet* packet, enum dump_format_t format) {
 
     int result = STATUS_OK; /* return value */
-    ethernet_t* eth = packet->eth;
+    ethhdr_t* eth = packet->eth;
     const char* type = ether_type2str(ntohs((unsigned short)eth->h_proto));
 
     fprintf(s,

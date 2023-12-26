@@ -18,7 +18,7 @@
 #include <sys/uio.h>
 #include <unistd.h>
 
-#include "ip_address.h"
+#include "ipaddr.h"
 #include "packet_header.h"
 
 /* The directions in which a packet may flow. */
@@ -82,7 +82,7 @@ struct packet {
      * of the interesting TCP/UDP/IP action is.
      */
     /* Layer 2 */
-    ethernet_t* eth; /* start of Ethernet header, if present */
+    ethhdr_t* eth; /* start of Ethernet header, if present */
     /* Layer 3 */
     struct ipv4* ipv4; /* start of IPv4 header, if present */
     struct ipv6* ipv6; /* start of IPv6 header, if present */
@@ -160,7 +160,7 @@ static inline int packet_payload_len(const struct packet* packet) {
 
 /* A TCP/UDP/IP address for an endpoint. */
 struct endpoint {
-    struct ip_address ip; /* IP address */
+    struct ipaddr ip; /* IP address */
     __be16 port;          /* TCP/UDP port (network order) */
 };
 

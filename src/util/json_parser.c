@@ -8,7 +8,7 @@
 #include <string.h>
 
 #include "list.h"
-#include "rbtree.h"
+#include "linux_rbtree.h"
 
 #define JSON_DEPTH_LIMIT 1024
 #define NAN (0.0f / 0.0f)

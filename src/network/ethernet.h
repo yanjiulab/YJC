@@ -6,6 +6,7 @@
 #include <net/ethernet.h>
 #include <netinet/ether.h> // Ethernet
 #include <stdio.h>
+#include <stdbool.h>
 
 /* IEEE 802.3 Ethernet magic constants. The frame sizes omit the preamble
  * and FCS/CRC (frame check sequence). */
@@ -22,19 +23,20 @@
 #define ETH_P_ALL 0x0003
 
 /* Ethernet header. */
-typedef struct ethhdr ethernet_t;
+typedef struct ethhdr ethhdr_t;
+const char* ether_type2str(uint16_t type);
 
 /* Ethernet address. */
-typedef struct ether_addr ether_addr_t;
+struct ethaddr {
+    uint8_t octet[ETH_ALEN];
+} __attribute__((packed));
+typedef struct ethaddr ethaddr_t;
 
-// static inline void ether_copy(void *dst, const void *src) {
-//     memcpy(dst, src, sizeof(ether_addr_t));
-// }
-
-#define ether_copy(dst, src) memcpy(dst, src, sizeof(ether_addr_t))
-
-void ether_from_string(const char* str, ether_addr_t* ether);
-char* ether_to_string(ether_addr_t* ether, const char* str);
-const char* ether_type2str(uint16_t type);
+#define ether_copy(dst, src) memcpy(dst, src, sizeof(ethaddr_t))
+int ether_str2mac(const char* str, struct ethaddr* mac);
+char* ether_mac2str(const struct ethaddr* mac, char* buf, int size);
+bool is_zero_mac(const struct ethaddr* mac);
+bool is_bcast_mac(const struct ethaddr* mac);
+bool is_mcast_mac(const struct ethaddr* mac);
 
 #endif /* __ETHERNET_H__ */

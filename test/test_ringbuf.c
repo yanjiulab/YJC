@@ -72,13 +72,13 @@ void test_ringbuf() {
     soil->end = soil->start;
     const char *phloem = "root";
     printf("Encoding: '%s'\n", phloem);
-    printf("start:%d, end:%d\n", soil->start, soil->end);
+    printf("start:%ld, end:%ld\n", soil->start, soil->end);
     assert(ringbuf_put(soil, phloem, strlen(phloem)) == 4);
     char xylem[strlen(phloem) + 1];
     assert(ringbuf_get(soil, &xylem, 100) == 4);
     xylem[strlen(phloem)] = '\0';
     printf("Retrieved: '%s'\n", xylem);
-    printf("start:%d, end:%d\n", soil->start, soil->end);
+    printf("start:%ld, end:%ld\n", soil->start, soil->end);
 
     ringbuf_wipe(soil);
 
@@ -87,7 +87,7 @@ void test_ringbuf() {
     soil->end = soil->start;
     const char *cytoplasm = "tree";
     printf("Encoding: '%s'\n", cytoplasm);
-    printf("start:%d, end:%d\n", soil->start, soil->end);
+    printf("start:%ld, end:%ld\n", soil->start, soil->end);
     assert(ringbuf_put(soil, cytoplasm, strlen(cytoplasm)) == 4);
     char chloroplast[strlen(cytoplasm) + 1];
     assert(ringbuf_peek(soil, 2, &chloroplast[0], 100) == 2);
@@ -95,7 +95,7 @@ void test_ringbuf() {
     chloroplast[strlen(cytoplasm)] = '\0';
     assert(!strcmp(chloroplast, "eetr"));
     printf("Retrieved: '%s'\n", chloroplast);
-    printf("start:%d, end:%d\n", soil->start, soil->end);
+    printf("start:%ld, end:%ld\n", soil->start, soil->end);
 
     printf("Deleting...\n");
     ringbuf_del(soil);

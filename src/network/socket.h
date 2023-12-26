@@ -22,12 +22,12 @@
 #define ANYADDR "0.0.0.0"
 #define INVALID_SOCKET -1
 
-INLINE int socket_errno() { return errno; }
+static inline int socket_errno() { return errno; }
 EXPORT const char* socket_strerror(int err);
 
 #define blocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
 #define nonblocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
-INLINE int closesocket(int sockfd) { return close(sockfd); }
+static inline int closesocket(int sockfd) { return close(sockfd); }
 
 #ifndef SAFE_CLOSESOCKET
 #define SAFE_CLOSESOCKET(fd) \
@@ -68,7 +68,7 @@ char* inet_itoa_n(uint32_t i);
 
 #ifdef ENABLE_UDS
 #define SOCKADDR_STRLEN sizeof(((struct sockaddr_un*)(NULL))->sun_path)
-INLINE void sockaddr_set_path(sockaddr_u* addr, const char* path) {
+static inline void sockaddr_set_path(sockaddr_u* addr, const char* path) {
     addr->sa.sa_family = AF_UNIX;
     strncpy(addr->sun.sun_path, path, sizeof(addr->sun.sun_path));
 }
@@ -121,12 +121,12 @@ EXPORT int ConnectUnixTimeout(const char* path,
 
 EXPORT int Socketpair(int family, int type, int protocol, int sv[2]);
 
-INLINE int tcp_nodelay(int sockfd, int on DEFAULT(1)) {
+static inline int tcp_nodelay(int sockfd, int on DEFAULT(1)) {
     return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on,
                       sizeof(int));
 }
 
-INLINE int tcp_nopush(int sockfd, int on DEFAULT(1)) {
+static inline int tcp_nopush(int sockfd, int on DEFAULT(1)) {
 #ifdef TCP_NOPUSH
     return setsockopt(sockfd, IPPROTO_TCP, TCP_NOPUSH, (const char*)&on,
                       sizeof(int));
@@ -138,7 +138,7 @@ INLINE int tcp_nopush(int sockfd, int on DEFAULT(1)) {
 #endif
 }
 
-INLINE int tcp_keepalive(int sockfd, int on DEFAULT(1), int delay DEFAULT(60)) {
+static inline int tcp_keepalive(int sockfd, int on DEFAULT(1), int delay DEFAULT(60)) {
     if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on,
                    sizeof(int)) != 0) {
         return errno;
@@ -158,13 +158,13 @@ INLINE int tcp_keepalive(int sockfd, int on DEFAULT(1), int delay DEFAULT(60)) {
 #endif
 }
 
-INLINE int udp_broadcast(int sockfd, int on DEFAULT(1)) {
+static inline int udp_broadcast(int sockfd, int on DEFAULT(1)) {
     return setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char*)&on,
                       sizeof(int));
 }
 
 // send timeout
-INLINE int so_sndtimeo(int sockfd, int timeout) {
+static inline int so_sndtimeo(int sockfd, int timeout) {
 #ifdef OS_WIN
     return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout,
                       sizeof(int));
@@ -175,7 +175,7 @@ INLINE int so_sndtimeo(int sockfd, int timeout) {
 }
 
 // recv timeout
-INLINE int so_rcvtimeo(int sockfd, int timeout) {
+static inline int so_rcvtimeo(int sockfd, int timeout) {
 #ifdef OS_WIN
     return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout,
                       sizeof(int));
@@ -186,18 +186,18 @@ INLINE int so_rcvtimeo(int sockfd, int timeout) {
 }
 
 // send buffer size
-INLINE int so_sndbuf(int sockfd, int len) {
+static inline int so_sndbuf(int sockfd, int len) {
     return setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (const char*)&len,
                       sizeof(int));
 }
 
 // recv buffer size
-INLINE int so_rcvbuf(int sockfd, int len) {
+static inline int so_rcvbuf(int sockfd, int len) {
     return setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&len,
                       sizeof(int));
 }
 
-INLINE int so_reuseaddr(int sockfd, int on DEFAULT(1)) {
+static inline int so_reuseaddr(int sockfd, int on DEFAULT(1)) {
 #ifdef SO_REUSEADDR
     // NOTE: SO_REUSEADDR allow to reuse sockaddr of TIME_WAIT status
     return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on,
@@ -207,7 +207,7 @@ INLINE int so_reuseaddr(int sockfd, int on DEFAULT(1)) {
 #endif
 }
 
-INLINE int so_reuseport(int sockfd, int on DEFAULT(1)) {
+static inline int so_reuseport(int sockfd, int on DEFAULT(1)) {
 #ifdef SO_REUSEPORT
     // NOTE: SO_REUSEPORT allow multiple sockets to bind same port
     return setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&on,
@@ -217,7 +217,7 @@ INLINE int so_reuseport(int sockfd, int on DEFAULT(1)) {
 #endif
 }
 
-INLINE int so_linger(int sockfd, int timeout DEFAULT(1)) {
+static inline int so_linger(int sockfd, int timeout DEFAULT(1)) {
 #ifdef SO_LINGER
     struct linger linger;
     if (timeout >= 0) {

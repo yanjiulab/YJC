@@ -741,7 +741,7 @@ const char** iniparser_getseckeys(const dictionary* d, const char* s, const char
   the dictionary, do not free or modify it.
  */
 /*--------------------------------------------------------------------------*/
-const char* iniparser_getstring(const dictionary* d, const char* key, const char* def) {
+char* iniparser_getstring(const dictionary* d, const char* key, const char* def) {
     const char* lc_key;
     const char* sval;
     char tmp_str[ASCIILINESZ + 1];

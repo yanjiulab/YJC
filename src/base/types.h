@@ -1,6 +1,8 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#include <stdint.h>
+
 /* We use kernel-style names for standard integer types. */
 typedef unsigned char u8;
 typedef unsigned short u16;
@@ -22,4 +24,9 @@ enum status_t {
     STATUS_TIMEOUT = -3 /* timeout sniffing outbound packet */
 };
 
+/* VRF ID type. */
+typedef uint32_t vrf_id_t;
+
+/* Interface index type. */
+typedef signed int ifindex_t;
 #endif

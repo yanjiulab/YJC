@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include "openbsd-tree.h"
 
 typedef uint32_t ns_id_t;
 
@@ -21,37 +22,37 @@ typedef uint32_t ns_id_t;
 #define NS_DEFAULT_NAME "default-netns"
 #endif /* HAVE_NETNS */
 
-// struct ns {
-// 	RB_ENTRY(ns) entry;
+struct ns {
+	RB_ENTRY(ns) entry;
 
-// 	/* Identifier, same as the vector index */
-// 	ns_id_t ns_id;
+	/* Identifier, same as the vector index */
+	ns_id_t ns_id;
 
-// 	/* Identifier, mapped on the NSID value */
-// 	ns_id_t internal_ns_id;
+	/* Identifier, mapped on the NSID value */
+	ns_id_t internal_ns_id;
 
-// 	/* Identifier, value of NSID of default netns,
-// 	 * relative value in that local netns
-// 	 */
-// 	ns_id_t relative_default_ns;
+	/* Identifier, value of NSID of default netns,
+	 * relative value in that local netns
+	 */
+	ns_id_t relative_default_ns;
 
-// 	/* Name */
-// 	char *name;
+	/* Name */
+	char *name;
 
-// 	/* File descriptor */
-// 	int fd;
+	/* File descriptor */
+	int fd;
 
-// 	/* Master list of interfaces belonging to this NS */
-// 	struct list *iflist;
+	/* Master list of interfaces belonging to this NS */
+	struct list *iflist;
 
-// 	/* Back Pointer to VRF */
-// 	void *vrf_ctxt;
+	/* Back Pointer to VRF */
+	void *vrf_ctxt;
 
-// 	/* User data */
-// 	void *info;
-// };
-// RB_HEAD(ns_head, ns);
-// RB_PROTOTYPE(ns_head, ns, entry, ns_compare)
+	/* User data */
+	void *info;
+};
+RB_HEAD(ns_head, ns);
+RB_PROTOTYPE(ns_head, ns, entry, ns_compare)
 
 // /*
 //  * API for managing NETNS. eg from zebra daemon

@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "defs.h"
-#include "ip_address.h"
+#include "base.h"
+#include "ipaddr.h"
 #include "log.h"
 
 static void verbose_system(const char *command) {
@@ -20,7 +20,7 @@ static void verbose_system(const char *command) {
 
 /* Configure a local IPv4 address and netmask for the device */
 static void net_add_ipv4_address(const char *dev_name,
-                                 const struct ip_address *ip, int prefix_len) {
+                                 const struct ipaddr *ip, int prefix_len) {
     char *command = NULL;
     char ip_string[ADDR_STR_LEN];
 
@@ -38,7 +38,7 @@ static void net_add_ipv4_address(const char *dev_name,
 
 /* Configure a local IPv6 address and prefix length for the device */
 static void net_add_ipv6_address(const char *dev_name,
-                                 const struct ip_address *ip, int prefix_len) {
+                                 const struct ipaddr *ip, int prefix_len) {
     char *command = NULL;
     char ip_string[ADDR_STR_LEN];
 
@@ -61,9 +61,9 @@ static void net_add_ipv6_address(const char *dev_name,
     if (!strstr(dev_name, "tun")) sleep(2);
 }
 
-void netdev_add_ip_address(const char *dev_name, const char *ip_str,
+void netdev_add_ipaddr(const char *dev_name, const char *ip_str,
                            int prefix_len) {
-    struct ip_address ip;
+    struct ipaddr ip;
     int status = ip_parse(ip_str, &ip);
 
     if (status == STATUS_ERR) {
@@ -84,12 +84,12 @@ void netdev_add_ip_address(const char *dev_name, const char *ip_str,
     }
 }
 
-void netdev_del_ip_address(const char *dev_name, const char *ip_str,
+void netdev_del_ipaddr(const char *dev_name, const char *ip_str,
                            int prefix_len) {
     char *command = NULL;
     char ip_string[ADDR_STR_LEN];
 
-    struct ip_address ip;
+    struct ipaddr ip;
     int status = ip_parse(ip_str, &ip);
 
     if (status == STATUS_ERR) {

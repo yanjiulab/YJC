@@ -45,12 +45,12 @@ void test_datetime() {
     char time_str[DATETIME_FMT_BUFLEN] = {0};
 
     // 自 1970 年开始时间
-    printf("%lld s since 1970.1.1 00:00 UTC+0\n", time(NULL));
+    printf("%ld s since 1970.1.1 00:00 UTC+0\n", time(NULL));
     printf("%lld ms since 1970.1.1 00:00 UTC+0\n", gettimeofday_ms());
     printf("%lld us since 1970.1.1 00:00 UTC+0\n", gettimeofday_us());
 
     // 时钟时间，系统启动时清零
-    printf("%lld ms since system boot\n", gettick_ms());
+    printf("%d ms since system boot\n", gettick_ms());
     printf("%lld us since system boot\n", gethrtime_us());
     printf("%s elapsed since system boot\n", duration_fmt((int)gettick_ms() / 1000, time_str));
 
@@ -66,6 +66,6 @@ void test_datetime() {
     timezone_t tz = timezone_now();
     char tz_str[TZ_FMT_BUFLEN] = {0};
     timezone_fmt(&tz, tz_str);
-    printf("gmoff: %d\n", tz.gmtoff);
+    printf("gmoff: %ld\n", tz.gmtoff);
     printf("%s %s\n", time_str, tz_str);
 }

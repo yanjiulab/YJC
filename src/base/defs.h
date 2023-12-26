@@ -4,11 +4,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "errors.h"
-#include "export.h"
-#include "platform.h"
-#include "types.h"
-
 #ifndef ABS
 #define ABS(n) ((n) > 0 ? (n) : -(n))
 #endif
@@ -163,13 +158,25 @@ ASCII:
      (((uint32)a) << 24))
 #endif
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#ifdef MAX
+#undef MAX
 #endif
+#define MAX(a, b)                          \
+    ({                                     \
+        typeof(a) _max_a = (a);            \
+        typeof(b) _max_b = (b);            \
+        _max_a > _max_b ? _max_a : _max_b; \
+    })
 
-#ifndef MIN
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#ifdef MIN
+#undef MIN
 #endif
+#define MIN(a, b)                          \
+    ({                                     \
+        typeof(a) _min_a = (a);            \
+        typeof(b) _min_b = (b);            \
+        _min_a < _min_b ? _min_a : _min_b; \
+    })
 
 #ifndef LIMIT
 #define LIMIT(lower, v, upper)                         \
@@ -298,5 +305,22 @@ ASCII:
 #define UNSET_FLAG(V, F) (V) &= ~(F)
 #define RESET_FLAG(V) (V) = 0
 #define COND_FLAG(V, F, C) ((C) ? (SET_FLAG(V, F)) : (UNSET_FLAG(V, F)))
+
+/* helper to get type safety/avoid casts on calls
+ * (w/o this, functions accepting all prefix types need casts on the caller
+ * side, which strips type safety since the cast will accept any pointer
+ * type.)
+ */
+#ifndef __cplusplus
+#define prefixtype(uname, typename, fieldname) typename* fieldname;
+#define TRANSPARENT_UNION __attribute__((transparent_union))
+#else
+#define prefixtype(uname, typename, fieldname) \
+    typename* fieldname;                       \
+    uname(typename* x) {                       \
+        this->fieldname = x;                   \
+    }
+#define TRANSPARENT_UNION
+#endif
 
 #endif // !DEFS_H

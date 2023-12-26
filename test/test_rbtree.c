@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "rbtree.h"
+#include "linux_rbtree.h"
 #include "test.h"
 
 typedef int rbtree_key_type;

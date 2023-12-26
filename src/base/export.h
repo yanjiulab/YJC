@@ -8,9 +8,6 @@
 #define EXPORT
 #endif
 
-// INLINE
-#define INLINE static inline
-
 // DEPRECATED
 #if defined(NO_DEPRECATED)
 #define DEPRECATED

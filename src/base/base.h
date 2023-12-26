@@ -4,6 +4,7 @@
 #include "defs.h" // for printd
 #include "export.h"
 #include "platform.h" // for bool
+#include "types.h"
 
 //--------------------alloc/free---------------------------
 EXPORT void* ev_malloc(size_t size);
@@ -15,7 +16,7 @@ EXPORT void ev_free(void* ptr);
 
 EXPORT long ev_alloc_cnt();
 EXPORT long ev_free_cnt();
-INLINE void ev_memcheck(void) { printf("Memcheck => alloc:%ld free:%ld\n", ev_alloc_cnt(), ev_free_cnt()); }
+static inline void ev_memcheck(void) { printf("Memcheck => alloc:%ld free:%ld\n", ev_alloc_cnt(), ev_free_cnt()); }
 #define MEMCHECK atexit(ev_memcheck);
 
 #define EV_ALLOC(ptr, size)                                                                                \

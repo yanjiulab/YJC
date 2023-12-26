@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #include "checksum.h"
-#include "ip_address.h"
+#include "ipaddr.h"
 #include "log.h"
 #include "packet.h"
 
@@ -169,7 +169,7 @@ static int parse_ipv4(struct packet* packet, uint8_t* header_start,
     // {
     //     char src_string[ADDR_STR_LEN];
     //     char dst_string[ADDR_STR_LEN];
-    //     struct ip_address src_ip, dst_ip;
+    //     struct ipaddr src_ip, dst_ip;
     //     ip_from_ipv4(&ipv4->src_ip, &src_ip);
     //     ip_from_ipv4(&ipv4->dst_ip, &dst_ip);
     //     log_debug("src IP: %s", ip_to_string(&src_ip, src_string));
@@ -223,7 +223,7 @@ static int parse_ipv6(struct packet* packet, uint8_t* header_start,
     // {
     //     char src_string[ADDR_STR_LEN];
     //     char dst_string[ADDR_STR_LEN];
-    //     struct ip_address src_ip, dst_ip;
+    //     struct ipaddr src_ip, dst_ip;
     //     ip_from_ipv6(&ipv6->src_ip, &src_ip);
     //     ip_from_ipv6(&ipv6->dst_ip, &dst_ip);
     //     log_debug("src IP: %s\n", ip_to_string(&src_ip, src_string));
@@ -330,7 +330,7 @@ static int parse_layer3_packet(struct packet* packet, uint8_t* header_start,
 static int parse_layer2_packet(struct packet* packet, uint8_t* header_start,
                                uint8_t* packet_end, char** error) {
     uint8_t* p = header_start;
-    ethernet_t* ether = NULL;
+    ethhdr_t* ether = NULL;
     if (parse_handlers[PACKET_LAYER_2_ETHERNET])
         (*parse_handlers[PACKET_LAYER_2_ETHERNET])(packet, header_start, packet_end, error);
 
@@ -339,7 +339,7 @@ static int parse_layer2_packet(struct packet* packet, uint8_t* header_start,
         asprintf(error, "Ethernet header overflows packet");
         goto error_out;
     }
-    ether = packet->eth = (ethernet_t*)p;
+    ether = packet->eth = (ethhdr_t*)p;
     p += sizeof(*ether);
     // packet->l2_header_bytes = sizeof(*ether);
 

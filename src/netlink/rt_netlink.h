@@ -5,15 +5,13 @@
 
 #include "nl_kernel.h"
 
-typedef signed int ifindex_t;
-
 #define RTM_NHA(h) \
     ((struct rtattr*)(((char*)(h)) + NLMSG_ALIGN(sizeof(struct nhmsg))))
 
 // High-level API
 
 int netlink_route_read(struct nlsock* nl); // ==> ip route list table all
-int netlink_route_change(struct nlsock* nl);
+int netlink_route_change(struct nlsock* nl, struct nlmsghdr* h, ns_id_t ns_id) ;
 
 int netlink_macfdb_read(struct nlsock* nl);
 
@@ -29,7 +27,7 @@ int netlink_macfdb_table(struct nlmsghdr* nl_header_answer);
 
 int netlink_request_route(struct nlsock* nl, int family, int type);
 int netlink_request_route_add(struct nlsock* nl, int type,
-                              ip_address_t* dst, ip_address_t* gw,
+                              ipaddr_t* dst, ipaddr_t* gw,
                               int default_gw, int ifidx);
 int netlink_request_macs(struct nlsock* nl, int family, int type, ifindex_t master_ifindex);
 

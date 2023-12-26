@@ -29,12 +29,12 @@ typedef struct timezone_s {
 } timezone_t;
 
 EXPORT unsigned int gettick_ms();
-INLINE unsigned long long gettimeofday_ms() {
+static inline unsigned long long gettimeofday_ms() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * (unsigned long long)1000 + tv.tv_usec / 1000;
 }
-INLINE unsigned long long gettimeofday_us() {
+static inline unsigned long long gettimeofday_us() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * (unsigned long long)1000000 + tv.tv_usec;

@@ -26,7 +26,7 @@ void test_packet_socket();
 void test_packet_stringify();
 void test_packet_generator();
 void test_packet_parser();
-void test_ip_address();
+void test_ipaddr();
 void test_net_utils();
 void test_ethernet();
 void test_udp();
