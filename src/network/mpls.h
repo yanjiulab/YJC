@@ -10,6 +10,8 @@
 #include <arpa/inet.h>
 #include <vxlan.h>
 
+#include "base.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

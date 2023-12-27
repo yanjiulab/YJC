@@ -181,7 +181,7 @@ enum connect_result sockunion_connect(int fd, const union sockunion* peersu,
     if (ret < 0) {
         if (errno != EINPROGRESS) {
             char str[SU_ADDRSTRLEN];
-            zlog_info("can't connect to %s fd %d : %s",
+            log_info("can't connect to %s fd %d : %s",
                       sockunion_log(&su, str, sizeof(str)), fd,
                       safe_strerror(errno));
             return connect_error;

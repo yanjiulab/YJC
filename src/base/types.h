@@ -29,4 +29,5 @@ typedef uint32_t vrf_id_t;
 
 /* Interface index type. */
 typedef signed int ifindex_t;
+
 #endif

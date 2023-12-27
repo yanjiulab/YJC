@@ -240,7 +240,7 @@ buffer_status_t buffer_flush_window(struct buffer *b, int fd, int width, int hei
 
     /* For erase and more data add two to b's buffer_data count.*/
     if (b->head->next == NULL) {
-        iov_alloc = ARRAY_SIZE(small_iov);
+        iov_alloc = array_size(small_iov);
         iov = small_iov;
     } else {
         iov_alloc = ((height * (width + 2)) / b->size) + 10;

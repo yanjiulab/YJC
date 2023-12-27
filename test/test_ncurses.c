@@ -354,7 +354,7 @@ void panel_browser() {
  * @brief menu
  *
  */
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+#define array_size(a) (sizeof(a) / sizeof(a[0]))
 #define CTRLD 4
 void menu_basic() {
     char* choices[] = {
@@ -370,7 +370,7 @@ void menu_basic() {
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
-    n_choices = ARRAY_SIZE(choices);
+    n_choices = array_size(choices);
     my_items = (ITEM**)calloc(n_choices + 1, sizeof(ITEM*));
     for (i = 0; i < n_choices; ++i) my_items[i] = new_item(choices[i], choices[i]);
     my_items[n_choices] = (ITEM*)NULL;
@@ -412,7 +412,7 @@ void menu_window() {
     keypad(stdscr, TRUE);
     init_pair(1, COLOR_RED, COLOR_BLACK);
     /* Create items */
-    n_choices = ARRAY_SIZE(choices);
+    n_choices = array_size(choices);
     my_items = (ITEM**)calloc(n_choices, sizeof(ITEM*));
     for (i = 0; i < n_choices; ++i) my_items[i] = new_item(choices[i], choices[i]);
     /* Crate menu */
@@ -474,7 +474,7 @@ void menu_scroll() {
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_CYAN, COLOR_BLACK);
     /* Create items */
-    n_choices = ARRAY_SIZE(choices);
+    n_choices = array_size(choices);
     my_items = (ITEM**)calloc(n_choices, sizeof(ITEM*));
     for (i = 0; i < n_choices; ++i) my_items[i] = new_item(choices[i], choices[i]);
     /* Crate menu */
@@ -547,7 +547,7 @@ void menu_multicol() {
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_CYAN, COLOR_BLACK);
     /* Create items */
-    n_choices = ARRAY_SIZE(choices);
+    n_choices = array_size(choices);
     my_items = (ITEM**)calloc(n_choices, sizeof(ITEM*));
     for (i = 0; i < n_choices; ++i) my_items[i] = new_item(choices[i], choices[i]);
     /* Crate menu */
@@ -618,7 +618,7 @@ void menu_multival() {
     noecho();
     keypad(stdscr, TRUE);
     /* Initialize items */
-    n_choices = ARRAY_SIZE(choices);
+    n_choices = array_size(choices);
     my_items = (ITEM**)calloc(n_choices + 1, sizeof(ITEM*));
     for (i = 0; i < n_choices; ++i) my_items[i] = new_item(choices[i], choices[i]);
     my_items[n_choices] = (ITEM*)NULL;
@@ -683,7 +683,7 @@ void menu_color() {
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
     /* Initialize items */
-    n_choices = ARRAY_SIZE(choices);
+    n_choices = array_size(choices);
     my_items = (ITEM**)calloc(n_choices + 1, sizeof(ITEM*));
     for (i = 0; i < n_choices; ++i) my_items[i] = new_item(choices[i], choices[i]);
     my_items[n_choices] = (ITEM*)NULL;
@@ -748,7 +748,7 @@ void menu_user() {
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     init_pair(3, COLOR_MAGENTA, COLOR_BLACK);
     /* Initialize items */
-    n_choices = ARRAY_SIZE(choices);
+    n_choices = array_size(choices);
     my_items = (ITEM**)calloc(n_choices + 1, sizeof(ITEM*));
     for (i = 0; i < n_choices; ++i) {
         my_items[i] = new_item(choices[i], choices[i]);

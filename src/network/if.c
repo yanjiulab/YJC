@@ -7,6 +7,7 @@
 // #include <zebra.h>
 #include "if.h"
 
+#include "base.h"
 #include "linklist.h"
 #include "vector.h"
 // #include "lib_errors.h"
@@ -724,7 +725,7 @@ static void if_dump(const struct interface* ifp) {
     struct connected* c __attribute__((unused));
 
     for (ALL_LIST_ELEMENTS_RO(ifp->connected, node, c))
-        zlog_info(
+        log_info(
             "Interface %s vrf %s(%u) index %d metric %d mtu %d mtu6 %d %s",
             ifp->name, ifp->vrf->name, ifp->vrf->vrf_id,
             ifp->ifindex, ifp->metric, ifp->mtu, ifp->mtu6,
@@ -805,7 +806,7 @@ connected_log(struct connected* connected, char* str) {
         strlcat(logbuf, inet_ntop(p->family, &p->u.prefix, buf, BUFSIZ),
                 BUFSIZ);
     }
-    zlog_info("%s", logbuf);
+    log_info("%s", logbuf);
 }
 
 /* Print if_addr structure. */
@@ -821,7 +822,7 @@ nbr_connected_log(struct nbr_connected* connected, char* str) {
     snprintf(logbuf, sizeof(logbuf), "%s interface %s %s %pFX ", str,
              ifp->name, prefix_family_str(p), p);
 
-    zlog_info("%s", logbuf);
+    log_info("%s", logbuf);
 }
 
 /* If two connected address has same prefix return 1. */

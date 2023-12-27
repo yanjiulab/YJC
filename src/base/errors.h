@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "export.h"
 #define MAXLINE 4096
 
 void err_ret(const char* fmt, ...);
@@ -120,6 +119,6 @@ enum {
 };
 
 // errcode => errmsg
-EXPORT const char* hv_strerror(int err);
+const char* hv_strerror(int err);
 
 #endif

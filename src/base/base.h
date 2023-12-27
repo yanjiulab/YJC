@@ -5,6 +5,9 @@
 #include "export.h"
 #include "platform.h" // for bool
 #include "types.h"
+#include "version.h"
+#include "str.h"
+#include "math.h"
 
 //--------------------alloc/free---------------------------
 EXPORT void* ev_malloc(size_t size);

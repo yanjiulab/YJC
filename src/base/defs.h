@@ -4,16 +4,16 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifndef array_size
+#define array_size(a) (sizeof(a) / sizeof(*(a)))
+#endif
+
 #ifndef ABS
 #define ABS(n) ((n) > 0 ? (n) : -(n))
 #endif
 
 #ifndef NABS
 #define NABS(n) ((n) < 0 ? (n) : -(n))
-#endif
-
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(*(a)))
 #endif
 
 #ifndef BITSET
@@ -178,6 +178,13 @@ ASCII:
         _min_a < _min_b ? _min_a : _min_b; \
     })
 
+#define numcmp(a, b)                                          \
+    ({                                                        \
+        typeof(a) _cmp_a = (a);                               \
+        typeof(b) _cmp_b = (b);                               \
+        (_cmp_a < _cmp_b) ? -1 : ((_cmp_a > _cmp_b) ? 1 : 0); \
+    })
+
 #ifndef LIMIT
 #define LIMIT(lower, v, upper)                         \
     ((v) < (lower) ? (lower) : (v) > (upper) ? (upper) \
@@ -321,6 +328,15 @@ ASCII:
         this->fieldname = x;                   \
     }
 #define TRANSPARENT_UNION
+#endif
+
+/*
+ * Add explicit static cast only when using a C++ compiler.
+ */
+#ifdef __cplusplus
+#define static_cast(l, r) static_cast<decltype(l)>((r))
+#else
+#define static_cast(l, r) (r)
 #endif
 
 #endif // !DEFS_H

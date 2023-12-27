@@ -167,7 +167,7 @@ void packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
  * ether_frame[0].iov_len = sizeof(ether);
  * ether_frame[1].iov_base = &ip; // IP datagram.
  * ether_frame[1].iov_len = sizeof(ip);
- * result = packet_socket_writev(psock, ether_frame, ARRAY_SIZE(ether_frame));
+ * result = packet_socket_writev(psock, ether_frame, array_size(ether_frame));
  */
 int packet_socket_writev(struct packet_socket* psock, const struct iovec* iov,
                          int iovcnt) {

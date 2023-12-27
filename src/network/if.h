@@ -11,7 +11,6 @@
 #include "ipaddr.h"
 #include "linklist.h"
 #include "openbsd-tree.h"
-#include "vrf.h"
 #include <net/if.h>
 
 #ifdef __cplusplus
@@ -589,22 +588,22 @@ struct if_link_params* if_link_params_init(struct interface* ifp);
 void if_link_params_free(struct interface*);
 
 /* Northbound. */
-struct vty;
-extern void if_vty_config_start(struct vty* vty, struct interface* ifp);
-extern void if_vty_config_end(struct vty* vty);
-extern void if_cmd_init(int (*config_write)(struct vty*));
-extern void if_cmd_init_default(void);
-extern void if_zapi_callbacks(int (*create)(struct interface* ifp),
-                              int (*up)(struct interface* ifp),
-                              int (*down)(struct interface* ifp),
-                              int (*destroy)(struct interface* ifp));
+// struct vty;
+// extern void if_vty_config_start(struct vty* vty, struct interface* ifp);
+// extern void if_vty_config_end(struct vty* vty);
+// extern void if_cmd_init(int (*config_write)(struct vty*));
+// extern void if_cmd_init_default(void);
+// extern void if_zapi_callbacks(int (*create)(struct interface* ifp),
+//                               int (*up)(struct interface* ifp),
+//                               int (*down)(struct interface* ifp),
+//                               int (*destroy)(struct interface* ifp));
 
-extern void if_new_via_zapi(struct interface* ifp);
-extern void if_up_via_zapi(struct interface* ifp);
-extern void if_down_via_zapi(struct interface* ifp);
-extern void if_destroy_via_zapi(struct interface* ifp);
+// extern void if_new_via_zapi(struct interface* ifp);
+// extern void if_up_via_zapi(struct interface* ifp);
+// extern void if_down_via_zapi(struct interface* ifp);
+// extern void if_destroy_via_zapi(struct interface* ifp);
 
-extern const struct frr_yang_module_info frr_interface_info;
+// extern const struct frr_yang_module_info frr_interface_info;
 
 #ifdef __cplusplus
 }

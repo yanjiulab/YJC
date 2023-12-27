@@ -737,7 +737,7 @@ int vrf_bind(vrf_id_t vrf_id, int fd, const char* ifname) {
     ret = setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, ifname,
                      strlen(ifname) + 1);
     if (ret < 0)
-        zlog_err("bind to interface %s failed, errno=%d", ifname,
+        log_error("bind to interface %s failed, errno=%d", ifname,
                  errno);
 #endif /* SO_BINDTODEVICE */
     return ret;

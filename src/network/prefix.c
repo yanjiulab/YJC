@@ -1010,24 +1010,24 @@ const char* prefix2str(union prefixconstptr pu, char* str, int size) {
     return str;
 }
 
-static ssize_t prefixhost2str(struct fbuf* fbuf, union prefixconstptr pu) {
-    const struct prefix* p = pu.p;
-    char buf[PREFIX2STR_BUFFER];
+// static ssize_t prefixhost2str(struct fbuf* fbuf, union prefixconstptr pu) {
+//     const struct prefix* p = pu.p;
+//     char buf[PREFIX2STR_BUFFER];
 
-    switch (p->family) {
-    case AF_INET:
-    case AF_INET6:
-        inet_ntop(p->family, &p->u.prefix, buf, sizeof(buf));
-        return bputs(fbuf, buf);
+//     switch (p->family) {
+//     case AF_INET:
+//     case AF_INET6:
+//         inet_ntop(p->family, &p->u.prefix, buf, sizeof(buf));
+//         return bputs(fbuf, buf);
 
-    case AF_ETHERNET:
-        prefix_mac2str(&p->u.prefix_eth, buf, sizeof(buf));
-        return bputs(fbuf, buf);
+//     case AF_ETHERNET:
+//         prefix_mac2str(&p->u.prefix_eth, buf, sizeof(buf));
+//         return bputs(fbuf, buf);
 
-    default:
-        return bprintfrr(fbuf, "{prefix.af=%dPF}", p->family);
-    }
-}
+//     default:
+//         return bprintfrr(fbuf, "{prefix.af=%dPF}", p->family);
+//     }
+// }
 
 void prefix_mcast_inet4_dump(const char* onfail, struct in_addr addr,
                              char* buf, int buf_size) {
