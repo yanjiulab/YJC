@@ -89,6 +89,10 @@
 #define HAVE_SETPROCTITLE 0
 #endif
 
+#ifndef HAVE_NETNS
+#define HAVE_NETNS 1
+#endif
+
 /* #undef WITH_OPENSSL */
 /* #undef WITH_GNUTLS */
 /* #undef WITH_MBEDTLS */

@@ -4,7 +4,7 @@
  */
 
 #include "hash.h"
-
+#include "thread.h"
 #include <math.h>
 
 // #include "memory.h"
@@ -36,16 +36,13 @@ struct hash* hash_create_size(unsigned int size,
     hash->name = name ? strdup(name) : NULL;
     hash->stats.empty = hash->size;
 
-    
-    // frr_with_mutex (&_hashes_mtx) {
-    // 	if (!_hashes)
-    // 		_hashes = list_new();
+    mutex_lock(&_hashes_mtx);
+    if (!_hashes)
+        _hashes = list_new();
+    listnode_add(_hashes, hash);
+    mutex_unlock(&_hashes_mtx);
 
-    // 	listnode_add(_hashes, hash);
-    // }
-    for (pthread_mutex_t *_mtx_21 = _frr_mtx_lock(&_hashes_mtx), *_once = ((void*)0); _once == ((void*)0); _once = (void*)1)
-
-        return hash;
+    return hash;
 }
 
 struct hash* hash_create(unsigned int (*hash_key)(const void*),
@@ -301,17 +298,16 @@ struct list* hash_to_list(struct hash* hash) {
 }
 
 void hash_free(struct hash* hash) {
-    frr_with_mutex(&_hashes_mtx) {
-        if (_hashes) {
-            listnode_delete(_hashes, hash);
-            if (_hashes->count == 0) {
-                list_delete(&_hashes);
-            }
+    mutex_lock(&_hashes_mtx);
+    if (_hashes) {
+        listnode_delete(_hashes, hash);
+        if (_hashes->count == 0) {
+            list_delete(&_hashes);
         }
     }
+    mutex_unlock(&_hashes_mtx);
 
     free(hash->name);
-
     free(hash->index);
     free(hash);
 }

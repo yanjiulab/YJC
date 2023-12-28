@@ -4,7 +4,7 @@
 #include "platform.h"
 
 typedef struct proc_ctx_s {
-    pid_t pid;  // tid in Windows
+    pid_t pid;
     time_t start_time;
     int spawn_cnt;
     procedure_t init;
@@ -15,7 +15,7 @@ typedef struct proc_ctx_s {
     void* exit_userdata;
 } proc_ctx_t;
 
-static inline void hproc_run(proc_ctx_t* ctx) {
+static inline void proc_run(proc_ctx_t* ctx) {
     if (ctx->init) {
         ctx->init(ctx->init_userdata);
     }
@@ -27,7 +27,7 @@ static inline void hproc_run(proc_ctx_t* ctx) {
     }
 }
 
-static inline int hproc_spawn(proc_ctx_t* ctx) {
+static inline int proc_spawn(proc_ctx_t* ctx) {
     ++ctx->spawn_cnt;
     ctx->start_time = time(NULL);
     pid_t pid = fork();
@@ -37,7 +37,7 @@ static inline int hproc_spawn(proc_ctx_t* ctx) {
     } else if (pid == 0) {
         // child process
         ctx->pid = getpid();
-        hproc_run(ctx);
+        proc_run(ctx);
         exit(0);
     } else if (pid > 0) {
         // parent process

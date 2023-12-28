@@ -1,20 +1,20 @@
 #include "eventloop.h"
 
 #include "base.h"
+#include "concurrency.h"
 #include "defs.h"
 #include "event.h"
 #include "iowatcher.h"
 #include "log.h"
-#include "concurrency.h"
 #include "socket.h"
 
 #if defined(OS_UNIX) && HAVE_EVENTFD
 #include "sys/eventfd.h"
 #endif
 
-#define ELOOP_PAUSE_TIME 10       // ms
-#define ELOOP_MAX_BLOCK_TIME 100  // ms
-#define ELOOP_STAT_TIMEOUT 60000  // ms
+#define ELOOP_PAUSE_TIME 10      // ms
+#define ELOOP_MAX_BLOCK_TIME 100 // ms
+#define ELOOP_STAT_TIMEOUT 60000 // ms
 
 #define IO_ARRAY_INIT_SIZE 1024
 #define CUSTOM_EVENT_QUEUE_INIT_SIZE 16
@@ -192,8 +192,8 @@ static void eloop_stat_timer_cb(etimer_t* timer) {
     eloop_t* loop = timer->loop;
     // hlog_set_level(LOG_LEVEL_DEBUG);
     log_debug("[loop] pid=%ld tid=%ld uptime=%lluus cnt=%llu nactives=%u nios=%u ntimers=%u nidles=%u", loop->pid,
-          loop->tid, loop->cur_hrtime - loop->start_hrtime, loop->loop_cnt, loop->nactives, loop->nios, loop->ntimers,
-          loop->nidles);
+              loop->tid, loop->cur_hrtime - loop->start_hrtime, loop->loop_cnt, loop->nactives, loop->nios, loop->ntimers,
+              loop->nidles);
 }
 
 static void eventfd_read_cb(eio_t* io, void* buf, int readbytes) {
@@ -206,7 +206,7 @@ static void eventfd_read_cb(eio_t* io, void* buf, int readbytes) {
     count = *(uint64_t*)buf;
 #endif
     for (uint64_t i = 0; i < count; ++i) {
-        hmutex_lock(&loop->custom_events_mutex);
+        mutex_lock(&loop->custom_events_mutex);
         if (event_queue_empty(&loop->custom_events)) {
             goto unlock;
         }
@@ -217,14 +217,14 @@ static void eventfd_read_cb(eio_t* io, void* buf, int readbytes) {
         ev = *pev;
         event_queue_pop_front(&loop->custom_events);
         // NOTE: unlock before cb, avoid deadlock if eloop_post_event called in cb.
-        hmutex_unlock(&loop->custom_events_mutex);
+        mutex_unlock(&loop->custom_events_mutex);
         if (ev.cb) {
             ev.cb(&ev);
         }
     }
     return;
 unlock:
-    hmutex_unlock(&loop->custom_events_mutex);
+    mutex_unlock(&loop->custom_events_mutex);
 }
 
 static int eloop_create_eventfds(eloop_t* loop) {
@@ -281,7 +281,7 @@ void eloop_post_event(eloop_t* loop, event_t* ev) {
 
     int nwrite = 0;
     uint64_t count = 1;
-    hmutex_lock(&loop->custom_events_mutex);
+    mutex_lock(&loop->custom_events_mutex);
     if (loop->eventfds[EVENTFDS_WRITE_INDEX] == -1) {
         if (eloop_create_eventfds(loop) != 0) {
             goto unlock;
@@ -300,7 +300,7 @@ void eloop_post_event(eloop_t* loop, event_t* ev) {
     }
     event_queue_push_back(&loop->custom_events, ev);
 unlock:
-    hmutex_unlock(&loop->custom_events_mutex);
+    mutex_unlock(&loop->custom_events_mutex);
 }
 
 static void eloop_init(eloop_t* loop) {
@@ -313,7 +313,7 @@ static void eloop_init(eloop_t* loop) {
 #endif
 
     loop->status = ELOOP_STATUS_STOP;
-    loop->pid = ev_getpid();
+    loop->pid = getpid();
     loop->tid = gettid();
 
     // idles
@@ -334,7 +334,7 @@ static void eloop_init(eloop_t* loop) {
     iowatcher_init(loop);
 
     // custom_events
-    hmutex_init(&loop->custom_events_mutex);
+    mutex_init(&loop->custom_events_mutex);
     event_queue_init(&loop->custom_events, CUSTOM_EVENT_QUEUE_INIT_SIZE);
     // NOTE: eloop_create_eventfds when eloop_post_event or eloop_run
     loop->eventfds[0] = loop->eventfds[1] = -1;
@@ -399,11 +399,11 @@ static void eloop_cleanup(eloop_t* loop) {
     iowatcher_cleanup(loop);
 
     // custom_events
-    hmutex_lock(&loop->custom_events_mutex);
+    mutex_lock(&loop->custom_events_mutex);
     eloop_destroy_eventfds(loop);
     event_queue_cleanup(&loop->custom_events);
-    hmutex_unlock(&loop->custom_events_mutex);
-    hmutex_destroy(&loop->custom_events_mutex);
+    mutex_unlock(&loop->custom_events_mutex);
+    mutex_destroy(&loop->custom_events_mutex);
 }
 
 eloop_t* eloop_new(int flags) {
@@ -430,15 +430,15 @@ int eloop_run(eloop_t* loop) {
         return -2;
 
     loop->status = ELOOP_STATUS_RUNNING;
-    loop->pid = ev_getpid();
+    loop->pid = getpid();
     loop->tid = gettid();
 
     if (loop->intern_nevents == 0) {
-        hmutex_lock(&loop->custom_events_mutex);
+        mutex_lock(&loop->custom_events_mutex);
         if (loop->eventfds[EVENTFDS_WRITE_INDEX] == -1) {
             eloop_create_eventfds(loop);
         }
-        hmutex_unlock(&loop->custom_events_mutex);
+        mutex_unlock(&loop->custom_events_mutex);
 
 #ifdef DEBUG
         etimer_add(loop, eloop_stat_timer_cb, ELOOP_STAT_TIMEOUT, INFINITE);

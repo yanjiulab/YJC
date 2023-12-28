@@ -96,7 +96,7 @@ void eio_init(eio_t* io) {
     // write_queue init when hwrite try_write failed
     // write_queue_init(&io->write_queue, 4);
 
-    hrecursive_mutex_init(&io->write_mutex);
+    recursive_mutex_init(&io->write_mutex);
 }
 
 void eio_ready(eio_t* io) {
@@ -186,14 +186,14 @@ void eio_done(eio_t* io) {
 
     // write_queue
     offset_buf_t* pbuf = NULL;
-    hrecursive_mutex_lock(&io->write_mutex);
+    recursive_mutex_lock(&io->write_mutex);
     while (!write_queue_empty(&io->write_queue)) {
         pbuf = write_queue_front(&io->write_queue);
         EV_FREE(pbuf->base);
         write_queue_pop_front(&io->write_queue);
     }
     write_queue_cleanup(&io->write_queue);
-    hrecursive_mutex_unlock(&io->write_mutex);
+    recursive_mutex_unlock(&io->write_mutex);
 
 #if WITH_RUDP
     if ((io->io_type & EIO_TYPE_SOCK_DGRAM) || (io->io_type & EIO_TYPE_SOCK_RAW)) {
@@ -206,7 +206,7 @@ void eio_free(eio_t* io) {
     if (io == NULL)
         return;
     eio_close(io);
-    hrecursive_mutex_destroy(&io->write_mutex);
+    recursive_mutex_destroy(&io->write_mutex);
     EV_FREE(io->localaddr);
     EV_FREE(io->peeraddr);
     EV_FREE(io);

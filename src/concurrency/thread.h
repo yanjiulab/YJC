@@ -73,6 +73,20 @@ static inline int thread_mutex_lock_for(pthread_mutex_t* mutex,
 #define mutex_timedlock(pmutex, ms) thread_mutex_lock_for(pmutex, ms)
 #define mutex_unlock pthread_mutex_unlock
 
+/* ---------------------------- pthread recursive mutex ---------------------------- */
+#define recursive_mutex_t pthread_mutex_t
+#define recursive_mutex_init(pmutex)                               \
+    do {                                                           \
+        pthread_mutexattr_t attr;                                  \
+        pthread_mutexattr_init(&attr);                             \
+        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); \
+        pthread_mutex_init(pmutex, &attr);                         \
+    } while (0)
+#define recursive_mutex_destroy pthread_mutex_destroy
+#define recursive_mutex_lock pthread_mutex_lock
+#define recursive_mutex_trylock pthread_mutex_trylock
+#define recursive_mutex_unlock pthread_mutex_unlock
+
 /* ---------------------------- pthread rwlock ---------------------------- */
 #define rwlock_t pthread_rwlock_t
 #define rwlock_init(prwlock) pthread_rwlock_init(prwlock, NULL)

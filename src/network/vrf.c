@@ -82,7 +82,7 @@ int vrf_switch_to_netns(vrf_id_t vrf_id) {
     /* VRF has no NETNS backend. silently ignore */
     if (vrf->data.l.netns_name[0] == '\0')
         return 2; /* 2 = no netns */
-    name = ns_netns_pathname(NULL, vrf->data.l.netns_name);
+    name = ns_netns_pathname(vrf->data.l.netns_name);
     if (debug_vrf)
         log_debug("VRF_SWITCH: %s(%u)", name, vrf->vrf_id);
     return ns_switch_to_netns(name);
@@ -269,7 +269,7 @@ int vrf_enable(struct vrf* vrf) {
      * are awaiting vrf initialization then
      * let's let people know about it
      */
-    nexthop_group_enable_vrf(vrf);
+    // nexthop_group_enable_vrf(vrf);
 
     return 1;
 }
@@ -297,7 +297,7 @@ void vrf_disable(struct vrf* vrf) {
      * handle all nexthop-groups associated
      * with this vrf
      */
-    nexthop_group_disable_vrf(vrf);
+    // nexthop_group_disable_vrf(vrf);
 
     if (vrf_master.vrf_disable_hook)
         (*vrf_master.vrf_disable_hook)(vrf);

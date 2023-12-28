@@ -140,16 +140,16 @@ static inline int vrf_is_user_cfged(struct vrf* vrf) {
 }
 
 static inline uint32_t vrf_interface_count(struct vrf* vrf) {
-    // uint32_t count = 0;
-    // struct interface* ifp;
+    uint32_t count = 0;
+    struct interface* ifp;
 
-    // RB_FOREACH(ifp, if_name_head, &vrf->ifaces_by_name) {
-    //     /* skip the l3mdev */
-    //     if (strncmp(ifp->name, vrf->name, VRF_NAMSIZ) == 0)
-    //         continue;
-    //     count++;
-    // }
-    // return count;
+    RB_FOREACH(ifp, if_name_head, &vrf->ifaces_by_name) {
+        /* skip the l3mdev */
+        if (strncmp(ifp->name, vrf->name, VRF_NAMSIZ) == 0)
+            continue;
+        count++;
+    }
+    return count;
 }
 
 /*
