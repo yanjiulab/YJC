@@ -43,7 +43,7 @@ static char vrf_default_name[VRF_NAMSIZ] = VRF_DEFAULT_NAME_INTERNAL;
  * Turn on/off debug code
  * for vrf.
  */
-static int debug_vrf = 0;
+static int debug_vrf = 1;
 
 /* Holding VRF hooks  */
 static struct vrf_master {
@@ -130,8 +130,7 @@ struct vrf* vrf_get(vrf_id_t vrf_id, const char* name) {
         new = 1;
 
         if (debug_vrf)
-            log_debug("VRF(%u) %s is created.", vrf_id,
-                      (name) ? name : "(NULL)");
+            log_debug("VRF(%u) %s is created.", vrf_id, (name) ? name : "(NULL)");
     }
 
     /* Set identifier */
@@ -144,8 +143,7 @@ struct vrf* vrf_get(vrf_id_t vrf_id, const char* name) {
     if (name && vrf->name[0] != '\0' && strcmp(name, vrf->name)) {
         /* update the vrf name */
         RB_REMOVE(vrf_name_head, &vrfs_by_name, vrf);
-        strlcpy(vrf->data.l.netns_name,
-                name, NS_NAMSIZ);
+        strlcpy(vrf->data.l.netns_name, name, NS_NAMSIZ);
         strlcpy(vrf->name, name, sizeof(vrf->name));
         RB_INSERT(vrf_name_head, &vrfs_by_name, vrf);
     } else if (name && vrf->name[0] == '\0') {

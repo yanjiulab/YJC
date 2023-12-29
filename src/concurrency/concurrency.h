@@ -2,12 +2,12 @@
 #define CONCURRENCY_H_
 
 #include "datetime.h"
-// #include "export.h"
 #include "platform.h"
 #include "atomic.h"
 #include "thread.h"
 #include "proc.h"
 #include "thpool.h"
+
 // //-----------------------------atomic----------------------------------------------
 // #ifdef HAVE_STDATOMIC_H
 // // c11

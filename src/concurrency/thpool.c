@@ -184,7 +184,8 @@ void thpool_wait(thpool_* thpool_p) {
 /* Destroy the threadpool */
 void thpool_destroy(thpool_* thpool_p) {
     /* No need to destroy if it's NULL */
-    if (thpool_p == NULL) return;
+    if (thpool_p == NULL)
+        return;
 
     volatile int threads_total = thpool_p->num_threads_alive;
 
@@ -341,7 +342,7 @@ static void* thread_do(struct thread* thread_p) {
             pthread_mutex_unlock(&thpool_p->thcount_lock);
         }
     }
-    
+
     pthread_mutex_lock(&thpool_p->thcount_lock);
     thpool_p->num_threads_alive--;
     pthread_mutex_unlock(&thpool_p->thcount_lock);
@@ -390,14 +391,14 @@ static void jobqueue_push(jobqueue* jobqueue_p, struct job* newjob) {
     newjob->prev = NULL;
 
     switch (jobqueue_p->len) {
-        case 0: /* if no jobs in queue */
-            jobqueue_p->front = newjob;
-            jobqueue_p->rear = newjob;
-            break;
+    case 0: /* if no jobs in queue */
+        jobqueue_p->front = newjob;
+        jobqueue_p->rear = newjob;
+        break;
 
-        default: /* if jobs in queue */
-            jobqueue_p->rear->prev = newjob;
-            jobqueue_p->rear = newjob;
+    default: /* if jobs in queue */
+        jobqueue_p->rear->prev = newjob;
+        jobqueue_p->rear = newjob;
     }
     jobqueue_p->len++;
 
@@ -413,20 +414,20 @@ static struct job* jobqueue_pull(jobqueue* jobqueue_p) {
     job* job_p = jobqueue_p->front;
 
     switch (jobqueue_p->len) {
-        case 0: /* if no jobs in queue */
-            break;
+    case 0: /* if no jobs in queue */
+        break;
 
-        case 1: /* if one job in queue */
-            jobqueue_p->front = NULL;
-            jobqueue_p->rear = NULL;
-            jobqueue_p->len = 0;
-            break;
+    case 1: /* if one job in queue */
+        jobqueue_p->front = NULL;
+        jobqueue_p->rear = NULL;
+        jobqueue_p->len = 0;
+        break;
 
-        default: /* if >1 jobs in queue */
-            jobqueue_p->front = job_p->prev;
-            jobqueue_p->len--;
-            /* more than one job in queue -> post it */
-            bsem_post(jobqueue_p->has_jobs);
+    default: /* if >1 jobs in queue */
+        jobqueue_p->front = job_p->prev;
+        jobqueue_p->len--;
+        /* more than one job in queue -> post it */
+        bsem_post(jobqueue_p->has_jobs);
     }
 
     pthread_mutex_unlock(&jobqueue_p->rwmutex);
