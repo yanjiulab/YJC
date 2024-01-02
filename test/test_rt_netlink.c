@@ -65,7 +65,8 @@ void test_rt_netlink() {
 
     nl_socket_t* nls = nl_socket_new(NETLINK_ROUTE, "route", 0);
 
-    test_neigh(nls);
+    // test_neigh(nls);
+    test_route(nls);
 
     nl_socket_free(nls);
 }
