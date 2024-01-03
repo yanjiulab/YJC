@@ -1,28 +1,27 @@
 #include "datetime.h"
+#include "ethernet.h"
 #include "rt_netlink.h"
 #include "test.h"
 
+// test add, delete and get
 void test_neigh(nl_socket_t* nls) {
-    // test ipv4
-    int ifindex = 3;
     ipaddr_t peer;
-    string_to_ip("10.10.10.0", &peer, NULL);
-    char* lla = "123456";
-    int llalen = 6;
-    netlink_neigh_update(nls, RTM_NEWNEIGH, ifindex, &(peer.ip.v4), lla, llalen, 0, peer.address_family, true, RTPROT_STATIC);
-    netlink_neigh_read(nls);
-    netlink_neigh_update(nls, RTM_DELNEIGH, ifindex, &(peer.ip.v4), lla, llalen, 0, peer.address_family, true, RTPROT_STATIC);
-
-    // test ipv6
+    string_to_ip("10.10.10.1", &peer, NULL);
     ipaddr_t peer6;
     string_to_ip("fe80::226:8b9b:60ee:a010", &peer6, NULL);
-    lla = "654321";
-    netlink_neigh_update(nls, RTM_NEWNEIGH, ifindex, &(peer6.ip.v6), lla, llalen, 0, peer6.address_family, true, RTPROT_STATIC);
-    netlink_neigh_read(nls);
-    netlink_neigh_update(nls, RTM_DELNEIGH, ifindex, &(peer6.ip.v6), lla, llalen, 0, peer6.address_family, true, RTPROT_STATIC);
+    ethaddr_t mac;
+    ether_str2mac("01:02:03:04:05:06", &mac);
 
-    // test notification
-    // TODO
+    // ip neigh add 10.10.10.1 lladdr 01:02:03:04:05:06 dev ens38
+    netlink_neigh_update(nls, RTM_NEWNEIGH, peer, mac, "ens38", true, RTPROT_STATIC, 0);
+    // ip neigh add fe80::226:8b9b:60ee:a010 lladdr 01:02:03:04:05:06 dev ens38 nud reachable
+    netlink_neigh_update(nls, RTM_NEWNEIGH, peer6, mac, "ens38", false, RTPROT_STATIC, 0);
+    // ip neigh show nud all
+    netlink_neigh_read(nls);
+    // ip neigh del 10.10.10.1 lladdr 01:02:03:04:05:06 dev ens38
+    netlink_neigh_update(nls, RTM_DELNEIGH, peer, mac, "ens38", true, RTPROT_STATIC, 0);
+    // ip neigh del fe80::226:8b9b:60ee:a010 lladdr 01:02:03:04:05:06 dev ens38
+    netlink_neigh_update(nls, RTM_DELNEIGH, peer6, mac, "ens38", false, RTPROT_STATIC, 0);
 }
 
 void test_route(nl_socket_t* nls) {
@@ -60,13 +59,17 @@ void test_macfdb(nl_socket_t* nls) {
     // netlink_macfdb_read(nls);
 }
 
+void test_notification() {
+    // netlink_route_change()
+    // netlink_neigh_change()
+}
+
 void test_rt_netlink() {
     // log_set_level(LOG_INFO);
 
     nl_socket_t* nls = nl_socket_new(NETLINK_ROUTE, "route", 0);
-
-    // test_neigh(nls);
-    test_route(nls);
+    test_neigh(nls);
+    // test_route(nls);
 
     nl_socket_free(nls);
 }

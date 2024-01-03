@@ -2,14 +2,14 @@
 #define __NL_DEBUG_H__
 
 /* Netlink debug */
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
-#define NIPQUAD(addr) ((unsigned char*)&addr)[0], \
-                      ((unsigned char*)&addr)[1], \
-                      ((unsigned char*)&addr)[2], \
-                      ((unsigned char*)&addr)[3]
-#define NIPQUAD_FMT "%u.%u.%u.%u"
+#define NIP4(addr) ((unsigned char*)&addr)[0], \
+                   ((unsigned char*)&addr)[1], \
+                   ((unsigned char*)&addr)[2], \
+                   ((unsigned char*)&addr)[3]
+#define NIP4_FMT "%u.%u.%u.%u"
 
 #ifndef s6_addr16
 #define s6_addr16 __in6_u.__u6_addr16
@@ -25,6 +25,9 @@
                    ntohs((addr).s6_addr16[7])
 #define NIP6_FMT "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x"
 #define NIP6_SEQFMT "%04x%04x%04x%04x%04x%04x%04x%04x"
+
+#define ETH_FMT
+#define ETH()
 
 const char* nlmsg_type2str(uint16_t type);
 const char* af_type2str(int type);

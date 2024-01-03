@@ -1,0 +1,24 @@
+#!/usr/bin/python
+
+import sys
+import argparse
+
+parser = argparse.ArgumentParser(description='Markdown utils')
+parser.add_argument('-t', '--table', nargs=2, type=int, metavar=('R', 'C'),
+                    help='generate a table contains R rows and C columns')
+
+args = parser.parse_args()
+
+# table
+if args.table:
+    row = args.table[0]
+    col = args.table[1]
+
+    t = ['col%d' %  i for i in range(col)]
+    print(*t, sep='|')
+    s = [':---:' for i in range(col)]
+    print(*s, sep='|')
+
+    for i in range(row):
+        r = ['' for c in range(col)]
+        print(*r, sep='|')

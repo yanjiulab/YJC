@@ -11,14 +11,16 @@
 // High-level API
 
 int netlink_route_read(struct nlsock* nl); // ==> ip route list table all
-int netlink_route_change(struct nlsock* nl, struct nlmsghdr* h, ns_id_t ns_id) ;
+int netlink_route_change(struct nlsock* nl, struct nlmsghdr* h, ns_id_t ns_id);
 
 int netlink_macfdb_read(struct nlsock* nl);
 
 int netlink_neigh_read(struct nlsock* nl);
-int netlink_neigh_update(struct nlsock* nl, int cmd, int ifindex, void* addr, char* lla,
-                         int llalen, ns_id_t ns_id, uint8_t family,
-                         bool permanent, uint8_t protocol);
+int netlink_neigh_update(struct nlsock* nl, int cmd, ipaddr_t ip, ethaddr_t mac, const char* ifname,
+                         bool permanent, uint8_t protocol, ns_id_t ns_id);
+// int netlink_neigh_update(struct nlsock* nl, int cmd, int ifindex, void* addr, char* lla,
+//                          int llalen, ns_id_t ns_id, uint8_t family,
+//                          bool permanent, uint8_t protocol);
 
 // Low-level API
 

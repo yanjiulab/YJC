@@ -1070,8 +1070,8 @@ next_rta:
     case RTA_PREFSRC:
         switch (plen) {
         case sizeof(struct in_addr):
-            log_debug("      " NIPQUAD_FMT,
-                      NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
+            log_debug("      " NIP4_FMT,
+                      NIP4(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case sizeof(struct in6_addr):
             log_debug("      " NIP6_FMT,
@@ -1145,8 +1145,8 @@ next_rta:
     case NDA_DST:
         switch (plen) {
         case sizeof(struct in_addr):
-            log_debug("      " NIPQUAD_FMT,
-                      NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
+            log_debug("      " NIP4_FMT,
+                      NIP4(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case sizeof(struct in6_addr):
             log_debug("      " NIP6_FMT,
@@ -1202,8 +1202,8 @@ next_rta:
     case IFA_BROADCAST:
         switch (plen) {
         case 4:
-            log_debug("      " NIPQUAD_FMT,
-                      NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
+            log_debug("      " NIP4_FMT,
+                      NIP4(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case 16:
             log_debug("      " NIP6_FMT,
@@ -1352,8 +1352,8 @@ next_rta:
     case NHA_GATEWAY:
         switch (nhm->nh_family) {
         case AF_INET:
-            log_debug("      " NIPQUAD_FMT,
-                      NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
+            log_debug("      " NIP4_FMT,
+                      NIP4(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case AF_INET6:
             log_debug("      " NIP6_FMT,
@@ -1410,8 +1410,8 @@ next_rta:
     case FRA_SRC:
         switch (plen) {
         case sizeof(struct in_addr):
-            log_debug("      " NIPQUAD_FMT,
-                      NIPQUAD(*(struct in_addr*)RTA_DATA(rta)));
+            log_debug("      " NIP4_FMT,
+                      NIP4(*(struct in_addr*)RTA_DATA(rta)));
             break;
         case sizeof(struct in6_addr):
             log_debug("      " NIP6_FMT,
