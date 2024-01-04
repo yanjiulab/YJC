@@ -2,8 +2,19 @@
 
 #include "ethernet.h"
 #include "if.h"
+#include "network.h"
 #include "nl_debug.h"
 #include "prefix.h"
+
+/* convert the netlink multicast group number into a bit map */
+/* (  e.g. 4 => 16, 5 => 32  ) */
+static uint32_t nl_mgrp(uint32_t group) {
+    if (group > 31) {
+        printf("Netlink: Use setsockopt() for this group: %d\n", group);
+        return 0;
+    }
+    return (group ? (1 << (group - 1)) : 0);
+}
 
 int netlink_rtattr_add(struct nlmsghdr* n, int maxlen, int type,
                        const void* data, int alen) {
@@ -64,85 +75,6 @@ int netlink_rtattr_add(struct nlmsghdr* n, int maxlen, int type,
 // }
 
 #define ROUTE_START
-int netlink_rtm_parse_route(struct nlmsghdr* nl_header_answer) {
-    struct rtmsg* r = NLMSG_DATA(nl_header_answer);
-    int len = nl_header_answer->nlmsg_len;
-    struct rtattr* tb[RTA_MAX + 1];
-    int table;
-    char buf[256];
-
-    len -= NLMSG_LENGTH(sizeof(*r));
-
-    if (len < 0) {
-        perror("Wrong message length");
-        return;
-    }
-
-    netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(r), len);
-
-    table = r->rtm_table;
-    if (tb[RTA_TABLE]) {
-        table = *(uint32_t*)RTA_DATA(tb[RTA_TABLE]);
-    }
-
-    // if (r->rtm_family != AF_INET && table != RT_TABLE_MAIN) {
-    //     return;
-    // }
-
-    if (tb[RTA_DST]) {
-        // if ((r->rtm_dst_len != 24) && (r->rtm_dst_len != 16)) {
-        //     return;
-        // }
-
-        printf(
-            "%s/%u",
-            inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_DST]), buf, sizeof(buf)),
-            r->rtm_dst_len);
-
-    } else if (r->rtm_dst_len) {
-        printf("0/%u", r->rtm_dst_len);
-    } else {
-        printf("default");
-    }
-
-    if (tb[RTA_GATEWAY]) {
-        printf(" via %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_GATEWAY]),
-                                    buf, sizeof(buf)));
-    }
-
-    if (tb[RTA_OIF]) {
-        char if_nam_buf[IF_NAMESIZE];
-        int ifidx = *(uint32_t*)RTA_DATA(tb[RTA_OIF]);
-
-        printf(" dev %s", if_indextoname(ifidx, if_nam_buf));
-    }
-
-    if (r->rtm_protocol) {
-        printf(" proto %d", r->rtm_protocol);
-    }
-
-    printf(" scope %d", r->rtm_scope);
-    // printf(" type %d", r->rtm_type); // unicast
-
-    if (tb[RTA_SRC]) {
-        printf(" src %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_SRC]), buf,
-                                    sizeof(buf)));
-    }
-
-    if (tb[RTA_PREFSRC]) {
-        printf(" src %s", inet_ntop(r->rtm_family, RTA_DATA(tb[RTA_PREFSRC]),
-                                    buf, sizeof(buf)));
-    }
-
-    if (tb[RTA_PRIORITY]) {
-        int pri = *(uint32_t*)RTA_DATA(tb[RTA_PRIORITY]);
-        printf(" metric %d", pri);
-    }
-
-    printf("\n");
-
-    return 0;
-}
 
 /* Request for specific route information from the kernel */
 int netlink_request_route(struct nlsock* nl, int family, int type) {
@@ -161,67 +93,6 @@ int netlink_request_route(struct nlsock* nl, int family, int type) {
     return netlink_request(nl, &req);
 }
 
-int netlink_request_route_add(struct nlsock* nl, int type,
-                              struct ipaddr* dst, ipaddr_t* gw,
-                              int default_gw, int ifidx) {
-    struct {
-        struct nlmsghdr n;
-        struct rtmsg rtm;
-        char buf[256];
-    } req;
-
-    /* Initialize request structure */
-    memset(&req, 0, sizeof(req));
-    req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-    req.n.nlmsg_flags = NLM_F_REQUEST;
-    req.n.nlmsg_type = type;
-    req.rtm.rtm_family = dst->address_family;
-    req.rtm.rtm_table = RT_TABLE_MAIN;
-    req.rtm.rtm_scope = RT_SCOPE_NOWHERE;
-
-    /* Set additional flags if NOT deleting route */
-    if (type != RTM_DELROUTE) {
-        req.rtm.rtm_protocol = RTPROT_BOOT;
-        req.rtm.rtm_type = RTN_UNICAST;
-    }
-
-    /* Select scope, for simplicity we supports here only IPv6 and IPv4 */
-    if (req.rtm.rtm_family == AF_INET6) {
-        req.rtm.rtm_scope = RT_SCOPE_UNIVERSE;
-    } else {
-        req.rtm.rtm_scope = RT_SCOPE_LINK;
-    }
-
-    unsigned char addr_bitlen = dst->address_family == AF_INET ? 32 : 128;
-
-    /* Set destination network */
-    netlink_rtattr_add(&req.n, sizeof(req), /*RTA_NEWDST*/ RTA_DST, &dst->ip,
-                       addr_bitlen / 8);
-
-    /* Set gateway */
-    if (gw) {
-        netlink_rtattr_add(&req.n, sizeof(req), RTA_GATEWAY, &gw->ip, 4);
-        req.rtm.rtm_scope = 0;
-        req.rtm.rtm_family = gw->address_family;
-    }
-
-    /* Set interface */
-    netlink_rtattr_add(&req.n, sizeof(req), RTA_OIF, &ifidx, sizeof(int));
-
-    // /* Don't set destination and interface in case of default gateways */
-    // if (!default_gw) {
-    //     /* Set destination network */
-    //     netlink_rtattr_add(&req.n, sizeof(req), /*RTA_NEWDST*/ RTA_DST,
-    //                        &dst->ip, 4);
-
-    //     /* Set interface */
-    //     netlink_rtattr_add(&req.n, sizeof(req), RTA_OIF, &ifidx,
-    //     sizeof(int));
-    // }
-
-    return netlink_request(nl, &req);
-}
-
 int netlink_route_read(struct nlsock* nl) {
     int ret;
 
@@ -229,7 +100,7 @@ int netlink_route_read(struct nlsock* nl) {
     ret = netlink_request_route(nl, AF_INET, RTM_GETROUTE);
     if (ret < 0)
         return ret;
-    ret = netlink_parse_info(nl, netlink_rtm_parse_route);
+    ret = netlink_parse_info(nl, netlink_route_change);
     if (ret < 0)
         return ret;
 
@@ -237,16 +108,34 @@ int netlink_route_read(struct nlsock* nl) {
     ret = netlink_request_route(nl, AF_INET6, RTM_GETROUTE);
     if (ret < 0)
         return ret;
-    ret = netlink_parse_info(nl, netlink_rtm_parse_route);
+    ret = netlink_parse_info(nl, netlink_route_change);
     if (ret < 0)
         return ret;
 
     return 0;
 }
 
+int netlink_route_add(struct nlsock* nl, struct ipaddr* dst, int dst_mlen,
+                      ipaddr_t* gw, int ifidx, int default_gw) {
+    return netlink_route_update(nl, RTM_NEWROUTE, dst, dst_mlen, gw, ifidx, RT_METRIC_DEFAULT,
+                                default_gw, RT_TABLE_MAIN, RTPROT_STATIC,
+                                RT_SCOPE_UNIVERSE, RTN_UNICAST,
+                                0, 0);
+}
+
+int netlink_route_del(struct nlsock* nl, struct ipaddr* dst, int dst_mlen,
+                      ipaddr_t* gw, int ifidx, int default_gw) {
+    return netlink_route_update(nl, RTM_DELROUTE, dst, dst_mlen, gw, ifidx, 0,
+                                default_gw, RT_TABLE_MAIN, RTPROT_UNSPEC,
+                                RT_SCOPE_UNIVERSE, RTN_UNSPEC,
+                                0, 0);
+}
+
 int netlink_route_update(struct nlsock* nl, int cmd,
-                         struct ipaddr* dst, ipaddr_t* gw,
-                         int default_gw, int ifidx) {
+                         struct ipaddr* dst, int dst_mlen, ipaddr_t* gw,
+                         int ifidx, int metric, int default_gw,
+                         int table, int proto, int scope, int type,
+                         vrf_id_t vrf, ns_id_t ns_id) {
     struct {
         struct nlmsghdr n;
         struct rtmsg rtm;
@@ -256,67 +145,46 @@ int netlink_route_update(struct nlsock* nl, int cmd,
     /* Initialize request structure */
     memset(&req, 0, sizeof(req));
     req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
-    req.n.nlmsg_flags = NLM_F_REQUEST;
     req.n.nlmsg_type = cmd;
+    req.n.nlmsg_flags =
+        cmd == RTM_NEWROUTE ? NLM_F_REQUEST | NLM_F_CREATE | NLM_F_EXCL : NLM_F_REQUEST;
     req.rtm.rtm_family = dst->address_family;
-    req.rtm.rtm_table = RT_TABLE_MAIN;
-    req.rtm.rtm_scope = RT_SCOPE_NOWHERE;
-
-    /* Set additional flags if NOT deleting route */
-    if (cmd != RTM_DELROUTE) {
-        req.rtm.rtm_protocol = RTPROT_BOOT;
-        req.rtm.rtm_type = RTN_UNICAST;
-    }
-
-    /* Select scope, for simplicity we supports here only IPv6 and IPv4 */
-    if (req.rtm.rtm_family == AF_INET6) {
-        req.rtm.rtm_scope = RT_SCOPE_UNIVERSE;
-    } else {
-        req.rtm.rtm_scope = RT_SCOPE_LINK;
-    }
+    req.rtm.rtm_dst_len = dst_mlen;
+    // req.rtm.rtm_src_len;
+    // req.rtm.rtm_tos;
+    req.rtm.rtm_table = table;    /* Routing table id */
+    req.rtm.rtm_protocol = proto; /* Routing protocol */
+    req.rtm.rtm_scope = scope;
+    req.rtm.rtm_type = type;
+    // req.rtm.rtm_flags;
 
     unsigned char addr_bitlen = dst->address_family == AF_INET ? 32 : 128;
 
-    /* Set destination network */
-    netlink_rtattr_add(&req.n, sizeof(req), /*RTA_NEWDST*/ RTA_DST, &dst->ip,
-                       addr_bitlen / 8);
-
     /* Set gateway */
     if (gw) {
-        netlink_rtattr_add(&req.n, sizeof(req), RTA_GATEWAY, &gw->ip, 4);
+        netlink_rtattr_add(&req.n, sizeof(req), RTA_GATEWAY, &gw->ip, addr_bitlen / 8);
         req.rtm.rtm_scope = 0;
         req.rtm.rtm_family = gw->address_family;
     }
 
-    /* Set interface */
-    netlink_rtattr_add(&req.n, sizeof(req), RTA_OIF, &ifidx, sizeof(int));
+    /* Don't set destination and interface in case of default gateways */
+    if (default_gw) {
+        req.rtm.rtm_dst_len = 0;
+    } else {
+        /* Set destination network */
+        netlink_rtattr_add(&req.n, sizeof(req), RTA_DST, &dst->ip, addr_bitlen / 8);
 
-    // /* Don't set destination and interface in case of default gateways */
-    // if (!default_gw) {
-    //     /* Set destination network */
-    //     netlink_rtattr_add(&req.n, sizeof(req), /*RTA_NEWDST*/ RTA_DST,
-    //                        &dst->ip, 4);
+        /* Set interface */
+        netlink_rtattr_add(&req.n, sizeof(req), RTA_OIF, &ifidx, sizeof(int));
+    }
 
-    //     /* Set interface */
-    //     netlink_rtattr_add(&req.n, sizeof(req), RTA_OIF, &ifidx,
-    //     sizeof(int));
-    // }
+    /* Set metric */
+    netlink_rtattr_add(&req.n, sizeof(req), RTA_PRIORITY, &metric, sizeof(int));
 
-    return netlink_talk(nl, &req, netlink_rtm_parse_route);
+    return netlink_talk(nl, &req, netlink_route_change);
 }
 
-// int netlink_route_read_internal(struct nlsock* nl, int family) {
-//     /* Get IPv6 routing table. */
-//     int ret;
-//     ret = netlink_request_route(nl, family, RTM_GETROUTE);
-//     if (ret < 0)
-//         return ret;
-//     ret = netlink_parse_info(nl, netlink_rtm_parse_route);
-//     if (ret < 0)
-//         return ret;
-// }
-
-static int netlink_route_change_read_unicast(struct nlsock* nl, struct nlmsghdr* h) {
+static int netlink_route_change_read_unicast(struct nlmsghdr* h, ns_id_t ns_id) {
     int len;
     struct rtmsg* rtm;
     struct rtattr* tb[RTA_MAX + 1];
@@ -342,29 +210,32 @@ static int netlink_route_change_read_unicast(struct nlsock* nl, struct nlmsghdr*
     void* prefsrc = NULL; /* IPv4 preferred source host address */
     void* src = NULL;     /* IPv6 srcdest   source prefix */
     // enum blackhole_type bh_type = BLACKHOLE_UNSPEC;
+    char buf[256];
+
+    char* dump = NULL;
+    size_t size = 0;
+    FILE* s = open_memstream(&dump, &size); /* output string */
 
     rtm = NLMSG_DATA(h);
 
-    if (h->nlmsg_type != RTM_NEWROUTE)
-        return 0;
-    switch (rtm->rtm_type) {
+    // switch (rtm->rtm_type) {
     // case RTN_UNICAST:
     //     break;
-    // case RTN_BLACKHOLE:
-    //     bh_type = BLACKHOLE_NULL;
-    //     break;
-    // case RTN_UNREACHABLE:
-    //     bh_type = BLACKHOLE_REJECT;
-    //     break;
-    // case RTN_PROHIBIT:
-    //     bh_type = BLACKHOLE_ADMINPROHIB;
-    //     break;
-    default:
-        log_debug("Route rtm_type: %s(%d) intentionally ignoring",
-                  nl_rttype_to_str(rtm->rtm_type),
-                  rtm->rtm_type);
-        return 0;
-    }
+    // // case RTN_BLACKHOLE:
+    // //     bh_type = BLACKHOLE_NULL;
+    // //     break;
+    // // case RTN_UNREACHABLE:
+    // //     bh_type = BLACKHOLE_REJECT;
+    // //     break;
+    // // case RTN_PROHIBIT:
+    // //     bh_type = BLACKHOLE_ADMINPROHIB;
+    // //     break;
+    // default:
+    //     log_debug("Route rtm_type: %s(%d) intentionally ignoring",
+    //               nl_rttype_to_str(rtm->rtm_type),
+    //               rtm->rtm_type);
+    //     return 0;
+    // }
 
     len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct rtmsg));
     if (len < 0) {
@@ -376,12 +247,12 @@ static int netlink_route_change_read_unicast(struct nlsock* nl, struct nlmsghdr*
 
     netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(rtm), len);
 
-    if (rtm->rtm_flags & RTM_F_CLONED)
-        return 0;
-    if (rtm->rtm_protocol == RTPROT_REDIRECT)
-        return 0;
-    if (rtm->rtm_protocol == RTPROT_KERNEL)
-        return 0;
+    // if (rtm->rtm_flags & RTM_F_CLONED)
+    //     return 0;
+    // if (rtm->rtm_protocol == RTPROT_REDIRECT)
+    //     return 0;
+    // if (rtm->rtm_protocol == RTPROT_KERNEL)
+    //     return 0;
 
     /* We don't care about change notifications for the MPLS table. */
     /* TODO: Revisit this. */
@@ -417,45 +288,78 @@ static int netlink_route_change_read_unicast(struct nlsock* nl, struct nlmsghdr*
     //         flags |= ZEBRA_FLAG_SELFROUTE;
     //         proto = proto2zebra(rtm->rtm_protocol, rtm->rtm_family, false);
     //     }
-    //     if (tb[RTA_OIF])
-    //         index = *(int*)RTA_DATA(tb[RTA_OIF]);
+    if (tb[RTA_DST]) {
+        dest = RTA_DATA(tb[RTA_DST]);
+        fprintf(s, "%s/%u",
+                inet_ntop(rtm->rtm_family, dest, buf, sizeof(buf)),
+                rtm->rtm_dst_len);
+    } else if (rtm->rtm_dst_len) {
+        fprintf(s, "0/%u", rtm->rtm_dst_len);
+    } else {
+        dest = anyaddr;
+        fprintf(s, "default");
+    }
 
-    //     if (tb[RTA_DST])
-    //         dest = RTA_DATA(tb[RTA_DST]);
-    //     else
-    //         dest = anyaddr;
+    if (tb[RTA_GATEWAY]) {
+        gate = RTA_DATA(tb[RTA_GATEWAY]);
+        fprintf(s, " via %s", inet_ntop(rtm->rtm_family, gate, buf, sizeof(buf)));
+    }
 
-    //     if (tb[RTA_SRC])
-    //         src = RTA_DATA(tb[RTA_SRC]);
-    //     else
-    //         src = anyaddr;
+    if (tb[RTA_OIF]) {
+        char if_nam_buf[IF_NAMESIZE];
+        index = *(int*)RTA_DATA(tb[RTA_OIF]);
+        fprintf(s, " dev %s", if_indextoname(index, if_nam_buf));
+    }
 
-    //     if (tb[RTA_PREFSRC])
-    //         prefsrc = RTA_DATA(tb[RTA_PREFSRC]);
+    if (rtm->rtm_protocol) {
+        fprintf(s, " proto %s", rtm_protocol2str(rtm->rtm_protocol));
+    }
 
-    //     if (tb[RTA_GATEWAY])
-    //         gate = RTA_DATA(tb[RTA_GATEWAY]);
+    fprintf(s, " scope %s", rtm_scope2str(rtm->rtm_scope));
 
-    //     if (tb[RTA_NH_ID])
-    //         nhe_id = *(uint32_t*)RTA_DATA(tb[RTA_NH_ID]);
+    if (tb[RTA_SRC]) {
+        src = RTA_DATA(tb[RTA_SRC]);
+        fprintf(s, " src %s", inet_ntop(rtm->rtm_family, src, buf, sizeof(buf)));
+    } else {
+        src = anyaddr;
+    }
 
-    //     if (tb[RTA_PRIORITY])
-    //         metric = *(int*)RTA_DATA(tb[RTA_PRIORITY]);
+    if (tb[RTA_PREFSRC]) {
+        prefsrc = RTA_DATA(tb[RTA_PREFSRC]);
+        fprintf(s, " src %s", inet_ntop(rtm->rtm_family, prefsrc, buf, sizeof(buf)));
+    } else {
+        src = anyaddr;
+    }
+
+    if (tb[RTA_NH_ID]) {
+        nhe_id = *(uint32_t*)RTA_DATA(tb[RTA_NH_ID]);
+        fprintf(s, " nh_id %d", nhe_id);
+    }
+
+    if (tb[RTA_PRIORITY]) {
+        metric = *(int*)RTA_DATA(tb[RTA_PRIORITY]);
+        fprintf(s, " metric %d", metric);
+    }
+
+    fputc('\n', s);
+
+    fclose(s);
+    printf("%s", dump);
 
     // #if defined(SUPPORT_REALMS)
     //     if (tb[RTA_FLOW])
     //         tag = *(uint32_t*)RTA_DATA(tb[RTA_FLOW]);
     // #endif
 
-    //     if (tb[RTA_METRICS]) {
-    //         struct rtattr* mxrta[RTAX_MAX + 1];
+    // if (tb[RTA_METRICS]) {
+    //     struct rtattr* mxrta[RTAX_MAX + 1];
 
-    //         netlink_parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(tb[RTA_METRICS]),
-    //                              RTA_PAYLOAD(tb[RTA_METRICS]));
+    //     netlink_parse_rtattr(mxrta, RTAX_MAX, RTA_DATA(tb[RTA_METRICS]),
+    //                          RTA_PAYLOAD(tb[RTA_METRICS]));
 
-    //         if (mxrta[RTAX_MTU])
-    //             mtu = *(uint32_t*)RTA_DATA(mxrta[RTAX_MTU]);
-    //     }
+    //     if (mxrta[RTAX_MTU])
+    //         mtu = *(uint32_t*)RTA_DATA(mxrta[RTAX_MTU]);
+    // }
 
     //     if (rtm->rtm_family == AF_INET) {
     //         p.family = AF_INET;
@@ -646,37 +550,121 @@ static int netlink_route_change_read_unicast(struct nlsock* nl, struct nlmsghdr*
     //     return 1;
 }
 
-static int netlink_route_change_read_multicast(struct nlsock* nl) {
-    // int len;
-    // struct rtmsg* rtm;
-    // struct rtattr* tb[RTA_MAX + 1];
+static int netlink_route_change_read_multicast(struct nlmsghdr* h, ns_id_t ns_id) {
+    int len;
+    struct rtmsg* rtm;
+    struct rtattr* tb[RTA_MAX + 1];
     // struct mcast_route_data* m;
-    // int iif = 0;
-    // int count;
-    // int oif[256];
-    // int oif_count = 0;
-    // char oif_list[256] = "\0";
-    // vrf_id_t vrf;
-    // int table;
+    int iif = 0;
+    int count;
+    int oif[256];
+    int oif_count = 0;
+    char oif_list[256] = "\0";
+    vrf_id_t vrf;
+    int table;
+    void* src = NULL;
+    void* grp = NULL;
+    struct rta_mfc_stats* mfc_stats;
 
     // assert(mroute);
     // m = mroute;
 
-    // rtm = NLMSG_DATA(h);
+    char buf[256];
+    char* dump = NULL;
+    size_t size = 0;
+    FILE* s = open_memstream(&dump, &size); /* output string */
 
-    // len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct rtmsg));
+    rtm = NLMSG_DATA(h);
 
-    // netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(rtm), len);
+    len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct rtmsg));
 
-    // if (tb[RTA_TABLE])
-    //     table = *(int*)RTA_DATA(tb[RTA_TABLE]);
-    // else
-    //     table = rtm->rtm_table;
+    netlink_parse_rtattr(tb, RTA_MAX, RTM_RTA(rtm), len);
+
+    if (tb[RTA_TABLE])
+        table = *(int*)RTA_DATA(tb[RTA_TABLE]);
+    else
+        table = rtm->rtm_table;
 
     // vrf = vrf_lookup_by_table(table, ns_id);
+    if (tb[RTA_SRC]) {
+        src = RTA_DATA(tb[RTA_SRC]);
+        if (rtm->rtm_family == RTNL_FAMILY_IPMR) {
+            fprintf(s, "(" NIP4_FMT ", ", NIP4(*(struct in_addr*)src));
+        } else {
+            fprintf(s, "(" NIP6_FMT ", ", NIP6(*(struct in6_addr*)src));
+        }
+    } else {
+        fprintf(s, "(*, ");
+    }
 
-    // if (tb[RTA_IIF])
-    //     iif = *(int*)RTA_DATA(tb[RTA_IIF]);
+    if (tb[RTA_DST]) {
+        grp = RTA_DATA(tb[RTA_DST]);
+        if (rtm->rtm_family == RTNL_FAMILY_IPMR) {
+            fprintf(s, NIP4_FMT ")", NIP4(*(struct in_addr*)grp));
+        } else {
+            fprintf(s, NIP6_FMT ")", NIP6(*(struct in6_addr*)grp));
+        }
+    } else {
+        fprintf(s, "*)");
+    }
+
+    if (tb[RTA_IIF]) {
+        char if_nam_buf[IF_NAMESIZE];
+        iif = *(int*)RTA_DATA(tb[RTA_IIF]);
+        fprintf(s, " Iif: %s", if_indextoname(iif, if_nam_buf));
+    }
+
+    if (tb[RTA_MULTIPATH]) {
+        struct rtnexthop* rtnh = (struct rtnexthop*)RTA_DATA(tb[RTA_MULTIPATH]);
+
+        len = RTA_PAYLOAD(tb[RTA_MULTIPATH]);
+        for (;;) {
+            if (len < (int)sizeof(*rtnh) || rtnh->rtnh_len > len)
+                break;
+
+            oif[oif_count] = rtnh->rtnh_ifindex;
+            oif_count++;
+
+            if (rtnh->rtnh_len == 0)
+                break;
+
+            len -= NLMSG_ALIGN(rtnh->rtnh_len);
+            rtnh = RTNH_NEXT(rtnh);
+        }
+    }
+
+    for (count = 0; count < oif_count; count++) {
+        // ifp = if_lookup_by_index(oif[count], vrf);
+        char t[16];
+        char temp[256];
+        if_indextoname(oif[count], t);
+        snprintf(temp, sizeof(temp), "%s(%d) ", oif[count] ? t : "Unknown", oif[count]);
+        strlcat(oif_list, temp, sizeof(oif_list));
+    }
+
+    if (oif_count) {
+        fprintf(s, " Oifs: %s", oif_list);
+    } else {
+        fprintf(s, " Oifs: null");
+    }
+
+    if (tb[RTA_MFC_STATS]) {
+        mfc_stats = (struct rta_mfc_stats*)RTA_DATA(tb[RTA_MFC_STATS]);
+        fprintf(s, " State: pkts=%ju bytes=%ju wrong_if=%ju",
+                (uintmax_t)mfc_stats->mfcs_packets,
+                (uintmax_t)mfc_stats->mfcs_bytes,
+                (uintmax_t)mfc_stats->mfcs_wrong_if);
+    }
+
+    if (tb[RTA_EXPIRES]) {
+        fprintf(s, " expires=%lld", *(unsigned long long*)RTA_DATA(tb[RTA_EXPIRES]));
+    }
+
+    fputc('\n', s);
+    fclose(s);
+    printf("%s", dump);
+
+    return 0;
 
     // if (tb[RTA_SRC]) {
     //     if (rtm->rtm_family == RTNL_FAMILY_IPMR)
@@ -698,26 +686,6 @@ static int netlink_route_change_read_multicast(struct nlsock* nl) {
 
     // if (tb[RTA_EXPIRES])
     //     m->lastused = *(unsigned long long*)RTA_DATA(tb[RTA_EXPIRES]);
-
-    // if (tb[RTA_MULTIPATH]) {
-    //     struct rtnexthop* rtnh =
-    //         (struct rtnexthop*)RTA_DATA(tb[RTA_MULTIPATH]);
-
-    //     len = RTA_PAYLOAD(tb[RTA_MULTIPATH]);
-    //     for (;;) {
-    //         if (len < (int)sizeof(*rtnh) || rtnh->rtnh_len > len)
-    //             break;
-
-    //         oif[oif_count] = rtnh->rtnh_ifindex;
-    //         oif_count++;
-
-    //         if (rtnh->rtnh_len == 0)
-    //             break;
-
-    //         len -= NLMSG_ALIGN(rtnh->rtnh_len);
-    //         rtnh = RTNH_NEXT(rtnh);
-    //     }
-    // }
 
     // if (rtm->rtm_family == RTNL_FAMILY_IPMR) {
     //     SET_IPADDR_V4(&m->src);
@@ -750,10 +718,9 @@ static int netlink_route_change_read_multicast(struct nlsock* nl) {
     //         &m->src, &m->grp, ifp ? ifp->name : "Unknown", iif,
     //         oif_list, m->lastused);
     // }
-    // return 0;
 }
 
-int netlink_route_change(struct nlsock* nl, struct nlmsghdr* h, ns_id_t ns_id) {
+int netlink_route_change(struct nlmsghdr* h, ns_id_t ns_id) {
     int len;
     struct rtmsg* rtm;
 
@@ -761,31 +728,9 @@ int netlink_route_change(struct nlsock* nl, struct nlmsghdr* h, ns_id_t ns_id) {
 
     if (!(h->nlmsg_type == RTM_NEWROUTE || h->nlmsg_type == RTM_DELROUTE)) {
         /* If this is not route add/delete message print warning. */
-        log_debug("Kernel message: %s NS %u", nl_msg_type_to_str(h->nlmsg_type), ns_id);
+        log_warn("Kernel message: %s NS %u", nl_msg_type_to_str(h->nlmsg_type), ns_id);
         return 0;
     }
-
-    switch (rtm->rtm_family) {
-    case AF_INET:
-    case AF_INET6:
-        break;
-
-    case RTNL_FAMILY_IPMR:
-    case RTNL_FAMILY_IP6MR:
-        // return 0;
-
-    default:
-        log_warn("Invalid address family: %u received from kernel route change: %s",
-                 rtm->rtm_family, nl_msg_type_to_str(h->nlmsg_type));
-        return 0;
-    }
-
-    /* Connected route. */
-    log_debug("%s %s %s proto %s NS %u",
-              nl_msg_type_to_str(h->nlmsg_type),
-              nl_family_to_str(rtm->rtm_family),
-              nl_rttype_to_str(rtm->rtm_type),
-              nl_rtproto_to_str(rtm->rtm_protocol), ns_id);
 
     len = h->nlmsg_len - NLMSG_LENGTH(sizeof(struct rtmsg));
     if (len < 0) {
@@ -794,15 +739,34 @@ int netlink_route_change(struct nlsock* nl, struct nlmsghdr* h, ns_id_t ns_id) {
         return -1;
     }
 
-    /* these are "magic" kernel-managed *unicast* routes used for
-     * outputting locally generated multicast traffic (which uses unicast
-     * handling on Linux because ~reasons~.
-     */
-    if (rtm->rtm_type == RTN_MULTICAST)
-        return 0;
+    log_debug("%s %s %s table %s netns %u",
+              nl_msg_type_to_str(h->nlmsg_type),
+              nl_family_to_str(rtm->rtm_family),
+              nl_rttype_to_str(rtm->rtm_type),
+              nl_rttable_to_str(rtm->rtm_table), ns_id);
 
-    netlink_route_change_read_unicast(h, ns_id);
-    return 0;
+    switch (rtm->rtm_family) {
+    case AF_INET:
+    case AF_INET6:
+        /* unicast routing table contains some entries with multicast type,
+         * but these are "magic" kernel-managed *unicast* routes used for
+         * outputting locally generated multicast traffic (which uses unicast
+         * handling on Linux).
+         */
+        // if (rtm->rtm_type == RTN_MULTICAST) {
+        //     return 0;
+        // } else {
+        return netlink_route_change_read_unicast(h, ns_id);
+        // }
+    case RTNL_FAMILY_IPMR:
+    case RTNL_FAMILY_IP6MR:
+        /* typically we consider these entries as the "real" multicast routing. */
+        return netlink_route_change_read_multicast(h, ns_id);
+    default:
+        log_warn("Invalid address family: %u received from kernel route change: %s",
+                 rtm->rtm_family, nl_msg_type_to_str(h->nlmsg_type));
+        return 0;
+    }
 }
 
 #define MAC_START

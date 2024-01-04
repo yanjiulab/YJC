@@ -24,31 +24,19 @@ void test_neigh(nl_socket_t* nls) {
     netlink_neigh_update(nls, RTM_DELNEIGH, peer6, mac, "ens38", false, RTPROT_STATIC, 0);
 }
 
+// test add, delete and get
 void test_route(nl_socket_t* nls) {
-    // test ipv4
-    // test ipv6
-    // test notification
-    // read ipv4 route table
-    // printf("dump `ip route list table all`\n");
+    ipaddr_t dst;
+    string_to_ip("10.10.10.0", &dst, NULL);
+    ipaddr_t gw;
+    string_to_ip("192.168.50.11", &gw, NULL);
+
+    // ip route add 10.10.10.0/24 via 192.168.50.11 dev ens38
+    // netlink_route_add(nls, &dst, 24, &gw, 3, false);
+    // ip route list table all
     netlink_route_read(nls);
-
-    // printf("dump `ip neigh show nud all`\n");
-    // netlink_neigh_read(nls);
-
-    // netlink_parse_info(nls, NULL);
-    // netlink_parse_info(nls, NULL);
-    // netlink_request_route(nls, AF_INET6, RTM_GETROUTE);
-    // netlink_parse_info(nls, NULL);
-
-    // ipaddr_t dst;
-    // string_to_ip("10.10.10.0", &dst, NULL);
-    // ipaddr_t gw;
-    // string_to_ip("12.2.2.2", &gw, NULL);
-    // print_data(&dst, sizeof(dst));
-
-    // netlink_request_route_add(nls, RTM_NEWROUTE, &dst, &gw, 0, 2);
-    // netlink_request_route(nls, AF_INET, RTM_GETROUTE);
-    // netlink_parse_info(nls, netlink_rtm_parse_route);
+    // ip route del 10.10.10.0/24 via 192.168.50.11 dev ens38
+    // netlink_route_del(nls, &dst, 24, &gw, 3, false);
 }
 
 void test_macfdb(nl_socket_t* nls) {
@@ -61,15 +49,23 @@ void test_macfdb(nl_socket_t* nls) {
 
 void test_notification() {
     // netlink_route_change()
+    // int groups = RTMGRP_LINK | RTMGRP_IPV4_IFADDR | RTMGRP_IPV4_ROUTE;
+    int groups = RTMGRP_IPV4_ROUTE | RTMGRP_IPV4_MROUTE;
+    nl_socket_t* nls = nl_socket_new(NETLINK_ROUTE, "route", groups);
+    fcntl(nls->sock, F_SETFL, fcntl(nls->sock, F_GETFL) & ~O_NONBLOCK);
+
+    netlink_parse_info(nls, netlink_route_change);
     // netlink_neigh_change()
 }
 
 void test_rt_netlink() {
+
     // log_set_level(LOG_INFO);
 
-    nl_socket_t* nls = nl_socket_new(NETLINK_ROUTE, "route", 0);
-    test_neigh(nls);
+    // nl_socket_t* nls = nl_socket_new(NETLINK_ROUTE, "route", 0);
+    // // test_neigh(nls);
     // test_route(nls);
+    // nl_socket_free(nls);
 
-    nl_socket_free(nls);
+    test_notification();
 }

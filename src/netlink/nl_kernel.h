@@ -122,6 +122,7 @@ extern struct rtattr* nl_rta_nest(struct rtattr* rta, unsigned int maxlen,
 extern int nl_rta_nest_end(struct rtattr* rta, struct rtattr* nest);
 extern const char* nl_msg_type_to_str(uint16_t msg_type);
 extern const char* nl_rtproto_to_str(uint8_t rtproto);
+extern const char* nl_rttable_to_str(uint8_t rttable);
 extern const char* nl_family_to_str(uint8_t family);
 extern const char* nl_rttype_to_str(uint8_t rttype);
 

@@ -6,43 +6,44 @@
 
 uint32_t rcvbufsize = 128 * 1024;
 
-static const struct message nlmsg_str[] = {{RTM_NEWROUTE, "RTM_NEWROUTE"},
-                                           {RTM_DELROUTE, "RTM_DELROUTE"},
-                                           {RTM_GETROUTE, "RTM_GETROUTE"},
-                                           {RTM_NEWLINK, "RTM_NEWLINK"},
-                                           {RTM_SETLINK, "RTM_SETLINK"},
-                                           {RTM_DELLINK, "RTM_DELLINK"},
-                                           {RTM_GETLINK, "RTM_GETLINK"},
-                                           {RTM_NEWADDR, "RTM_NEWADDR"},
-                                           {RTM_DELADDR, "RTM_DELADDR"},
-                                           {RTM_GETADDR, "RTM_GETADDR"},
-                                           {RTM_NEWNEIGH, "RTM_NEWNEIGH"},
-                                           {RTM_DELNEIGH, "RTM_DELNEIGH"},
-                                           {RTM_GETNEIGH, "RTM_GETNEIGH"},
-                                           {RTM_NEWRULE, "RTM_NEWRULE"},
-                                           {RTM_DELRULE, "RTM_DELRULE"},
-                                           {RTM_GETRULE, "RTM_GETRULE"},
-                                           {RTM_NEWNEXTHOP, "RTM_NEWNEXTHOP"},
-                                           {RTM_DELNEXTHOP, "RTM_DELNEXTHOP"},
-                                           {RTM_GETNEXTHOP, "RTM_GETNEXTHOP"},
-                                           {RTM_NEWNETCONF, "RTM_NEWNETCONF"},
-                                           {RTM_DELNETCONF, "RTM_DELNETCONF"},
-                                           //    {RTM_NEWTUNNEL, "RTM_NEWTUNNEL"},
-                                           //    {RTM_DELTUNNEL, "RTM_DELTUNNEL"},
-                                           //    {RTM_GETTUNNEL, "RTM_GETTUNNEL"},
-                                           {RTM_NEWQDISC, "RTM_NEWQDISC"},
-                                           {RTM_DELQDISC, "RTM_DELQDISC"},
-                                           {RTM_GETQDISC, "RTM_GETQDISC"},
-                                           {RTM_NEWTCLASS, "RTM_NEWTCLASS"},
-                                           {RTM_DELTCLASS, "RTM_DELTCLASS"},
-                                           {RTM_GETTCLASS, "RTM_GETTCLASS"},
-                                           {RTM_NEWTFILTER, "RTM_NEWTFILTER"},
-                                           {RTM_DELTFILTER, "RTM_DELTFILTER"},
-                                           {RTM_GETTFILTER, "RTM_GETTFILTER"},
-                                           {RTM_NEWVLAN, "RTM_NEWVLAN"},
-                                           {RTM_DELVLAN, "RTM_DELVLAN"},
-                                           {RTM_GETVLAN, "RTM_GETVLAN"},
-                                           {0}};
+static const struct message nlmsg_str[] = {
+    {RTM_NEWROUTE, "RTM_NEWROUTE"},
+    {RTM_DELROUTE, "RTM_DELROUTE"},
+    {RTM_GETROUTE, "RTM_GETROUTE"},
+    {RTM_NEWLINK, "RTM_NEWLINK"},
+    {RTM_SETLINK, "RTM_SETLINK"},
+    {RTM_DELLINK, "RTM_DELLINK"},
+    {RTM_GETLINK, "RTM_GETLINK"},
+    {RTM_NEWADDR, "RTM_NEWADDR"},
+    {RTM_DELADDR, "RTM_DELADDR"},
+    {RTM_GETADDR, "RTM_GETADDR"},
+    {RTM_NEWNEIGH, "RTM_NEWNEIGH"},
+    {RTM_DELNEIGH, "RTM_DELNEIGH"},
+    {RTM_GETNEIGH, "RTM_GETNEIGH"},
+    {RTM_NEWRULE, "RTM_NEWRULE"},
+    {RTM_DELRULE, "RTM_DELRULE"},
+    {RTM_GETRULE, "RTM_GETRULE"},
+    {RTM_NEWNEXTHOP, "RTM_NEWNEXTHOP"},
+    {RTM_DELNEXTHOP, "RTM_DELNEXTHOP"},
+    {RTM_GETNEXTHOP, "RTM_GETNEXTHOP"},
+    {RTM_NEWNETCONF, "RTM_NEWNETCONF"},
+    {RTM_DELNETCONF, "RTM_DELNETCONF"},
+    //    {RTM_NEWTUNNEL, "RTM_NEWTUNNEL"},
+    //    {RTM_DELTUNNEL, "RTM_DELTUNNEL"},
+    //    {RTM_GETTUNNEL, "RTM_GETTUNNEL"},
+    {RTM_NEWQDISC, "RTM_NEWQDISC"},
+    {RTM_DELQDISC, "RTM_DELQDISC"},
+    {RTM_GETQDISC, "RTM_GETQDISC"},
+    {RTM_NEWTCLASS, "RTM_NEWTCLASS"},
+    {RTM_DELTCLASS, "RTM_DELTCLASS"},
+    {RTM_GETTCLASS, "RTM_GETTCLASS"},
+    {RTM_NEWTFILTER, "RTM_NEWTFILTER"},
+    {RTM_DELTFILTER, "RTM_DELTFILTER"},
+    {RTM_GETTFILTER, "RTM_GETTFILTER"},
+    {RTM_NEWVLAN, "RTM_NEWVLAN"},
+    {RTM_DELVLAN, "RTM_DELVLAN"},
+    {RTM_GETVLAN, "RTM_GETVLAN"},
+    {0}};
 
 static const struct message rtproto_str[] = {
     {RTPROT_REDIRECT, "redirect"},
@@ -56,35 +57,48 @@ static const struct message rtproto_str[] = {
 #ifdef RTPROT_BIRD
     {RTPROT_BIRD, "BIRD"},
 #endif /* RTPROT_BIRD */
+    {RTPROT_DHCP, "DHCP"},
+    {RTPROT_KEEPALIVED, "KeepaliveD"},
     {RTPROT_MROUTED, "mroute"},
     {RTPROT_BGP, "BGP"},
-    {RTPROT_OSPF, "OSPF"},
     {RTPROT_ISIS, "IS-IS"},
+    {RTPROT_OSPF, "OSPF"},
     {RTPROT_RIP, "RIP"},
+    {RTPROT_EIGRP, "EIGRP"},
     // {RTPROT_RIPNG, "RIPNG"},
     // {RTPROT_ZSTATIC, "static"},
     {0}};
 
-static const struct message family_str[] = {{AF_INET, "ipv4"},
-                                            {AF_INET6, "ipv6"},
-                                            {AF_BRIDGE, "bridge"},
-                                            {RTNL_FAMILY_IPMR, "ipv4MR"},
-                                            {RTNL_FAMILY_IP6MR, "ipv6MR"},
-                                            {0}};
+static const struct message family_str[] = {
+    {AF_INET, "ipv4"},
+    {AF_INET6, "ipv6"},
+    {AF_BRIDGE, "bridge"},
+    {RTNL_FAMILY_IPMR, "ipv4MR"},
+    {RTNL_FAMILY_IP6MR, "ipv6MR"},
+    {0}};
 
-static const struct message rttype_str[] = {{RTN_UNSPEC, "none"},
-                                            {RTN_UNICAST, "unicast"},
-                                            {RTN_LOCAL, "local"},
-                                            {RTN_BROADCAST, "broadcast"},
-                                            {RTN_ANYCAST, "anycast"},
-                                            {RTN_MULTICAST, "multicast"},
-                                            {RTN_BLACKHOLE, "blackhole"},
-                                            {RTN_UNREACHABLE, "unreachable"},
-                                            {RTN_PROHIBIT, "prohibited"},
-                                            {RTN_THROW, "throw"},
-                                            {RTN_NAT, "nat"},
-                                            {RTN_XRESOLVE, "resolver"},
-                                            {0}};
+static const struct message rttype_str[] = {
+    {RTN_UNSPEC, "none"},
+    {RTN_UNICAST, "unicast"},
+    {RTN_LOCAL, "local"},
+    {RTN_BROADCAST, "broadcast"},
+    {RTN_ANYCAST, "anycast"},
+    {RTN_MULTICAST, "multicast"},
+    {RTN_BLACKHOLE, "blackhole"},
+    {RTN_UNREACHABLE, "unreachable"},
+    {RTN_PROHIBIT, "prohibited"},
+    {RTN_THROW, "throw"},
+    {RTN_NAT, "nat"},
+    {RTN_XRESOLVE, "resolver"},
+    {0}};
+
+static const struct message rttable_str[] = {
+    {RT_TABLE_UNSPEC, "none"},
+    {RT_TABLE_COMPAT, "compatibility"},
+    {RT_TABLE_DEFAULT, "default"},
+    {RT_TABLE_MAIN, "main"},
+    {RT_TABLE_LOCAL, "local"},
+    {0}};
 
 void netlink_parse_rtattr_flags(struct rtattr** tb, int max, struct rtattr* rta,
                                 int len, unsigned short flags) {
@@ -263,6 +277,10 @@ const char* nl_msg_type_to_str(uint16_t msg_type) {
 
 const char* nl_rtproto_to_str(uint8_t rtproto) {
     return lookup_msg(rtproto_str, rtproto);
+}
+
+const char* nl_rttable_to_str(uint8_t rttable) {
+    return lookup_msg(rttable_str, rttable);
 }
 
 const char* nl_family_to_str(uint8_t family) {
