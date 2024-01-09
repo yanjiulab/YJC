@@ -112,7 +112,7 @@ int sockunion_socket(const union sockunion* su) {
         char buf[SU_ADDRSTRLEN];
         log_error("Can't make socket for %s : %s",
                   sockunion_log(su, buf, SU_ADDRSTRLEN),
-                  safe_strerror(errno));
+                  strerr(errno));
         return -1;
     }
 
@@ -183,7 +183,7 @@ enum connect_result sockunion_connect(int fd, const union sockunion* peersu,
             char str[SU_ADDRSTRLEN];
             log_info("can't connect to %s fd %d : %s",
                       sockunion_log(&su, str, sizeof(str)), fd,
-                      safe_strerror(errno));
+                      strerr(errno));
             return connect_error;
         }
     }
@@ -240,7 +240,7 @@ int sockunion_bind(int sock, union sockunion* su, unsigned short port,
         char buf[SU_ADDRSTRLEN];
         log_error("can't bind socket for %s : %s",
                   sockunion_log(su, buf, SU_ADDRSTRLEN),
-                  safe_strerror(errno));
+                  strerr(errno));
     }
 
     return ret;
@@ -254,7 +254,7 @@ int sockopt_reuseaddr(int sock) {
                      sizeof(on));
     if (ret < 0) {
         log_error("can't set sockopt SO_REUSEADDR to socket %d errno=%d: %s",
-                  sock, errno, safe_strerror(errno));
+                  sock, errno, strerr(errno));
         return -1;
     }
     return 0;
@@ -314,7 +314,7 @@ int sockopt_minttl(int family, int sock, int minttl) {
                              sizeof(minttl));
         if (ret < 0)
             log_error("can't set sockopt IP_MINTTL to %d on socket %d: %s",
-                      minttl, sock, safe_strerror(errno));
+                      minttl, sock, strerr(errno));
         return ret;
     }
 #endif /* IP_MINTTL */
@@ -324,7 +324,7 @@ int sockopt_minttl(int family, int sock, int minttl) {
                              &minttl, sizeof(minttl));
         if (ret < 0)
             log_error("can't set sockopt IPV6_MINHOPCOUNT to %d on socket %d: %s",
-                      minttl, sock, safe_strerror(errno));
+                      minttl, sock, strerr(errno));
         return ret;
     }
 #endif
@@ -449,7 +449,7 @@ union sockunion* sockunion_getsockname(int fd) {
     ret = getsockname(fd, (struct sockaddr*)&name, &len);
     if (ret < 0) {
         log_error("Can't get local address and port by getsockname: %s",
-                  safe_strerror(errno));
+                  strerr(errno));
         return NULL;
     }
 
@@ -487,7 +487,7 @@ union sockunion* sockunion_getpeername(int fd) {
     ret = getpeername(fd, (struct sockaddr*)&name, &len);
     if (ret < 0) {
         log_error("Can't get remote address and port: %s",
-                  safe_strerror(errno));
+                  strerr(errno));
         return NULL;
     }
 

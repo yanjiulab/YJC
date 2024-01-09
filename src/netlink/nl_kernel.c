@@ -435,7 +435,7 @@ ssize_t netlink_sendmsg(struct nlsock* nl, void* buf, size_t buflen) {
  * Returns -1 on error, 0 if read would block or the number of bytes received.
  */
 ssize_t netlink_recvmsg(struct nlsock* nl, struct msghdr* msg) {
-    // new
+
     struct iovec iov;
     int status;
 
@@ -482,49 +482,6 @@ ssize_t netlink_recvmsg(struct nlsock* nl, struct msghdr* msg) {
 #endif /* NETLINK_DEBUG */
 
     return status;
-
-    //     // old
-    //     struct iovec* iov = msg->msg_iov;
-    //     char* buf;
-    //     ssize_t len;
-
-    //     iov->iov_base = NULL;
-    //     iov->iov_len = 0;
-
-    //     do {
-    //         len = recvmsg(fd, msg, MSG_PEEK | MSG_TRUNC);
-    //     } while (len < 0 && (errno == EINTR || errno == EAGAIN));
-
-    //     if (len < 0) {
-    //         return len;
-    //     }
-
-    //     buf = malloc(len);
-
-    //     if (!buf) {
-    //         perror("malloc failed");
-    //         return -ENOMEM;
-    //     }
-
-    //     iov->iov_base = buf;
-    //     iov->iov_len = len;
-
-    //     do {
-    //         len = recvmsg(fd, msg, 0);
-    //     } while (len < 0 && (errno == EINTR || errno == EAGAIN));
-
-    //     if (len < 0) {
-    //         free(buf);
-    //         return len;
-    //     }
-
-    //     *answer = buf;
-
-    // #ifdef DEBUG_NL
-    //     nl_dump(buf, len);
-    // #endif // DEBUG_NL
-
-    //     return len;
 }
 
 int netlink_request(struct nlsock* nl, void* req) {

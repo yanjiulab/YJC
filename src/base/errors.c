@@ -1,13 +1,13 @@
 #include "errors.h"
 
-static void err_doit(int, const char *, va_list);
+static void err_doit(int, const char*, va_list);
 
 /**
  * Nonfatal error related to system call
  * Print message and return
  * 与系统调用相关的非严重错误，打印信息并返回。
  */
-void err_ret(const char *fmt, ...) {
+void err_ret(const char* fmt, ...) {
     va_list params;
 
     va_start(params, fmt);
@@ -21,7 +21,7 @@ void err_ret(const char *fmt, ...) {
  * Print message and terminate
  * 与系统调用相关的严重错误，打印信息并终止程序。
  */
-void err_sys(const char *fmt, ...) {
+void err_sys(const char* fmt, ...) {
     va_list params;
 
     va_start(params, fmt);
@@ -35,7 +35,7 @@ void err_sys(const char *fmt, ...) {
  * Print message and return
  * 与系统调用不相关的非严重错误，打印信息并返回。
  */
-void err_msg(const char *fmt, ...) {
+void err_msg(const char* fmt, ...) {
     va_list params;
 
     va_start(params, fmt);
@@ -49,7 +49,7 @@ void err_msg(const char *fmt, ...) {
  * Print message and terminate
  * 与系统调用不相关的严重错误，打印信息并终止程序。
  */
-void err_quit(const char *fmt, ...) {
+void err_quit(const char* fmt, ...) {
     va_list params;
 
     va_start(params, fmt);
@@ -58,7 +58,7 @@ void err_quit(const char *fmt, ...) {
     exit(EXIT_FAILURE);
 }
 
-static void err_doit(int errnoflag, const char *fmt, va_list params) {
+static void err_doit(int errnoflag, const char* fmt, va_list params) {
     int errno_save;
     char buf[MAXLINE + 1];
     errno_save = errno; /* value caller might want printed */
@@ -67,7 +67,7 @@ static void err_doit(int errnoflag, const char *fmt, va_list params) {
 
     int n = strlen(buf);
     if (errnoflag) {
-        snprintf(buf + n, MAXLINE - n, " (%s)", hv_strerror(errno_save));
+        snprintf(buf + n, MAXLINE - n, " (%s)", strerr(errno_save));
     }
     strcat(buf, "\n");
 
@@ -79,7 +79,7 @@ static void err_doit(int errnoflag, const char *fmt, va_list params) {
 }
 
 // errcode => errmsg
-const char *hv_strerror(int err) {
+const char* strerr(int err) {
     if (err > 0 && err <= SYS_NERR) {
         return strerror(err);
     }
@@ -90,13 +90,7 @@ const char *hv_strerror(int err) {
         return errmsg;
         FOREACH_ERR(F)
 #undef F
-        default:
-            return "Undefined error";
+    default:
+        return "Undefined error";
     }
-}
-
-/* Wrapper around strerror to handle case where it returns NULL. */
-const char *safe_strerror(int errnum) {
-    const char *s = strerror(errnum);
-    return (s != NULL) ? s : "Unknown error";
 }

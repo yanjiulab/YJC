@@ -119,6 +119,6 @@ enum {
 };
 
 // errcode => errmsg
-const char* hv_strerror(int err);
+const char* strerr(int err); // strerror with custom errno supported and safty check
 
 #endif
