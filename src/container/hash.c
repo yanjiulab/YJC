@@ -5,10 +5,8 @@
 
 #include "hash.h"
 #include "thread.h"
-#include <math.h>
-
-// #include "memory.h"
 #include "linklist.h"
+// #include "memory.h"
 // #include "ttable.h"
 // #include "vty.h"
 // #include "command.h"
@@ -16,7 +14,7 @@
 // #include "frr_pthread.h"
 // #include "libfrr_trace.h"
 
-static pthread_mutex_t _hashes_mtx = PTHREAD_MUTEX_INITIALIZER;
+static mutex_t _hashes_mtx = PTHREAD_MUTEX_INITIALIZER;
 static struct list* _hashes;
 
 struct hash* hash_create_size(unsigned int size,
@@ -126,8 +124,7 @@ void* hash_get(struct hash* hash, void* data, void* (*alloc_func)(void*)) {
     key = (*hash->hash_key)(data);
     index = key & (hash->size - 1);
 
-    for (bucket = hash->index[index]; bucket != NULL;
-         bucket = bucket->next) {
+    for (bucket = hash->index[index]; bucket != NULL; bucket = bucket->next) {
         if (bucket->key == key && (*hash->hash_cmp)(bucket->data, data))
             return bucket->data;
     }

@@ -7,10 +7,10 @@
 #define _ZEBRA_HASH_H
 
 #include <stdatomic.h>
-// #include <stdbool.h>
-// #include <stdio.h>
-// #include <stdint.h>
-#include "base.h"
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+// #include "base.h"
 // #include "frratomic.h"
 
 #ifdef __cplusplus
@@ -324,11 +324,6 @@ extern struct list *hash_to_list(struct hash *hash);
  *    modified Bernstein hash of the string
  */
 extern unsigned int string_hash_make(const char *);
-
-/*
- * Install CLI commands for viewing global hash table statistics.
- */
-extern void hash_cmd_init(void);
 
 #ifdef __cplusplus
 }

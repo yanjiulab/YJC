@@ -89,7 +89,9 @@ sha256.h|SHA256 安全散列算法|标准 256 位安全散列实现，支持二�
 array.h|动态数组|暂时用于框架
 vector.h|动态数组|support quueue-like and stack-like operations
 list.h|链表|Linux 内核双向链表简化实现
-map.h|哈希表|key 为字符串的哈希表实现
+hashmap.h|哈希表|key 为字符串的哈希表实现，不实用，准备替换。
+hash.h|哈希表|结构体的哈希表实现，来自于zebra，待评估
+map.h|哈希表|结构体哈希表实现，来自于高赞github，待评估
 str.h|字符串|支持字符串去白、分割、构造、数值转换等功能
 heap.h|二叉堆|Linux 内核风格堆实现（优先队列）
 rbtree.h|红黑树|Linux 内核红黑树简化实现
