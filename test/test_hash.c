@@ -34,6 +34,9 @@ void test_hash() {
 
     struct my_struct *res = NULL;
     res = (struct my_struct *)hash_lookup(h, &(struct my_struct){ .i1=1 });
+
+    s1.i1 = 8;
+
     printf("%p\n", res);
     printf("%d, %d\n", res->i1, res->i2);
 }

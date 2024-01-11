@@ -4,7 +4,7 @@
 
 #include "base.h"
 #include "datetime.h"
-#include "map.h"
+// #include "map.h"
 #include "list.h"
 #include "log.h"
 #include "linux_rbtree.h"
@@ -189,31 +189,31 @@ void test_container() {
     log_info("[RBTree] search 10000 times elapse time: %ld microseconds", end - start);
 
     // hashmap
-    map_int_t route_map;
-    char map_key[10000][16] = {0};
-    for (int j = 0; j < 100; ++j) {
-        for (int i = 0; i < 100; ++i) {
-            sprintf(map_key[100 * j + i], "192.168.%d.%d", j, i);
-        }
-    }
-    log_info("[Hashmap] init 10000 nodes need %ld kb memory", (sizeof(map_int_t) + 20) * 10);
+    // map_int_t route_map;
+    // char map_key[10000][16] = {0};
+    // for (int j = 0; j < 100; ++j) {
+    //     for (int i = 0; i < 100; ++i) {
+    //         sprintf(map_key[100 * j + i], "192.168.%d.%d", j, i);
+    //     }
+    // }
+    // log_info("[Hashmap] init 10000 nodes need %ld kb memory", (sizeof(map_int_t) + 20) * 10);
     
-    start = gettimeofday_us();
-    for (int j = 0; j < 100; ++j) {
-        for (int i = 0; i < 100; ++i) {
-            sprintf(map_key[100 * j + i], "192.168.%d.%d", j, i);
-            map_insert(&route_map, map_key[j * 100 + i], j * 100 + i);
-        }
-    }
-    end = gettimeofday_us();
-    log_info("[Hashmap] insert 10000 nodes elapse time: %ld microseconds", end - start);
+    // start = gettimeofday_us();
+    // for (int j = 0; j < 100; ++j) {
+    //     for (int i = 0; i < 100; ++i) {
+    //         sprintf(map_key[100 * j + i], "192.168.%d.%d", j, i);
+    //         map_insert(&route_map, map_key[j * 100 + i], j * 100 + i);
+    //     }
+    // }
+    // end = gettimeofday_us();
+    // log_info("[Hashmap] insert 10000 nodes elapse time: %ld microseconds", end - start);
 
-    start = gettimeofday_us();
-    for (int j = 0; j < 100; ++j) {
-        for (int i = 0; i < 100; ++i) {
-            map_get(&route_map, keys[j * 100 + i]);
-        }
-    }
-    end = gettimeofday_us();
-    log_info("[Hashmap] search 10000 times elapse time: %ld microseconds", end - start);
+    // start = gettimeofday_us();
+    // for (int j = 0; j < 100; ++j) {
+    //     for (int i = 0; i < 100; ++i) {
+    //         map_get(&route_map, keys[j * 100 + i]);
+    //     }
+    // }
+    // end = gettimeofday_us();
+    // log_info("[Hashmap] search 10000 times elapse time: %ld microseconds", end - start);
 }

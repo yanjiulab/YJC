@@ -89,9 +89,8 @@ sha256.h|SHA256 安全散列算法|标准 256 位安全散列实现，支持二�
 array.h|动态数组|暂时用于框架
 vector.h|动态数组|support quueue-like and stack-like operations
 list.h|链表|Linux 内核双向链表简化实现
-hashmap.h|哈希表|key 为字符串的哈希表实现，不实用，准备替换。
-hash.h|哈希表|结构体的哈希表实现，来自于zebra，待评估
-map.h|哈希表|结构体哈希表实现，来自于高赞github，待评估
+hashmap.h|哈希表|[tidwall/hashmap.c](https://github.com/tidwall/hashmap.c)
+hash.h|哈希表|结构体的哈希表实现，来自于zebra，待替换。
 str.h|字符串|支持字符串去白、分割、构造、数值转换等功能
 heap.h|二叉堆|Linux 内核风格堆实现（优先队列）
 rbtree.h|红黑树|Linux 内核红黑树简化实现
@@ -110,6 +109,33 @@ cmd.h|命令行控制台库|TODO
 protobuf.h|protobuf 相关|TODO，查看protobuf-c
 thread.h|pthread 线程相关|简单包装了常用 API
 thpool.h|基于 pthread 线程的线程池基本实现|[Pithikos/C-Thread-Pool](https://github.com/Pithikos/C-Thread-Pool)
+
+## 数据结构
+
+### 哈希表 (hashmap)
+
+摘自 [tidwall/hashmap.c](https://github.com/tidwall/hashmap.c)，MIT Licence。
+
+选择理由：
+
+- 无复杂依赖，仅需 C99 特性。
+- 支持自定义 items。
+- 使用 Open addressing - Robin Hood 哈希，代码简洁易懂。
+- API 易用。
+
+API 如下所示，具体参见项目主页。
+
+```sh
+hashmap_new      # allocate a new hash map
+hashmap_free     # free the hash map
+hashmap_count    # returns the number of items in the hash map
+hashmap_set      # insert or replace an existing item and return the previous
+hashmap_get      # get an existing item
+hashmap_delete   # delete and return an item
+hashmap_clear    # clear the hash map
+hashmap_iter     # loop based iteration over all items in hash map 
+hashmap_scan     # callback based iteration over all items in hash map
+```
 
 ## TODO
 
