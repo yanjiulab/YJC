@@ -21,7 +21,7 @@ CC = gcc
 # Compiler Flags
 # CFLAGS =  -std=c99 #-Wall -g3
 # Test Compiler flags
-TCFLAGS = -g3 -DNETLINK_DEBUG #-DPRINT_DEBUG 
+TCFLAGS = -w -O2 -g3 -DNETLINK_DEBUG #-DPRINT_DEBUG 
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries
@@ -53,11 +53,18 @@ TEST_OUTPUT = build/$(APPNAME)_test
 LEAKS = log/leaks.log
 # Thread chek log file
 HELGRIND = log/threads.log
-
+# OBJ
+# OBJS = $(patsubst %.c, %.o, $(SOURCES))
+# @echo $(OBJS)
+# objs: $(SOURCES)
+# 	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS)
 
 all : compile run
 
 .PHONY: all
+
+${DIR_SRC_OBJ}/%.o : ${DIR_SRC}/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 start:
 	@echo "Creating project: $(PROJECT_NAME)"

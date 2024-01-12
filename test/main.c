@@ -61,7 +61,8 @@ int main(void) {
         // cmocka_unit_test(test_hashmap),
         // cmocka_unit_test(test_vrf),
         // cmocka_unit_test(test_cmd),
-        cmocka_unit_test(test_sds),
+        // cmocka_unit_test(test_sds),
+        cmocka_unit_test(test_linklist)
     };
 
     /* Run the tests */

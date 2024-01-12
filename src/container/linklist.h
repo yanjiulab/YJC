@@ -48,6 +48,7 @@ struct list {
     void (*del)(void* val);
 };
 
+/* Basic API */
 #define listnextnode(X) ((X) ? ((X)->next) : NULL)
 #define listnextnode_unchecked(X) ((X)->next)
 #define listhead(X) ((X) ? ((X)->head) : NULL)
@@ -62,6 +63,46 @@ struct list {
 #define listset_app_node_mem(X) ((X)->flags |= LINKLIST_FLAG_NODE_MEM_BY_APP)
 #define listnode_init(X, val) ((X)->data = (val))
 
+/* API */
+// #define list_new list_new
+#define list_add listnode_add
+#define list_add_head listnode_add_head
+#define list_add_tail listnode_add
+#define list_add_sort listnode_add_sort
+#define list_add_aftr listnode_add_after
+#define list_add_before listnode_add_before
+#define list_del list_delete_node
+#define list_get listnode_lookup
+#define list_clear list_delete_all_node
+#define list_free list_delete
+
+/* List iteration macro.
+ * Usage: for (ALL_LIST_ELEMENTS (...) { ... }
+ * It is safe to delete the listnode using this macro.
+ */
+#define ALL_LIST_ELEMENTS(list, node, nextnode, data)                 \
+    (node) = listhead(list), ((data) = NULL);                         \
+    (node) != NULL && ((data) = static_cast(data, listgetdata(node)), \
+                       (nextnode) = node->next, 1);                   \
+    (node) = (nextnode), ((data) = NULL)
+
+#define list_foreach(list, node, nextnode, data) \
+    for (ALL_LIST_ELEMENTS(list, node, nextnode, data))
+
+/* read-only list iteration macro.
+ * Usage: as per ALL_LIST_ELEMENTS, but not safe to delete the listnode Only
+ * use this macro when it is *immediately obvious* the listnode is not
+ * deleted in the body of the loop. Does not have forward-reference overhead
+ * of previous macro.
+ */
+#define ALL_LIST_ELEMENTS_RO(list, node, data)                            \
+    (node) = listhead(list), ((data) = NULL);                             \
+    (node) != NULL && ((data) = static_cast(data, listgetdata(node)), 1); \
+    (node) = listnextnode(node), ((data) = NULL)
+
+#define list_foreach_ro(list, node, data) \
+    for (ALL_LIST_ELEMENTS_RO(list, node, data))
+
 /*
  * Create a new linked list.
  *
@@ -69,6 +110,15 @@ struct list {
  *    the created linked list
  */
 extern struct list* list_new(void);
+
+/*
+ * Create a new linked list and set cmp and del function
+ *
+ * Returns:
+ *    the created linked list
+ */
+extern struct list* list_create(int (*cmp)(void* val1, void* val2),
+                                void (*del)(void* val));
 
 /*
  * Add a new element to the tail of a list.
@@ -314,26 +364,17 @@ extern bool listnode_add_sort_nodup(struct list* list, void* val);
  */
 extern struct list* list_dup(struct list* list);
 
-/* List iteration macro.
- * Usage: for (ALL_LIST_ELEMENTS (...) { ... }
- * It is safe to delete the listnode using this macro.
+/**
+ * list_scan iterates over all items in the list
+ *
+ * @param list  list to scan
+ * @param iter  iter can return false to stop iteration early.
+ * @param udata params of iter
+ * @return true if the iteration finished.
+ * @return false if the iteration has been stopped early.
  */
-#define ALL_LIST_ELEMENTS(list, node, nextnode, data)                 \
-    (node) = listhead(list), ((data) = NULL);                         \
-    (node) != NULL && ((data) = static_cast(data, listgetdata(node)), \
-                       (nextnode) = node->next, 1);                   \
-    (node) = (nextnode), ((data) = NULL)
-
-/* read-only list iteration macro.
- * Usage: as per ALL_LIST_ELEMENTS, but not safe to delete the listnode Only
- * use this macro when it is *immediately obvious* the listnode is not
- * deleted in the body of the loop. Does not have forward-reference overhead
- * of previous macro.
- */
-#define ALL_LIST_ELEMENTS_RO(list, node, data)                            \
-    (node) = listhead(list), ((data) = NULL);                             \
-    (node) != NULL && ((data) = static_cast(data, listgetdata(node)), 1); \
-    (node) = listnextnode(node), ((data) = NULL)
+extern bool list_scan(struct list* list,
+                      bool (*iter)(const void* item, void* udata), void* udata);
 
 extern struct listnode* listnode_lookup_nocheck(struct list* list, void* data);
 
@@ -344,6 +385,11 @@ extern struct listnode* listnode_lookup_nocheck(struct list* list, void* data);
  * Return: the new node.
  */
 extern struct listnode* listnode_add_force(struct list** list, void* val);
+
+/* Maybe useful for users. */
+int compare_ints(const void* a, const void* b);
+int compare_ptrs(const void* a, const void* b);
+int compare_strs(const void* a, const void* b);
 
 #ifdef __cplusplus
 }

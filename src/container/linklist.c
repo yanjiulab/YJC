@@ -42,6 +42,27 @@ struct list* list_new(void) {
     return calloc(1, sizeof(struct list));
 }
 
+int compare_ints(const void* a, const void* b) {
+    return *(int*)a - *(int*)b;
+}
+
+int compare_strs(const void* a, const void* b) {
+    return strcmp(*(char**)a, *(char**)b);
+}
+
+int compare_ptrs(const void* a, const void* b) {
+    return *(size_t*)a - *(size_t*)b;
+}
+
+struct list* list_create(int (*cmp)(void* val1, void* val2),
+                         void (*del)(void* val)) {
+    struct list* l;
+    l = calloc(1, sizeof(struct list));
+    l->cmp = cmp;
+    l->del = del;
+    return l;
+}
+
 /* Free list. */
 static void list_free_internal(struct list* l) {
     free(l);
@@ -324,8 +345,11 @@ struct listnode* listnode_lookup(struct list* list, const void* data) {
 
     assert(list);
     for (node = listhead(list); node; node = listnextnode(node))
-        if (data == listgetdata(node))
-            return node;
+        if (list->cmp)
+            if ((*list->cmp)(data, listgetdata(node)) == 0)
+                return node;
+            else if (data == listgetdata(node))
+                return node;
     return NULL;
 }
 
@@ -395,4 +419,16 @@ void** list_to_array(struct list* list, void** arr, size_t arrlen) {
     }
 
     return arr;
+}
+
+
+bool list_scan(struct list* list, bool (*iter)(const void* item, void* udata), void* udata) {
+    void* node_data;
+    struct listnode *node, *nnode;
+    for (ALL_LIST_ELEMENTS(list, node, nnode, node_data)) {
+        if (!(*iter)(node_data, udata)) {
+            return false;
+        }
+    }
+    return true;
 }

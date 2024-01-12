@@ -7,6 +7,7 @@
 
 #define UNUSED(x) (void)(x)
 void test_sds() {
+    printf("%d\n", sizeof(size_t));
     sds x = sdsnew("foo"), y;
 
     test_cond("Create a string and obtain the length",
