@@ -23,6 +23,21 @@ bool user_iter(const void* item, void* udata) {
     return true;
 }
 
+// const struct bgp_pbr_match* pbm = arg;
+// uint32_t key;
+
+// key = jhash_1word(pbm->vrf_id, 0x4312abde);
+// key = jhash_1word(pbm->flags, key);
+// key = jhash_1word(pbm->family, key);
+// key = jhash(&pbm->pkt_len_min, 2, key);
+// key = jhash(&pbm->pkt_len_max, 2, key);
+// key = jhash(&pbm->tcp_flags, 2, key);
+// key = jhash(&pbm->tcp_mask_flags, 2, key);
+// key = jhash(&pbm->dscp_value, 1, key);
+// key = jhash(&pbm->flow_label, 2, key);
+// key = jhash(&pbm->fragment, 1, key);
+// key = jhash(&pbm->protocol, 1, key);
+// return jhash_1word(pbm->type, key);
 uint64_t user_hash(const void* item, uint64_t seed0, uint64_t seed1) {
     const struct user* user = item;
     return hashmap_sip(user->name, strlen(user->name), seed0, seed1);

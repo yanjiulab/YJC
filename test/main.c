@@ -58,9 +58,10 @@ int main(void) {
         // cmocka_unit_test(test_thpool),
         // cmocka_unit_test(test_packet_socket),
         // cmocka_unit_test(test_hash),
-        cmocka_unit_test(test_hashmap),
+        // cmocka_unit_test(test_hashmap),
         // cmocka_unit_test(test_vrf),
-        // cmocka_unit_test(test_cmd)
+        // cmocka_unit_test(test_cmd),
+        cmocka_unit_test(test_sds),
     };
 
     /* Run the tests */
