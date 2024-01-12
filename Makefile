@@ -53,18 +53,10 @@ TEST_OUTPUT = build/$(APPNAME)_test
 LEAKS = log/leaks.log
 # Thread chek log file
 HELGRIND = log/threads.log
-# OBJ
-# OBJS = $(patsubst %.c, %.o, $(SOURCES))
-# @echo $(OBJS)
-# objs: $(SOURCES)
-# 	$(CC) $(CFLAGS) $(INCLUDES) $(LIBS)
 
 all : compile run
 
 .PHONY: all
-
-${DIR_SRC_OBJ}/%.o : ${DIR_SRC}/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
 
 start:
 	@echo "Creating project: $(PROJECT_NAME)"

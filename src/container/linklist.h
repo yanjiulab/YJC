@@ -71,7 +71,7 @@ struct list {
 #define list_add_sort listnode_add_sort
 #define list_add_aftr listnode_add_after
 #define list_add_before listnode_add_before
-#define list_del list_delete_node
+#define list_del listnode_delete
 #define list_get listnode_lookup
 #define list_clear list_delete_all_node
 #define list_free list_delete
