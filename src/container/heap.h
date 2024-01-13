@@ -1,8 +1,8 @@
 #ifndef HEAP_H_
 #define HEAP_H_
 
-#include <assert.h>  // for assert
-#include <stddef.h>  // for NULL
+#include <assert.h> // for assert
+#include <stddef.h> // for NULL
 
 struct heap_node {
     struct heap_node* parent;
@@ -35,8 +35,10 @@ static inline void heap_replace(struct heap* heap, struct heap_node* s, struct h
     else if (s->parent->right == s)
         s->parent->right = r;
 
-    if (s->left) s->left->parent = r;
-    if (s->right) s->right->parent = r;
+    if (s->left)
+        s->left->parent = r;
+    if (s->right)
+        s->right->parent = r;
     if (r) {
         //*r = *s;
         r->parent = s->parent;
@@ -59,8 +61,10 @@ static inline void heap_swap(struct heap* heap, struct heap_node* parent, struct
     else if (pparent->right == parent)
         pparent->right = child;
 
-    if (lchild) lchild->parent = parent;
-    if (rchild) rchild->parent = parent;
+    if (lchild)
+        lchild->parent = parent;
+    if (rchild)
+        rchild->parent = parent;
 
     child->parent = pparent;
     if (parent->left == child) {
@@ -72,7 +76,8 @@ static inline void heap_swap(struct heap* heap, struct heap_node* parent, struct
         child->left = sibling;
         child->right = parent;
     }
-    if (sibling) sibling->parent = child;
+    if (sibling)
+        sibling->parent = child;
 
     parent->parent = child;
     parent->left = lchild;
@@ -116,7 +121,8 @@ static inline void heap_insert(struct heap* heap, struct heap_node* node) {
 }
 
 static inline void heap_remove(struct heap* heap, struct heap_node* node) {
-    if (heap->nelts == 0) return;
+    if (heap->nelts == 0)
+        return;
     // get last => replace node with last => sift down and sift up
     // 0: left, 1: right
     int path = 0;
@@ -155,15 +161,19 @@ static inline void heap_remove(struct heap* heap, struct heap_node* node) {
     heap_replace(heap, node, last);
     node->parent = node->left = node->right = NULL;
 
-    if (!heap->compare) return;
+    if (!heap->compare)
+        return;
     struct heap_node* v = last;
     struct heap_node* est = NULL;
     // sift down
     while (1) {
         est = v;
-        if (v->left) est = heap->compare(est, v->left) ? est : v->left;
-        if (v->right) est = heap->compare(est, v->right) ? est : v->right;
-        if (est == v) break;
+        if (v->left)
+            est = heap->compare(est, v->left) ? est : v->left;
+        if (v->right)
+            est = heap->compare(est, v->right) ? est : v->right;
+        if (est == v)
+            break;
         heap_swap(heap, v, est);
     }
     // sift up
@@ -174,4 +184,4 @@ static inline void heap_remove(struct heap* heap, struct heap_node* node) {
 
 static inline void heap_dequeue(struct heap* heap) { heap_remove(heap, heap->root); }
 
-#endif  // HEAP_H_
+#endif // HEAP_H_

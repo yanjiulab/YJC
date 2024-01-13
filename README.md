@@ -82,21 +82,6 @@ md5.h|MD5 数字摘要|标准 128 位数字摘要实现，支持二进制或字�
 sha1.h|SHA1 安全散列算法|标准 160 位安全散列实现，支持二进制或字符串输出
 sha256.h|SHA256 安全散列算法|标准 256 位安全散列实现，支持二进制或字符串输出
 
-### 数据结构
-
-头文件 | 名称 | 说明
-:---:|:---:|:---:
-array.h|动态数组|暂时用于框架
-vector.h|动态数组|support quueue-like and stack-like operations
-list.h|链表|Linux 内核双向链表简化实现
-hashmap.h|哈希表|[tidwall/hashmap.c](https://github.com/tidwall/hashmap.c)
-hash.h|哈希表|结构体的哈希表实现，来自于zebra，待替换。
-str.h|字符串|支持字符串去白、分割、构造、数值转换等功能
-heap.h|二叉堆|Linux 内核风格堆实现（优先队列）
-rbtree.h|红黑树|Linux 内核红黑树简化实现
-ringbuf.h|循环缓存|摘自 FRR，通常用于在生产者和消费者之间共享数据的场景中
-ptable.h|ASCII风格表打印|[marchelzo/libtable](https://github.com/marchelzo/libtable)
-
 ### 工具
 
 头文件 | 名称 | 说明
@@ -111,6 +96,21 @@ thread.h|pthread 线程相关|简单包装了常用 API
 thpool.h|基于 pthread 线程的线程池基本实现|[Pithikos/C-Thread-Pool](https://github.com/Pithikos/C-Thread-Pool)
 
 ## 数据结构
+
+头文件 | 名称 | 说明
+:---:|:---:|:---:
+array.h|动态数组|暂时用于框架
+vector.h|动态数组|support quueue-like and stack-like operations
+list.h|链表|Linux 内核双向链表简化实现，未采用
+linklist.h|链表|Zebra 双向链表实现，采用
+hashmap.h|哈希表|[tidwall/hashmap.c](https://github.com/tidwall/hashmap.c)
+hash.h|哈希表|Zebra的哈希表实现，未采用。
+str.h|字符串|支持字符串去白、分割、构造、数值转换等功能，代替换
+sds.h|字符串|Redis的动态字符串实现。
+heap.h|二叉堆|Linux 内核风格堆实现（优先队列）
+rbtree.h|红黑树|Linux 内核红黑树简化实现
+ringbuf.h|循环缓存|摘自 FRR，通常用于在生产者和消费者之间共享数据的场景中
+ptable.h|ASCII风格表打印|[marchelzo/libtable](https://github.com/marchelzo/libtable)
 
 ### 哈希表 (hashmap)
 
@@ -131,11 +131,26 @@ hashmap_free     # free the hash map
 hashmap_count    # returns the number of items in the hash map
 hashmap_set      # insert or replace an existing item and return the previous
 hashmap_get      # get an existing item
-hashmap_delete   # delete and return an item
+hashmap_del      # delete and return an item
 hashmap_clear    # clear the hash map
 hashmap_iter     # loop based iteration over all items in hash map 
 hashmap_scan     # callback based iteration over all items in hash map
 ```
+
+### 总结
+
+API|链表|哈希表
+:---:|:---:|:---:
+数据结构|struct list*|struct hashmap*
+新建容器|list_new<br>list_create|hashmap_new
+删除容器|list_free|hashmap_free
+遍历容器（循环）|list_foreach<br>list_foreach_ro|hashmap_iter
+遍历容器（回调）|list_scan|hashmap_scan
+获取节点数量|list_count|hashmap_count
+添加节点|list_add<br>list_add_*|hashmap_set
+更新节点|No API|hashmap_set
+删除节点|list_del|hashmap_del
+获取节点|list_get|hashmap_get
 
 ## TODO
 

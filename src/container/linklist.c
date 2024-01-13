@@ -3,8 +3,6 @@
  * Copyright (C) 1997, 2000 Kunihiro Ishiguro
  */
 
-#include <stdlib.h>
-
 #include "linklist.h"
 
 /* these *do not* cleanup list nodes and referenced data, as the functions
@@ -340,6 +338,14 @@ void list_delete(struct list** list) {
     *list = NULL;
 }
 
+void* listnode_getdata(struct list* list, const void* data) {
+    struct listnode* node = listnode_lookup(list, data);
+    if (node != NULL)
+        return node->data;
+    else
+        return NULL;
+}
+
 struct listnode* listnode_lookup(struct list* list, const void* data) {
     struct listnode* node;
 
@@ -420,7 +426,6 @@ void** list_to_array(struct list* list, void** arr, size_t arrlen) {
 
     return arr;
 }
-
 
 bool list_scan(struct list* list, bool (*iter)(const void* item, void* udata), void* udata) {
     void* node_data;

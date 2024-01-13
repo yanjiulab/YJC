@@ -51,7 +51,7 @@ void test_linklist() {
     }
     list_free(&list);
 
-    list = list_create(user_compare, NULL);
+    list = list_create(NULL, NULL);
     // struct user user1 = {.name = "Dale", .age = 44};
     // struct user user2 = {.name = "Roger", .age = 68};
     // struct user user3 = {.name = "Jane", .age = 47};
@@ -60,14 +60,21 @@ void test_linklist() {
     list_add(list, user_new("Roger", 46));
     list_add(list, user_new("Jane", 33));
 
-    list_del(list, user_new("Dale", 33));
+    // list_del(list, user_new("Dale", 33));
     struct user* user;
     list_foreach(list, node, nnode, user) {
         user_iter(user, NULL);
     }
 
-    // user = list_del(list, user_new("Dale", 33));
-    user_iter(user, NULL);
+    user = list_get(list, USER_KEY("Dale"));
+    if (user)
+        user_iter(user, NULL);
+    else
+        printf("item not found\n");
+
+    list_del(list, USER_KEY("Dale"));
+    
+    list_scan(list, user_iter, 0);
 
     list_free(&list);
 }

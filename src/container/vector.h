@@ -14,13 +14,13 @@ extern "C" {
 #endif
 
 /* struct for vector */
-struct _vector {
+struct vector {
     unsigned int active;  /* number of active slots */
     unsigned int alloced; /* number of allocated slot */
     unsigned int count;
     void **index; /* index to data */
 };
-typedef struct _vector *vector;
+typedef struct vector *vector;
 
 #define VECTOR_MIN_SIZE 1
 

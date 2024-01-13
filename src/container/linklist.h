@@ -3,10 +3,13 @@
  * Copyright (C) 1997, 2000 Kunihiro Ishiguro
  */
 
-#ifndef _ZEBRA_LINKLIST_H
-#define _ZEBRA_LINKLIST_H
+#ifndef _LINKLIST_H_
+#define _LINKLIST_H_
 
-#include "base.h"
+#include <assert.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +58,7 @@ struct list {
 #define listhead_unchecked(X) ((X)->head)
 #define listtail(X) ((X) ? ((X)->tail) : NULL)
 #define listtail_unchecked(X) ((X)->tail)
-#define listcount(X) ((X)->count)
+#define list_count(X) ((X)->count)
 #define list_isempty(X) ((X)->head == NULL && (X)->tail == NULL)
 /* return X->data only if X and X->data are not NULL */
 #define listgetdata(X) (assert(X), assert((X)->data != NULL), (X)->data)
@@ -63,8 +66,7 @@ struct list {
 #define listset_app_node_mem(X) ((X)->flags |= LINKLIST_FLAG_NODE_MEM_BY_APP)
 #define listnode_init(X, val) ((X)->data = (val))
 
-/* API */
-// #define list_new list_new
+/* Easy API */
 #define list_add listnode_add
 #define list_add_head listnode_add_head
 #define list_add_tail listnode_add
@@ -72,7 +74,7 @@ struct list {
 #define list_add_aftr listnode_add_after
 #define list_add_before listnode_add_before
 #define list_del listnode_delete
-#define list_get listnode_lookup
+#define list_get listnode_getdata
 #define list_clear list_delete_all_node
 #define list_free list_delete
 
@@ -80,10 +82,10 @@ struct list {
  * Usage: for (ALL_LIST_ELEMENTS (...) { ... }
  * It is safe to delete the listnode using this macro.
  */
-#define ALL_LIST_ELEMENTS(list, node, nextnode, data)                 \
-    (node) = listhead(list), ((data) = NULL);                         \
-    (node) != NULL && ((data) = static_cast(data, listgetdata(node)), \
-                       (nextnode) = node->next, 1);                   \
+#define ALL_LIST_ELEMENTS(list, node, nextnode, data) \
+    (node) = listhead(list), ((data) = NULL);         \
+    (node) != NULL && ((data) = listgetdata(node),    \
+                       (nextnode) = node->next, 1);   \
     (node) = (nextnode), ((data) = NULL)
 
 #define list_foreach(list, node, nextnode, data) \
@@ -95,9 +97,9 @@ struct list {
  * deleted in the body of the loop. Does not have forward-reference overhead
  * of previous macro.
  */
-#define ALL_LIST_ELEMENTS_RO(list, node, data)                            \
-    (node) = listhead(list), ((data) = NULL);                             \
-    (node) != NULL && ((data) = static_cast(data, listgetdata(node)), 1); \
+#define ALL_LIST_ELEMENTS_RO(list, node, data)         \
+    (node) = listhead(list), ((data) = NULL);          \
+    (node) != NULL && ((data) = listgetdata(node), 1); \
     (node) = listnextnode(node), ((data) = NULL)
 
 #define list_foreach_ro(list, node, data) \
@@ -204,6 +206,35 @@ extern struct listnode* listnode_add_before(struct list* list,
                                             struct listnode* pp, void* data);
 
 /*
+ * Add a node to *list, if non-NULL. Otherwise, allocate a new list, mail
+ * it back in *list, and add a new node.
+ *
+ * Return: the new node.
+ */
+extern struct listnode* listnode_add_force(struct list** list, void* val);
+
+/*
+ * Insert a new element into a list with insertion sort if there is no
+ * duplicate element present in the list. This assumes the input list is
+ * sorted. If unsorted, it will check for duplicate until it finds out
+ * the position to do insertion sort with the unsorted list.
+ *
+ * If list->cmp is set, this function is used to determine the position to
+ * insert the new element. If it is not set, this function is equivalent to
+ * listnode_add. duplicate element is determined by cmp function returning 0.
+ *
+ * Runtime is O(N).
+ *
+ * list
+ *    list to operate on
+ *
+ * val
+ *    If MEM_BY_APP is set this is listnode. Otherwise it is element to add.
+ */
+
+extern bool listnode_add_sort_nodup(struct list* list, void* val);
+
+/*
  * Move a node to the tail of a list.
  *
  * Runtime is O(1).
@@ -242,6 +273,10 @@ extern void listnode_delete(struct list* list, const void* data);
  *    pointer to listnode storing the given data if found, NULL otherwise
  */
 extern struct listnode* listnode_lookup(struct list* list, const void* data);
+
+extern struct listnode* listnode_lookup_nocheck(struct list* list, void* data);
+
+extern void* listnode_getdata(struct list* list, const void* data);
 
 /*
  * Retrieve the element at the head of a list.
@@ -332,27 +367,6 @@ extern void list_delete_all_node(struct list* list);
 extern void list_delete_node(struct list* list, struct listnode* node);
 
 /*
- * Insert a new element into a list with insertion sort if there is no
- * duplicate element present in the list. This assumes the input list is
- * sorted. If unsorted, it will check for duplicate until it finds out
- * the position to do insertion sort with the unsorted list.
- *
- * If list->cmp is set, this function is used to determine the position to
- * insert the new element. If it is not set, this function is equivalent to
- * listnode_add. duplicate element is determined by cmp function returning 0.
- *
- * Runtime is O(N).
- *
- * list
- *    list to operate on
- *
- * val
- *    If MEM_BY_APP is set this is listnode. Otherwise it is element to add.
- */
-
-extern bool listnode_add_sort_nodup(struct list* list, void* val);
-
-/*
  * Duplicate the specified list, creating a shallow copy of each of its
  * elements.
  *
@@ -375,16 +389,6 @@ extern struct list* list_dup(struct list* list);
  */
 extern bool list_scan(struct list* list,
                       bool (*iter)(const void* item, void* udata), void* udata);
-
-extern struct listnode* listnode_lookup_nocheck(struct list* list, void* data);
-
-/*
- * Add a node to *list, if non-NULL. Otherwise, allocate a new list, mail
- * it back in *list, and add a new node.
- *
- * Return: the new node.
- */
-extern struct listnode* listnode_add_force(struct list** list, void* val);
 
 /* Maybe useful for users. */
 int compare_ints(const void* a, const void* b);

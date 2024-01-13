@@ -6,7 +6,7 @@
 
 /* Initialize vector : allocate memory and return vector. */
 vector vector_init(unsigned int size) {
-    vector v = calloc(1, sizeof(struct _vector));
+    vector v = calloc(1, sizeof(struct vector));
 
     /* allocate at least one slot */
     if (size == 0)
@@ -26,7 +26,7 @@ void vector_free(vector v) {
 
 vector vector_copy(vector v) {
     unsigned int size;
-    vector new = calloc(1, sizeof(struct _vector));
+    vector new = calloc(1, sizeof(struct vector));
 
     new->active = v->active;
     new->alloced = v->alloced;
