@@ -154,16 +154,18 @@ API|链表|哈希表
 
 ## TODO
 
-- atomic
-- grpc
-- protobuf
-- netllink
-- 数据库 db.ch sqlite3 / redis
-- 控制台命令系统 vtysh
-- cspf.ch 受限最短路径
-- py.ch
-- 标准化 makefile 文件（build 系统）
-- libpcap
-- libnet
-- ncurses
-- ui 界面
+- 完善 atomic
+- 完善 netllink 应用
+- 抽象为 sevl.h：极简事件循环库。
+- 更改 Makefile，可读性，降低依赖，加速编译速度。
+- 如何统一 DB 的API，建议分模块操作。sqlite3 / redis
+- 基于 cmd.h 开发 ecmd.h，主要增加非阻塞回调。
+- 统一 base 库，将采纳的常用模块全部放入 base 库中，base 库必须是无依赖的，且需要编译成 lib 文件，目前 base.c 中仍有混乱部分，主要是宏定义和 wrapper 部分。
+- 未来分为 base 库：大概率会用到的基础函数及功能，包括通用的宏定义、类型定义、多线程编程、配置文件读写、命令行参数解析、常用数据结构等。可以直接扔到别的项目中编译。
+  - event 库：改进或者替换。
+  - network 库：网络相关的基础库。
+  - netlink 应用库：Netlink 编程库，依赖 base、network，需要编译成 lib 文件。
+  - util 库：不太常用的算法和工具函数，util 库最好是无依赖的。
+- grpc 和 protobuf，不着急
+- cspf.ch 受限最短路径，不着急。
+- UI 界面开发，放到后面，基于 nurses。

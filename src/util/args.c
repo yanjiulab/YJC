@@ -1,4 +1,5 @@
 #include "args.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>

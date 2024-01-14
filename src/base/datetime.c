@@ -143,7 +143,7 @@ char* gmtime_fmt(time_t time, char* buf) {
 
 int month_atoi(const char* month) {
     for (size_t i = 0; i < 12; ++i) {
-        if (strnicmp(month, s_months[i], strlen(month)) == 0) return i + 1;
+        if (strncasecmp(month, s_months[i], strlen(month)) == 0) return i + 1;
     }
     return 0;
 }
@@ -155,7 +155,7 @@ const char* month_itoa(int month) {
 
 int weekday_atoi(const char* weekday) {
     for (size_t i = 0; i < 7; ++i) {
-        if (strnicmp(weekday, s_weekdays[i], strlen(weekday)) == 0) return i;
+        if (strncasecmp(weekday, s_weekdays[i], strlen(weekday)) == 0) return i;
     }
     return 0;
 }

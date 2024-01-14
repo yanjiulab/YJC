@@ -211,7 +211,7 @@ typedef std::atomic<uintptr_t> atomic_uintptr_t;
     })
 
 #else /* !HAVE___ATOMIC && !HAVE_STDATOMIC_H */
-// #error no atomic functions...
+#error no atomic functions...
 #endif
 
 #ifdef _ATOMIC_WANT_TYPEDEFS
