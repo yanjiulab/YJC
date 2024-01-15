@@ -10,7 +10,7 @@
 #include "ethernet.h"
 #include "ipaddr.h"
 #include "linklist.h"
-#include "openbsd-tree.h"
+#include "openbsd_tree.h"
 #include <net/if.h>
 
 #ifdef __cplusplus

@@ -1,14 +1,7 @@
 #include "sev.h"
-
+#include "log.h"
 /* Definitions */
-static int sev_nhandlers = 0;
-
-static struct sev_handler sev_handlers[NHANDLERS];
-
-// static struct sev_handler {
-//     int fd;        /* File descriptor				 */
-//     sev_cb func; /* Function to call with &fd_set */
-// } sev_handlers[NHANDLERS];
+static int id = 0;
 
 static struct timeval timeval_adjust(struct timeval a) {
     while (a.tv_usec >= TIMER_SECOND_MICRO) {
@@ -31,164 +24,156 @@ static struct timeval timeval_subtract(struct timeval a, struct timeval b) {
     return timeval_adjust(ret);
 }
 
-/* the code below implements a callout queue */
-static int id = 0;
-static struct timeout_q *Q = 0; /* pointer to the beginning of timeout queue */
-
-struct timeout_q {
-    struct timeout_q *next; /* next event */
-    int id;
-    cfunc_t func; /* function to call */
-    void *data;   /* func's data */
-    int time;     /* time offset to next event*/
-};
-
-#if 0
-#define CALLOUT_DEBUG 1
-#endif /* 0 */
-// static void print_Q(void);
-
-void callout_init() { Q = (struct timeout_q *)0; }
-
-void free_all_callouts() {
-    struct timeout_q *p;
-
-    while (Q) {
-        p = Q;
-        Q = Q->next;
-        free(p);
-    }
-}
-
-/*
- * elapsed_time seconds have passed; perform all the events that should
- * happen.
- */
-void age_callout_queue(int elapsed_time) {
-    struct timeout_q *ptr, *expQ;
-
-#ifdef CALLOUT_DEBUG
-    // log_debug("aging queue (elapsed time %d):", elapsed_time);
-    print_Q();
-#endif
-
-    expQ = Q;
-    ptr = NULL;
-
-    while (Q) {
-        if (Q->time > elapsed_time) {
-            Q->time -= elapsed_time;
-            if (ptr) {
-                ptr->next = NULL;
-                break;
-            }
-            return;
-        } else {
-            elapsed_time -= Q->time;
-            ptr = Q;
-            Q = Q->next;
-        }
-    }
-
-    /* handle queue of expired timers */
-    while (expQ) {
-        ptr = expQ;
-        if (ptr->func)
-            ptr->func(ptr->data);
-        expQ = expQ->next;
-        free(ptr);
-    }
-}
-
-/*
- * Return in how many seconds age_callout_queue() would like to be called.
- * Return -1 if there are no events pending.
- */
-int timer_nextTimer() {
-    if (Q) {
-        if (Q->time < 0) {
-            // log_warn("timer_nextTimer top of queue says %d", Q->time);
-            return 0;
-        }
-        return Q->time;
-    }
-    return -1;
-}
-
-/*
- * sets the timer
- */
-int timer_setTimer(int delay, cfunc_t action, void *data) {
-    struct timeout_q *ptr, *node, *prev;
-
-#ifdef CALLOUT_DEBUG
-    // log_debug("setting timer:");
-    print_Q();
-#endif
+// evtimer
+void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms, uint32_t repeat) {
+    struct evtimer *ptr, *node, *prev;
 
     /* create a node */
-    node = (struct timeout_q *)calloc(1, sizeof(struct timeout_q));
+    node = (struct evtimer*)calloc(1, sizeof(struct evtimer));
     if (!node) {
-        // log_error("Failed calloc() in timer_settimer\n");
+        printf("Failed calloc() in timer_settimer\n");
         return -1;
     }
-    node->func = action;
+    node->loop = loop;
+    node->func = cb;
     node->data = data;
-    node->time = delay;
+    node->time = etimeout_ms;
     node->next = 0;
     node->id = ++id;
+    node->repeat = repeat;
 
-    prev = ptr = Q;
-    /*2013-0618-1225::bug fixed by dongfh*/
+    prev = ptr = loop->timers;
+
     if (node->id == 0)
         node->id = ++id;
     /* insert node in the queue */
-
     /* if the queue is empty, insert the node and return */
-    if (!Q)
-        Q = node;
+    if (!loop->timers)
+        loop->timers = node;
     else {
         /* chase the pointer looking for the right place */
         while (ptr) {
-            if (delay < ptr->time) {
+            if (etimeout_ms < ptr->time) {
                 /* right place */
 
                 node->next = ptr;
-                if (ptr == Q)
-                    Q = node;
+                if (ptr == loop->timers)
+                    loop->timers = node;
                 else
                     prev->next = node;
                 ptr->time -= node->time;
-#if 0
-		print_Q();
-#endif
                 return node->id;
             } else {
                 /* keep moving */
-
-                delay -= ptr->time;
-                node->time = delay;
+                etimeout_ms -= ptr->time;
+                node->time = etimeout_ms;
                 prev = ptr;
                 ptr = ptr->next;
             }
         }
         prev->next = node;
     }
-#if 0
-    print_Q();
-#endif
     return node->id;
 }
 
+void evtimer_del(evloop_t* loop, int timer_id) {
+    struct evtimer *ptr, *prev;
+
+    if (!timer_id)
+        return;
+
+    prev = ptr = loop->timers;
+
+    while (ptr) {
+        if (ptr->id == timer_id) {
+            /* got the right node */
+
+            /* unlink it from the queue */
+            if (ptr == loop->timers)
+                loop->timers = loop->timers->next;
+            else
+                prev->next = ptr->next;
+
+            /* increment next node if any */
+            if (ptr->next != 0)
+                (ptr->next)->time += ptr->time;
+
+            free(ptr);
+            return;
+        }
+        prev = ptr;
+        ptr = ptr->next;
+    }
+}
+
+void evtimer_clean(evloop_t* loop) {
+    struct evtimer* p;
+    while (loop->timers) {
+        p = loop->timers;
+        loop->timers = loop->timers->next;
+        free(p);
+    }
+}
+
+// Return in how many ms evtimer_callout() would like to be called.
+// Return -1 if there are no events pending.
+int evtimer_next(evloop_t* loop) {
+    if (loop->timers) {
+        if (loop->timers->time < 0) {
+            return 0;
+        }
+        return loop->timers->time;
+    }
+    return -1;
+}
+
+/* elapsed_time seconds have passed; perform all the events that should happen. */
+void evtimer_callout(evloop_t* loop, int elapsed_time) {
+    struct evtimer *ptr, *expQ;
+
+    expQ = loop->timers;
+    ptr = NULL;
+
+    while (loop->timers) {
+        if (loop->timers->time > elapsed_time) {
+            loop->timers->time -= elapsed_time;
+            if (ptr) {
+                ptr->next = NULL;
+                break;
+            }
+            return;
+        } else {
+            elapsed_time -= loop->timers->time;
+            ptr = loop->timers;
+            loop->timers = loop->timers->next;
+        }
+    }
+
+    /* handle queue of expired timers */
+    while (expQ) {
+        ptr = expQ;
+        if (ptr->func) {
+            ptr->func(ptr->data);
+            // ptr->repeat--;
+            // if (ptr->repeat) {
+
+            // }
+
+        }
+        expQ = expQ->next;
+        free(ptr);
+    }
+}
+
 /* returns the time until the timer is scheduled */
-int timer_leftTimer(int timer_id) {
-    struct timeout_q *ptr;
+int evtimer_left(evloop_t* loop, int timer_id) {
+    struct evtimer* ptr;
     int left = 0;
 
     if (!timer_id)
         return -1;
 
-    for (ptr = Q; ptr; ptr = ptr->next) {
+    for (ptr = loop->timers; ptr; ptr = ptr->next) {
         left += ptr->time;
         if (ptr->id == timer_id)
             return left;
@@ -196,51 +181,9 @@ int timer_leftTimer(int timer_id) {
     return -1;
 }
 
-/* clears the associated timer */
-void timer_clearTimer(int timer_id) {
-    struct timeout_q *ptr, *prev;
-
-    if (!timer_id)
-        return;
-
-    prev = ptr = Q;
-#if 0        
-    print_Q();
-#endif
-    while (ptr) {
-        if (ptr->id == timer_id) {
-            /* got the right node */
-
-            /* unlink it from the queue */
-            if (ptr == Q)
-                Q = Q->next;
-            else
-                prev->next = ptr->next;
-
-            /* increment next node if any */
-            if (ptr->next != 0)
-                (ptr->next)->time += ptr->time;
-            /*
-                    if (ptr->data)    /已经改为unsigned int 类型 ，无须释放/
-                    free(ptr->data);
-            */
-            free(ptr);
-#if 0
-	    print_Q();
-#endif
-            return;
-        }
-        prev = ptr;
-        ptr = ptr->next;
-    }
-#if 0
-    print_Q();
-#endif
-}
-
-int timer_resetTimer(int timer_id, int delay) {
-    struct timeout_q *ptr, *node, *prev;
-
+int evtimer_reset(evloop_t* loop, int timer_id, int delay) {
+    struct evtimer *ptr, *node, *prev;
+    struct evtimer* Q = loop->timers;
     if (!timer_id)
         return;
 
@@ -298,53 +241,80 @@ int timer_resetTimer(int timer_id, int delay) {
     return node->id;
 }
 
-void print_Q() {
-    struct timeout_q *ptr;
-
-    // for (ptr = Q; ptr; ptr = ptr->next) log_debug("(%d,%d) ", ptr->id, ptr->time);
-}
-
-int ser_register(int fd, sev_cb func) {
-    if (sev_nhandlers >= NHANDLERS) {
+// evio
+int evio_add(evloop_t* loop, int fd, evio_cb cb) {
+    if (loop->nios >= loop->max_ios) {
         return -1;
     }
+    loop->ios[loop->nios].fd = fd;
+    loop->ios[loop->nios++].func = cb;
 
-    sev_handlers[sev_nhandlers].fd = fd;
-    sev_handlers[sev_nhandlers++].func = func;
+    FD_SET(loop->ios[loop->nios].fd, &loop->allset);
+    if (loop->ios[loop->nios].fd >= loop->nfds) {
+        loop->nfds = loop->ios[loop->nios].fd + 1;
+    }
+
     return 0;
 }
 
-void sev_runloop() {
-    struct timeval tv, difftime, curtime, lasttime, *timeout;
-    fd_set rfds, allset;
-    int nfds = 0, n, i, secs, ch;
-    char *tmp;
+// evloop
+evloop_t* evloop_new(int max) {
+    evloop_t* loop = calloc(1, sizeof(evloop_t));
+    loop->status = EVLOOP_STATUS_STOP;
+    loop->max_ios = max;
+    loop->ios = calloc(max, sizeof(struct evio));
+    loop->nios = 0;
+    FD_ZERO(&loop->allset);
+    FD_ZERO(&loop->rfds);
+    loop->timers = NULL;
+    return loop;
+}
 
+void evloop_free(evloop_t** pp) {
+    if (pp && *pp) {
+        // clear timers
+        evtimer_clean(*pp);
+        // clear ios
+        // evio_clean(*pp);
+        free(*pp);
+        *pp = NULL;
+    }
+}
+
+int evloop_run(evloop_t* loop) {
+    if (loop == NULL)
+        return -1;
+    if (loop->status == EVLOOP_STATUS_RUNNING)
+        return -2;
+
+    loop->status = EVLOOP_STATUS_RUNNING;
+
+    struct timeval tv, difftime, curtime, lasttime, *timeout;
+    int n, i, ms, diffms;
     difftime.tv_usec = 0;
+    difftime.tv_sec = 0;
     gettimeofday(&curtime, NULL);
     lasttime = curtime;
 
     /* Main loop */
-    while (1) {
-        memcpy(&rfds, &allset, sizeof(rfds));
-        secs = timer_nextTimer();
-        // log_trace("[TIMEOUT: %2d secs]  > ", secs);
+    while (loop->status != EVLOOP_STATUS_STOP) {
+        memcpy(&loop->rfds, &loop->allset, sizeof(loop->rfds));
+        ms = evtimer_next(loop);
 
-        if (secs == -1)
+        if (ms == -1)
             timeout = NULL;
         else {
             timeout = &tv;
-            timeout->tv_sec = secs;
-            timeout->tv_usec = 0;
+            timeout->tv_sec = ms / 1000;
+            timeout->tv_usec = (ms % 1000) * 1000;
         }
 
         gettimeofday(&curtime, NULL);
 
-        if ((n = select(nfds, &rfds, NULL, NULL, timeout)) < 0) {
-            // printf("select<0\n");
+        if ((n = select(loop->nfds, &loop->rfds, NULL, NULL, timeout)) < 0) {
             if (errno != EINTR) /* SIGALRM is expected */
-                // log_warn("select failed");
-                continue;
+                printf("select failed\n");
+            continue;
         }
 
         do {
@@ -354,43 +324,38 @@ void sev_runloop() {
              * call gettimeofday.
              */
             if (n == 0) {
-                curtime.tv_sec = lasttime.tv_sec + secs;
-                curtime.tv_usec = lasttime.tv_usec;
+                curtime.tv_sec = lasttime.tv_sec + (ms / 1000);
+                curtime.tv_usec = lasttime.tv_usec + ((ms % 1000) * 1000);
                 n = -1; /* don't do this next time through the loop */
             } else {
                 gettimeofday(&curtime, NULL);
             }
 
-            difftime.tv_sec = curtime.tv_sec - lasttime.tv_sec;
-            difftime.tv_usec += curtime.tv_usec - lasttime.tv_usec;
-
-            while (difftime.tv_usec > 1000000) {
-                difftime.tv_sec++;
-                difftime.tv_usec -= 1000000;
-            }
-
-            if (difftime.tv_usec < 0) {
-                difftime.tv_sec--;
-                difftime.tv_usec += 1000000;
-            }
-
+            difftime = timeval_subtract(curtime, lasttime);
+            diffms = difftime.tv_sec * 1000 + difftime.tv_usec / 1000;
             lasttime = curtime;
 
-            if (secs == 0 || difftime.tv_sec > 0) {
-                age_callout_queue(difftime.tv_sec);
+            if (ms == 0 || (diffms) > 0) {
+                evtimer_callout(loop, diffms);
             }
 
-            secs = -1;
-        } while (difftime.tv_sec > 0);
+            ms = -1;
+        } while (diffms > 0);
 
         /* Handle sockets */
         if (n > 0) {
-            for (i = 0; i < sev_nhandlers; i++) {
-                if (FD_ISSET(sev_handlers[i].fd, &rfds)) {
-                    (*sev_handlers[i].func)(sev_handlers[i].fd, &rfds);
+            for (i = 0; i < loop->nios; i++) {
+                if (FD_ISSET(loop->ios[i].fd, &loop->rfds)) {
+                    (*loop->ios[i].func)(loop->ios[i].fd, &loop->rfds);
                 }
             }
         }
 
     } /* Main loop */
+
+    loop->status = EVLOOP_STATUS_STOP;
+
+    evloop_free(&loop);
+
+    return 0;
 }

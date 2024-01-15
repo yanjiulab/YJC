@@ -1,4 +1,4 @@
 #include "test.h"
-#include "openbsd-tree.h"
+#include "openbsd_tree.h"
 
 void test_openbsd_tree() {}

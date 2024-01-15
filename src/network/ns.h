@@ -8,7 +8,7 @@
 #define _ZEBRA_NS_H
 
 #include "linklist.h"
-#include "openbsd-tree.h"
+#include "openbsd_tree.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -11,7 +11,7 @@
 #include "if.h"
 #include "linklist.h"
 #include "ns.h"
-#include "openbsd-tree.h"
+#include "openbsd_tree.h"
 #include "sockunion.h"
 
 #ifdef __cplusplus

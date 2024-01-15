@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 
-#include <openbsd-tree.h>
+#include <openbsd_tree.h>
 
 static inline struct rb_entry* rb_n2e(const struct rb_type* t, void* node) {
     unsigned long addr = (unsigned long)node;
