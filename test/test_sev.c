@@ -1,6 +1,7 @@
+#include <stdio.h>
+
 #include "sev.h"
 #include "test.h"
-#include <stdio.h>
 
 static void on_stdin(int fd) {
     char* line = NULL;
@@ -10,14 +11,13 @@ static void on_stdin(int fd) {
     printf("> %s\n", (char*)line);
 }
 
-static void period_hello(void *arg) {
+static void period_hello(evtimer_t* timer, void* arg) {
     printf("Hello %s\n", (char*)arg);
-    
+    evtimer_add(event_loop(timer), period_hello, "World", 1000);
 }
 
 void test_sev() {
-    evloop_t* loop;
-    loop = evloop_new(10);
+    evloop_t* loop = evloop_new(10);
 
     evio_add(loop, 0, on_stdin);
     evtimer_add(loop, period_hello, "World", 1000);

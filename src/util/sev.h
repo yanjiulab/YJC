@@ -21,23 +21,8 @@
 typedef enum { EVLOOP_STATUS_STOP,
                EVLOOP_STATUS_RUNNING } evloop_status_e;
 
-typedef void (*evtimer_cb)(void*);
+typedef void (*evtimer_cb)(struct evtimer*, void*);
 typedef void (*evio_cb)(int, fd_set*);
-
-struct evio {
-    int fd;       /* File descriptor				 */
-    evio_cb func; /* Function to call with &fd_set */
-};
-
-struct evtimer {
-    evloop_t* loop;
-    struct evtimer* next; /* next timer event */
-    int id;
-    evtimer_cb func; /* function to call */
-    void* data;      /* func's data */
-    int time;        /* time offset to next timer event*/
-    int repeat;
-};
 
 typedef struct evloop_s {
     evloop_status_e status;
@@ -45,14 +30,29 @@ typedef struct evloop_s {
     int max_ios;
     int nios;
     struct evio* ios;
-    fd_set rfds;   // select read fds
-    fd_set allset; // select all fds
-    int nfds;      // the max fd
+    fd_set rfds;    // select read fds
+    fd_set allset;  // select all fds
+    int nfds;       // the max fd
 
     // timers
     struct evtimer* timers;
 
 } evloop_t;
+
+struct evio {
+    int fd;       /* File descriptor				 */
+    evio_cb func; /* Function to call with &fd_set */
+};
+
+typedef struct evtimer {
+    evloop_t* loop;
+    struct evtimer* next; /* next timer event */
+    int id;
+    evtimer_cb func; /* function to call */
+    void* data;      /* func's data */
+    int time;        /* time offset to next timer event*/
+    int repeat;
+} evtimer_t;
 
 // evloop
 evloop_t* evloop_new(int max);
@@ -60,7 +60,7 @@ void evloop_free(evloop_t** pp);
 int evloop_run(evloop_t* loop);
 
 // evtimer
-void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms, uint32_t repeat);
+void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms);
 void evtimer_del(evloop_t* loop, int timer_id);
 void evtimer_clean(evloop_t* loop);
 // Return in how many ms evtimer_callout() would like to be called.

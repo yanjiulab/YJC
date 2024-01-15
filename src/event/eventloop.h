@@ -119,7 +119,7 @@ typedef enum {
 #define ELOOP_FLAG_RUN_ONCE 0x00000001
 #define ELOOP_FLAG_AUTO_FREE 0x00000002
 #define ELOOP_FLAG_QUIT_WHEN_NO_ACTIVE_EVENTS 0x00000004
-eloop_t* eloop_new(int flags DEFAULT(eloop_FLAG_AUTO_FREE));
+eloop_t* eloop_new(int flags DEFAULT(ELOOP_FLAG_AUTO_FREE));
 
 // WARN: Forbid to call eloop_free if eloop_FLAG_AUTO_FREE set.
 void eloop_free(eloop_t** pp);
