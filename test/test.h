@@ -78,6 +78,7 @@ void test_memory();
 void test_db();
 void test_sha1();
 void test_crc();
+void test_csv();
 void test_json_parser();
 void test_ecmd();
 void test_sev();
