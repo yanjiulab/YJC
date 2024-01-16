@@ -1,7 +1,10 @@
 #include "csv.h"
 #include "test.h"
 
-#define CSVTEST 1
+// #define CSVTEST 1
+#define CSVINFO 1
+// #define CSVFIX 1
+// #define CSVVALID 1
 
 #ifdef CSVFIX
 /*
@@ -99,8 +102,20 @@ struct counts {
     long unsigned rows;
 };
 
-void cb1(void* s, size_t len, void* data) { ((struct counts*)data)->fields++; }
-void cb2(int c, void* data) { ((struct counts*)data)->rows++; }
+static int put_comma;
+
+void cb1(void* s, size_t i, void* data) {
+    ((struct counts*)data)->fields++;
+    if (put_comma)
+        putc(',', stdout);
+    csv_fwrite(stdout, s, i);
+    put_comma = 1;
+}
+void cb2(int c, void* data) {
+    ((struct counts*)data)->rows++;
+    put_comma = 0;
+    putc('\n', stdout);
+}
 
 static int is_space(unsigned char c) {
     if (c == CSV_SPACE || c == CSV_TAB)
@@ -286,5 +301,7 @@ int csvvalid(int argc, char* argv[]) {
 #endif // CSVVALID
 
 void test_csv() {
-    csvtest();
+    // csvtest();
+    char* argv[2] = {"-s", "./test/csv/test_01.csv"};
+    csvinfo(3, argv);
 }
