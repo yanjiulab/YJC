@@ -1,4 +1,5 @@
 #include "sev.h"
+
 #include "log.h"
 /* Definitions */
 static int id = 0;
@@ -25,7 +26,7 @@ static struct timeval timeval_subtract(struct timeval a, struct timeval b) {
 }
 
 // evtimer
-void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms, uint32_t repeat) {
+void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms) {
     struct evtimer *ptr, *node, *prev;
 
     /* create a node */
@@ -40,7 +41,6 @@ void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms
     node->time = etimeout_ms;
     node->next = 0;
     node->id = ++id;
-    node->repeat = repeat;
 
     prev = ptr = loop->timers;
 
@@ -153,12 +153,7 @@ void evtimer_callout(evloop_t* loop, int elapsed_time) {
     while (expQ) {
         ptr = expQ;
         if (ptr->func) {
-            ptr->func(ptr->data);
-            // ptr->repeat--;
-            // if (ptr->repeat) {
-
-            // }
-
+            ptr->func(ptr, ptr->data);
         }
         expQ = expQ->next;
         free(ptr);
