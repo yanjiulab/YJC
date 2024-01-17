@@ -1,6 +1,22 @@
 #ifndef DATETIME_H
 #define DATETIME_H
 
+/**
+1. struct timeval:  A time value that is accurate to the nearest microsecond 
+                    but also has a range of years.  
+    struct timeval {
+        __time_t tv_sec;       // Seconds.
+        __suseconds_t tv_usec; // Microseconds.
+    };
+
+    get current time: gettimeofday(&tv, NULL);
+
+2. struct timezone
+3. struct tm
+4. time_t:
+5. clock_t: 
+*/
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>

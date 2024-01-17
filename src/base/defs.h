@@ -156,18 +156,6 @@
     ((type*)((char*)(ptr)-offsetof(type, member)))
 #endif
 
-#ifdef PRINT_DEBUG
-#define printd(...) printf(__VA_ARGS__)
-#else
-#define printd(...)
-#endif
-
-#ifdef PRINT_ERROR
-#define printe(...) fprintf(stderr, __VA_ARGS__)
-#else
-#define printe(...)
-#endif
-
 /* helper to get type safety/avoid casts on calls
  * (w/o this, functions accepting all prefix types need casts on the caller
  * side, which strips type safety since the cast will accept any pointer

@@ -68,6 +68,20 @@
 #define LOWER(c) ((c) | 0x20)
 #define UPPER(c) ((c) & ~0x20)
 
+/* Debug macros */
+#ifdef PRINT_DEBUG
+#define printd(...) printf(__VA_ARGS__)
+#else
+#define printd(...)
+#endif
+
+#ifdef PRINT_ERROR
+#define printe(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define printe(...)
+#endif
+
+/* CPP features related macros */
 /* */
 
 #endif

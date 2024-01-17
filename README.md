@@ -156,6 +156,7 @@ API|链表|哈希表
 
 - 完善 atomic
 - 完善 netllink 应用
+- 信号机制
 - 抽象为 sevl.h：极简事件循环库。
 - 更改 Makefile，可读性，降低依赖，加速编译速度。
 - 如何统一 DB 的API，建议分模块操作。sqlite3 / redis
