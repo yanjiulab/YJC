@@ -1,6 +1,10 @@
 #include "base.h"
 
+#include <fcntl.h>
+#include <signal.h>
 #include <stdatomic.h>
+#include <sys/resource.h>
+#include <syslog.h>
 
 #ifndef RAND_MAX
 #define RAND_MAX 2147483647
@@ -98,14 +102,74 @@ int rand_int(int min, int max) {
     return _rand;
 }
 
-char *rand_str(char *buf, int len) {
+char* rand_str(char* buf, int len) {
     static char s_characters[] = {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-        'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-        'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+        'A',
+        'B',
+        'C',
+        'D',
+        'E',
+        'F',
+        'G',
+        'H',
+        'I',
+        'J',
+        'K',
+        'L',
+        'M',
+        'N',
+        'O',
+        'P',
+        'Q',
+        'R',
+        'S',
+        'T',
+        'U',
+        'V',
+        'W',
+        'X',
+        'Y',
+        'Z',
+        'a',
+        'b',
+        'c',
+        'd',
+        'e',
+        'f',
+        'g',
+        'h',
+        'i',
+        'j',
+        'k',
+        'l',
+        'm',
+        'n',
+        'o',
+        'p',
+        'q',
+        'r',
+        's',
+        't',
+        'u',
+        'v',
+        'w',
+        'x',
+        'y',
+        'z',
+        '0',
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
     };
 
-    if (buf == NULL) buf = (char *)calloc(1, len + 1);
+    if (buf == NULL)
+        buf = (char*)calloc(1, len + 1);
 
     int i = 0;
     srand(time(NULL));
@@ -123,7 +187,8 @@ bool path_exists(const char* path) {
 }
 
 bool path_isdir(const char* path) {
-    if (access(path, 0) != 0) return false;
+    if (access(path, 0) != 0)
+        return false;
     struct stat st;
     memset(&st, 0, sizeof(st));
     stat(path, &st);
@@ -131,7 +196,8 @@ bool path_isdir(const char* path) {
 }
 
 bool path_isfile(const char* path) {
-    if (access(path, 0) != 0) return false;
+    if (access(path, 0) != 0)
+        return false;
     struct stat st;
     memset(&st, 0, sizeof(st));
     stat(path, &st);
@@ -139,7 +205,8 @@ bool path_isfile(const char* path) {
 }
 
 bool path_islink(const char* path) {
-    if (access(path, 0) != 0) return false;
+    if (access(path, 0) != 0)
+        return false;
     struct stat st;
     memset(&st, 0, sizeof(st));
     lstat(path, &st);
@@ -185,7 +252,8 @@ int rmdir_p(const char* dir) {
     char tmp[MAX_PATH] = {0};
     strncpy(tmp, dir, sizeof(tmp));
     char* p = tmp;
-    while (*p) ++p;
+    while (*p)
+        ++p;
     while (--p >= tmp) {
         if (*p == '/') {
             *p = '\0';
@@ -195,4 +263,116 @@ int rmdir_p(const char* dir) {
         }
     }
     return 0;
+}
+
+//--------------------daemon-------------------------------
+
+static int lockfile(int fd) {
+    struct flock fl;
+
+    fl.l_type = F_WRLCK;
+    fl.l_start = 0;
+    fl.l_whence = SEEK_SET;
+    fl.l_len = 0;
+    return (fcntl(fd, F_SETLK, &fl));
+}
+
+int already_running(const char* fname) {
+    int fd;
+    char buf[16];
+
+    fd = open(fname, O_RDWR | O_CREAT, LOCKMODE);
+    if (fd < 0) {
+        fprintf(stderr, "can't open %s: %s\n", fname, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    if (lockfile(fd) < 0) {
+        if (errno == EACCES || errno == EAGAIN) {
+            close(fd);
+            return (1);
+        }
+        fprintf(stderr, "can't lock %s: %s\n", fname, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    ftruncate(fd, 0);
+    sprintf(buf, "%ld", (long)getpid());
+    write(fd, buf, strlen(buf) + 1);
+    return (0);
+}
+
+void daemonize(const char* cmd) {
+    int i, fd0, fd1, fd2;
+    pid_t pid;
+    struct rlimit rl;
+    struct sigaction sa;
+
+    /*
+     * Clear file creation mask.
+     */
+    umask(0);
+
+    /*
+     * Get maximum number of file descriptors.
+     */
+    if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
+        // log_error("Can't get file limit");
+        exit(1);
+    }
+    /*
+     * Become a session leader to lose controlling TTY.
+     */
+    if ((pid = fork()) < 0) {
+        // log_error("Can't fork");
+        exit(1);
+    } else if (pid != 0) /* parent */
+        exit(0);
+    setsid();
+
+    /*
+     * Ensure future opens won't allocate controlling TTYs.
+     */
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGHUP, &sa, NULL) < 0) {
+        // err_quit("Can't ignore SIGHUP");
+        exit(1);
+    }
+    if ((pid = fork()) < 0) {
+        // log_error("Can't fork");
+        exit(1);
+    } else if (pid != 0) /* parent */
+        exit(0);
+
+    /*
+     * Change the current working directory to the root so
+     * we won't prevent file systems from being unmounted.
+     */
+    if (chdir("/") < 0) {
+        // err_quit("%s: can't change directory to /", cmd);
+    }
+
+    /*
+     * Close all open file descriptors.
+     */
+    if (rl.rlim_max == RLIM_INFINITY)
+        rl.rlim_max = 1024;
+    for (i = 0; i < rl.rlim_max; i++)
+        close(i);
+
+    /*
+     * Attach file descriptors 0, 1, and 2 to /dev/null.
+     */
+    fd0 = open("/dev/null", O_RDWR);
+    fd1 = dup(0);
+    fd2 = dup(0);
+
+    /*
+     * Initialize the log file.
+     */
+    openlog(cmd, LOG_CONS, LOG_DAEMON);
+    if (fd0 != 0 || fd1 != 1 || fd2 != 2) {
+        syslog(LOG_ERR, "unexpected file descriptors %d %d %d", fd0, fd1, fd2);
+        exit(1);
+    }
 }

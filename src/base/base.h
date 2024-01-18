@@ -70,4 +70,8 @@ EXPORT size_t filesize(const char* filepath);
 EXPORT int rand_int(int min, int max);
 EXPORT char* rand_str(char* buf, int len);
 
+//--------------------daemon-------------------------------
+#define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
+int already_running(const char* fname);
+
 #endif // EV_BASE_H_

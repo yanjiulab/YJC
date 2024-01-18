@@ -1,5 +1,5 @@
 #include "args.h"
-
+#include "base.h"
 int boo_callback(char* cmd_name, ArgParser* cmd_parser) {
     puts("------------- boo! -------------");
     ap_print(cmd_parser);
@@ -8,6 +8,7 @@ int boo_callback(char* cmd_name, ArgParser* cmd_parser) {
 }
 
 int main(int argc, char* argv[]) {
+
     // Instantiate a new ArgParser instance.
     ArgParser* parser = ap_new_parser();
     if (!parser) {
