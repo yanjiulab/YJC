@@ -1,6 +1,6 @@
 #include "base.h"
 
-// #include <syslog.h>
+#include <syslog.h>
 
 int main(int argc, char* argv[]) {
     /* Parse command line args */

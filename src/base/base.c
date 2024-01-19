@@ -275,7 +275,7 @@ int already_running(const char* fname) {
     int fd;
     char buf[16];
     char name_buf[FILENAME_MAX];
-    
+
     sprintf(name_buf, "/var/run/%s.pid", fname);
 
     fd = open(name_buf, O_RDWR | O_CREAT, LOCKMODE);
@@ -312,15 +312,13 @@ void daemonize(const char* cmd) {
      * Get maximum number of file descriptors.
      */
     if (getrlimit(RLIMIT_NOFILE, &rl) < 0) {
-        // log_error("Can't get file limit");
-        exit(1);
+        err_quit("Can't get file limit");
     }
     /*
      * Become a session leader to lose controlling TTY.
      */
     if ((pid = fork()) < 0) {
-        // log_error("Can't fork");
-        exit(1);
+        err_quit("Can't fork");
     } else if (pid != 0) /* parent */
         exit(0);
     setsid();
@@ -332,12 +330,11 @@ void daemonize(const char* cmd) {
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     if (sigaction(SIGHUP, &sa, NULL) < 0) {
-        // err_quit("Can't ignore SIGHUP");
+        err_quit("Can't ignore SIGHUP");
         exit(1);
     }
     if ((pid = fork()) < 0) {
-        // log_error("Can't fork");
-        exit(1);
+        err_quit("Can't fork");
     } else if (pid != 0) /* parent */
         exit(0);
 
@@ -346,7 +343,7 @@ void daemonize(const char* cmd) {
      * we won't prevent file systems from being unmounted.
      */
     if (chdir("/") < 0) {
-        // err_quit("%s: can't change directory to /", cmd);
+        err_quit("%s: can't change directory to /", cmd);
     }
 
     /*

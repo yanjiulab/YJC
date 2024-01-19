@@ -8,6 +8,7 @@
 #include "version.h"
 #include "str.h"
 #include "math.h"
+#include "errors.h"
 
 #include <fcntl.h>
 #include <signal.h>
