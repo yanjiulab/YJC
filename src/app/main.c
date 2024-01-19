@@ -54,7 +54,7 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
 }
 
 int main(int argc, char* argv[]) {
-    already_running("test.pid");
+    
     printf("%s", DEFAULT_MOTD);
     // memcheck atexit
     MEMCHECK;

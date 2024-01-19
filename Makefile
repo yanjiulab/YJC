@@ -35,7 +35,7 @@ SOURCE_DIRECTORY=./src
 # Test Directory
 TEST_DIRECTORY=./test
 # Application name
-APPNAME = main
+APPNAME = mydae
 APP_DIRECTORY=./src/app
 APP_FILE=$(shell find $(APP_DIRECTORY) -name '*.c')
 MAIN_FILE=$(APP_DIRECTORY)/$(APPNAME).c

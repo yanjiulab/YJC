@@ -1,11 +1,5 @@
 #include "base.h"
 
-#include <fcntl.h>
-#include <signal.h>
-#include <stdatomic.h>
-#include <sys/resource.h>
-#include <syslog.h>
-
 #ifndef RAND_MAX
 #define RAND_MAX 2147483647
 #endif
@@ -280,10 +274,13 @@ static int lockfile(int fd) {
 int already_running(const char* fname) {
     int fd;
     char buf[16];
+    char name_buf[FILENAME_MAX];
+    
+    sprintf(name_buf, "/var/run/%s.pid", fname);
 
-    fd = open(fname, O_RDWR | O_CREAT, LOCKMODE);
+    fd = open(name_buf, O_RDWR | O_CREAT, LOCKMODE);
     if (fd < 0) {
-        fprintf(stderr, "can't open %s: %s\n", fname, strerror(errno));
+        syslog(LOG_ERR, "can't open %s: %s", name_buf, strerror(errno));
         exit(EXIT_FAILURE);
     }
     if (lockfile(fd) < 0) {
@@ -291,7 +288,7 @@ int already_running(const char* fname) {
             close(fd);
             return (1);
         }
-        fprintf(stderr, "can't lock %s: %s\n", fname, strerror(errno));
+        syslog(LOG_ERR, "can't lock %s: %s", name_buf, strerror(errno));
         exit(EXIT_FAILURE);
     }
     ftruncate(fd, 0);

@@ -9,6 +9,11 @@
 #include "str.h"
 #include "math.h"
 
+#include <fcntl.h>
+#include <signal.h>
+#include <stdatomic.h>
+#include <sys/resource.h>
+#include <syslog.h>
 //--------------------alloc/free---------------------------
 EXPORT void* ev_malloc(size_t size);
 EXPORT void* ev_calloc(size_t nmemb, size_t size);
@@ -73,5 +78,5 @@ EXPORT char* rand_str(char* buf, int len);
 //--------------------daemon-------------------------------
 #define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 int already_running(const char* fname);
-
+void daemonize(const char* cmd);
 #endif // EV_BASE_H_
