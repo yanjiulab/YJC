@@ -2,11 +2,11 @@
 #include "test.h"
 
 void test_log() {
-    int level = LOG_TRACE;
+    int level = _LOG_TRACE;
     log_set_level(level);
-
+    log_set_debug();
     FILE *fp = fopen("log/app.log", "w");
-    int file_level = LOG_WARN;
+    int file_level = _LOG_WARN;
     log_add_fp(fp, file_level);
 
     log_trace("trace");

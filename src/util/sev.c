@@ -354,3 +354,8 @@ int evloop_run(evloop_t* loop) {
 
     return 0;
 }
+
+void evloop_stop(evloop_t* loop) {
+    if (loop)
+        loop->status = EVLOOP_STATUS_STOP;
+}

@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
     /* Check if program is running now */
     if (already_running(cmd)) {
         syslog(LOG_ERR, "program was already running!");
+        exit(EXIT_FAILURE);
     }
 
     // Program block here

@@ -35,7 +35,7 @@ SOURCE_DIRECTORY=./src
 # Test Directory
 TEST_DIRECTORY=./test
 # Application name
-APPNAME = mydae
+APPNAME = myapp
 APP_DIRECTORY=./src/app
 APP_FILE=$(shell find $(APP_DIRECTORY) -name '*.c')
 MAIN_FILE=$(APP_DIRECTORY)/$(APPNAME).c
@@ -48,7 +48,7 @@ TESTS = $(shell find $(TEST_DIRECTORY) -name '*.c')
 # Output file name
 OUTPUT = build/$(APPNAME)
 # Test Output file
-TEST_OUTPUT = build/$(APPNAME)_test
+TEST_OUTPUT = build/_test
 # Leaks log file
 LEAKS = log/leaks.log
 # Thread chek log file

@@ -60,12 +60,12 @@ int main(void) {
         // cmocka_unit_test(test_hash),
         // cmocka_unit_test(test_hashmap),
         // cmocka_unit_test(test_vrf),
-        // cmocka_unit_test(test_cmd),
+        cmocka_unit_test(test_cmdf),
         // cmocka_unit_test(test_sds),
         // cmocka_unit_test(test_linklist),
         // cmocka_unit_test(test_skiplist),
         // cmocka_unit_test(test_sev),
-        cmocka_unit_test(test_csv)
+        // cmocka_unit_test(test_csv)
         
     };
 

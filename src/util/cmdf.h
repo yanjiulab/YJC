@@ -171,6 +171,7 @@ CMDF_RETURN cmdf__default_do_command(const char* cmdname, cmdf_arglist* arglist)
 CMDF_RETURN cmdf__default_do_emptyline(cmdf_arglist* arglist /* Unused */);
 CMDF_RETURN cmdf__default_do_exit(cmdf_arglist* arglist /* Unused */);
 CMDF_RETURN cmdf__default_do_noop(cmdf_arglist* arglist /* Unused */);
+CMDF_RETURN cmdf__default_do_q(int, int);
 void cmdf__default_commandloop(void);
 
 /* Utility Functions */
@@ -353,7 +354,7 @@ void cmdf__pprint(size_t loffset, const char* const strtoprint) {
 }
 
 void cmdf__print_command_list(void) {
-    int i, printed;
+    int i, printed, offset;
     const struct cmdf_windowsize winsize = cmdf_get_window_size();
 
     /* Print documented commands */
@@ -367,7 +368,9 @@ void cmdf__print_command_list(void) {
             }
 
             /* Print command */
-            printed += fprintf(CMDF_STDOUT, "%s ", cmdf__entries[i].cmdname);
+            // printed += fprintf(CMDF_STDOUT, "%s ", cmdf__entries[i].cmdname);
+            offset = fprintf(CMDF_STDOUT, "%s\t", cmdf__entries[i].cmdname);
+            cmdf__pprint(offset, cmdf__entries[i].help);
         }
     }
 
@@ -437,6 +440,7 @@ void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
 #ifdef CMDF_READLINE_SUPPORT
     /* Set completion function */
     rl_attempted_completion_function = cmdf__command_name_completion;
+    rl_bind_key('?', cmdf__default_do_q);
 #endif
 }
 
@@ -713,6 +717,12 @@ CMDF_RETURN cmdf__default_do_exit(cmdf_arglist* arglist /* Unused */) {
 
 CMDF_RETURN cmdf__default_do_noop(cmdf_arglist* arglist /* Unused */) {
     return CMDF_OK;
+}
+
+CMDF_RETURN cmdf__default_do_q(int count, int key) {
+    cmdf__default_do_help(NULL);
+    rl_on_new_line();
+    return 0;
 }
 
 CMDF_RETURN cmdf__default_do_command(const char* cmdname, cmdf_arglist* arglist) {

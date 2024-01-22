@@ -21,8 +21,13 @@
 typedef enum { EVLOOP_STATUS_STOP,
                EVLOOP_STATUS_RUNNING } evloop_status_e;
 
-typedef void (*evtimer_cb)(struct evtimer*, void*);
-typedef void (*evio_cb)(int, fd_set*);
+typedef int EV_RETURN;
+typedef EV_RETURN (*evtimer_cb)(struct evtimer*, void*);
+typedef EV_RETURN (*evio_cb)(int, fd_set*);
+
+/* Error codes (for EV_RETURN) */
+#define EV_OK 1
+// #define EV_ERROR_* -1
 
 typedef struct evloop_s {
     evloop_status_e status;
@@ -30,9 +35,9 @@ typedef struct evloop_s {
     int max_ios;
     int nios;
     struct evio* ios;
-    fd_set rfds;    // select read fds
-    fd_set allset;  // select all fds
-    int nfds;       // the max fd
+    fd_set rfds;   // select read fds
+    fd_set allset; // select all fds
+    int nfds;      // the max fd
 
     // timers
     struct evtimer* timers;
@@ -58,6 +63,7 @@ typedef struct evtimer {
 evloop_t* evloop_new(int max);
 void evloop_free(evloop_t** pp);
 int evloop_run(evloop_t* loop);
+void evloop_stop(evloop_t* loop);
 
 // evtimer
 void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms);

@@ -88,7 +88,7 @@ void test_jhash();
 void test_base64();
 void test_args();
 void test_md5();
-void test_cmd();
+void test_cmdf();
 void test_sds();
 
 #endif  // !TEST_H

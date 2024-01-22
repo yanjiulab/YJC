@@ -43,6 +43,13 @@ enum { _LOG_TRACE,
 #define log_error(...) log_log(_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
 #define log_fatal(...) log_log(_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
+#define log_set_trace(level) log_set_level(_LOG_TRACE)
+#define log_set_debug(level) log_set_level(_LOG_DEBUG)
+#define log_set_info(level) log_set_level(_LOG_INFO)
+#define log_set_warn(level) log_set_level(_LOG_WARN)
+#define log_set_error(level) log_set_level(_LOG_ERROR)
+#define log_set_fatal(level) log_set_level(_LOG_FATAL)
+
 const char* log_level_string(int level);
 void log_set_lock(log_LockFn fn, void* udata);
 void log_set_level(int level);

@@ -30,14 +30,21 @@ char* str(const char* fmtstr, ...) {
 }
 
 int str2int(const char* string) {
+    if (!string)
+        return 0;
+
     char* endptr;
     errno = 0;
     long result = strtol(string, &endptr, 0);
+    if (endptr == string) {
+        fprintf(stderr, "No digits were found\n");
+        return 0;
+    }
     if (errno == ERANGE || result > INT_MAX || result < INT_MIN) {
-        err(str("'%s' is out of range", string));
+        fprintf(stderr, "Error: %s is out of range.\n", string);
     }
     if (*endptr != '\0') {
-        err(str("cannot parse '%s' as an integer", string));
+        fprintf(stderr, "Error: cannot parse '%s' as an integer.\n", string);
     }
     return (int)result;
 }
@@ -326,5 +333,3 @@ char* str_hex(char* buff, size_t bufsiz, const uint8_t* str, size_t num) {
 
     return buff;
 }
-
-

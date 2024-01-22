@@ -13,7 +13,8 @@
 #define _CRT_SECURE_NO_WARNINGS
 #define LIBCMDF_IMPL
 #define CMDF_READLINE_SUPPORT
-#include "cmd.h"
+
+#include "cmdf.h"
 #include "test.h"
 #include <stdio.h>
 
@@ -106,7 +107,7 @@ static CMDF_RETURN do_submenu1(cmdf_arglist* arglist) {
     return CMDF_OK;
 }
 
-void test_cmd(void) {
+void test_cmdf(void) {
     cmdf_init("libcmdf-test> ", PROG_INTRO, NULL, NULL, 0, 1);
 
     /* Register our custom commands */
