@@ -47,6 +47,20 @@ static EV_RETURN on_period_hello(evtimer_t* timer, void* arg) {
     return EV_OK;
 }
 
+static EV_RETURN on_accept(int fd) {
+    printf("helllll\n");
+    struct sockaddr_in cliaddr;
+    socklen_t clilen;
+    int conn;
+    clilen = sizeof(cliaddr);
+    conn = accept(fd, (struct sockaddr*)&cliaddr, &clilen);
+
+    FILE* f = fdopen(conn, "rw");
+    rl_instream = f;
+    char* buf = readline("tcp>");
+    printf("buf: %s", buf);
+}
+
 int main(int argc, char* argv[]) {
 
     /* Parse command line args */
@@ -66,7 +80,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    /* Parse ini config file. */
+    /* Parse ini config file */
     dictionary* ini = iniparser_load("config.ini");
     iniparser_dump(ini, stderr);
     // int i = iniparser_getint(ini, "sec:intkey", 0);
@@ -74,7 +88,7 @@ int main(int argc, char* argv[]) {
     // bool b = iniparser_getboolean(ini, "sec:boolkey", false);
     iniparser_freedict(ini);
 
-    /* Get program name. */
+    /* Get program name */
     char* cmd;
     if ((cmd = strrchr(argv[0], '/')) == NULL) {
         cmd = argv[0];
@@ -82,42 +96,69 @@ int main(int argc, char* argv[]) {
         cmd++;
     }
 
-    /* Program running in daemon mode. */
-    if (isdaemon) {
-        log_info("%s running in daemon mode!", cmd);
-        daemonize(cmd);
-    }
+    /* Check root privilege */
+    // uid_t uid = getuid();
+    // if (uid) {
+    //     log_warn("Please run %s in root privilege!", cmd);
+    //     return 0;
+    // }
 
-    /* Check if program is already running. */
-    if (already_running(cmd)) {
-        if (isdaemon)
-            syslog(LOG_ERR, "%s was already running!", cmd);
-        else
-            log_error("%s was already running!", cmd);
-        exit(EXIT_FAILURE);
-    }
+    // /* Program running in daemon mode */
+    // if (isdaemon) {
+    //     log_info("%s running in daemon mode!", cmd);
+    //     daemonize(cmd);
+    // }
 
-    /* Setting signals and clean */
-    if (signal(SIGINT, sig_int) == SIG_ERR) {
-        exit(EXIT_FAILURE);
-    }
+    // /* Check if program is already running. */
+    // if (already_running(cmd)) {
+    //     if (isdaemon)
+    //         syslog(LOG_ERR, "%s was already running!", cmd);
+    //     else
+    //         log_error("%s was already running!", cmd);
+    //     exit(EXIT_FAILURE);
+    // }
+
+    // /* Setting signals and clean */
+    // if (signal(SIGINT, sig_int) == SIG_ERR) {
+    //     exit(EXIT_FAILURE);
+    // }
+
+    // printf("in:%p, %p\n", stdin, rl_instream);
+    // printf("in:%p, %p\n", stdout, rl_outstream);
+    // FILE * f = fopen("log/app.log", "r");
+    // rl_instream = f;
+    // // rl_outstream = stdin;
 
     /* Start commandline loop for stdin */
-    thread_t cmd_th;
-    if (!isdaemon) {
-        cmdf_init(str("%s> ", cmd), PROG_INTRO, NULL, NULL, 0, 0);
-        cmdf_register_command(do_quit, "quit", "Quit the application");
-        cmdf_register_command(do_setlog, "log", "Set log debug level");
-        cmd_th = thread_create(cmdf_commandloop, NULL);
-    }
+    // thread_t cmd_th;
+    // if (!isdaemon) {
+    //     cmdf_init(str("%s> ", cmd), PROG_INTRO, NULL, NULL, 0, 0);
+    //     cmdf_register_command(do_quit, "quit", "Quit the application");
+    //     cmdf_register_command(do_setlog, "log", "Set log debug level");
+    //     cmd_th = thread_create(cmdf_commandloop, NULL);
+    // }
 
     /* Main loop */
     loop = evloop_new(10);
-    evtimer_add(loop, on_period_hello, "World", 1000);
+    // evtimer_add(loop, on_period_hello, "World", 1000);
+
+    int tcp_fd;
+    struct sockaddr_in addr;
+    tcp_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    bzero(&addr, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_port = htons(6688);
+    bind(tcp_fd, (struct sockaddr*)&addr, sizeof(addr));
+    listen(tcp_fd, 10);
+    evio_add(loop, tcp_fd, on_accept);
+    log_info("tcp:%d", tcp_fd);
+    
     evloop_run(loop);
 
     /* Clean and exit */
-    printf("\nClean and exit ...\n");
+    printf("\nClean ...\n");
+    printf("...\n");
     printf("\nBye.\n");
 
     return 0;

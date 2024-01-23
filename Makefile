@@ -19,7 +19,7 @@ endif
 # C Compiler
 CC = gcc
 # Compiler Flags
-# CFLAGS =  -std=c99 #-Wall -g3
+CFLAGS = -g3 #-std=c99 #-Wall -g3
 # Test Compiler flags
 # TCFLAGS = -O2 -g3 -DNETLINK_DEBUG #-DPRINT_DEBUG 
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3

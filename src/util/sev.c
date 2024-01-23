@@ -312,6 +312,8 @@ int evloop_run(evloop_t* loop) {
             continue;
         }
 
+        // printf("n: %d\n", n);
+
         do {
             /*
              * If the select timed out, then there's no other
