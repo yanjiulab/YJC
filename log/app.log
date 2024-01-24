@@ -1,2 +1,47 @@
-help
-help
+2024-01-24 18:38:56 INFO  ./src/app/app.c:158: Set file log level: DEBUG
+2024-01-24 18:38:56 INFO  ./src/app/app.c:176: Create an event loop
+2024-01-24 18:38:56 INFO  ./src/app/app.c:180: Add a timer event
+2024-01-24 18:38:56 INFO  ./src/app/app.c:195: Start cmd framework
+2024-01-24 18:38:56 INFO  ./src/app/app.c:209: Run event loop
+2024-01-24 18:39:01 INFO  ./src/app/app.c:45: Hello World 1
+2024-01-24 18:39:05 INFO  ./src/app/app.c:82: client [127.0.0.1:35368] connected console.
+
+2024-01-24 18:39:05 INFO  ./src/app/app.c:55: thread 140624748709440 start
+2024-01-24 18:39:06 INFO  ./src/app/app.c:45: Hello World 2
+2024-01-24 18:39:11 INFO  ./src/app/app.c:45: Hello World 3
+2024-01-24 18:39:16 INFO  ./src/app/app.c:45: Hello World 4
+2024-01-24 18:39:21 INFO  ./src/app/app.c:45: Hello World 5
+2024-01-24 18:39:26 INFO  ./src/app/app.c:64: thread 140624748709440 exit
+2024-01-24 18:39:26 INFO  ./src/app/app.c:45: Hello World 6
+2024-01-24 18:39:31 INFO  ./src/app/app.c:45: Hello World 7
+2024-01-24 18:39:36 INFO  ./src/app/app.c:45: Hello World 8
+2024-01-24 18:39:41 INFO  ./src/app/app.c:45: Hello World 9
+2024-01-24 18:39:46 INFO  ./src/app/app.c:45: Hello World 10
+2024-01-24 18:39:51 INFO  ./src/app/app.c:45: Hello World 11
+2024-01-24 18:39:56 INFO  ./src/app/app.c:45: Hello World 12
+2024-01-24 18:40:01 INFO  ./src/app/app.c:45: Hello World 13
+2024-01-24 18:40:06 INFO  ./src/app/app.c:45: Hello World 14
+2024-01-24 18:40:11 INFO  ./src/app/app.c:45: Hello World 15
+2024-01-24 18:40:16 INFO  ./src/app/app.c:45: Hello World 16
+2024-01-24 18:40:21 INFO  ./src/app/app.c:45: Hello World 17
+2024-01-24 18:40:26 INFO  ./src/app/app.c:45: Hello World 18
+2024-01-24 18:40:31 INFO  ./src/app/app.c:45: Hello World 19
+2024-01-24 18:40:36 INFO  ./src/app/app.c:45: Hello World 20
+2024-01-24 18:40:42 INFO  ./src/app/app.c:45: Hello World 21
+2024-01-24 18:40:47 INFO  ./src/app/app.c:45: Hello World 22
+2024-01-24 18:40:52 INFO  ./src/app/app.c:45: Hello World 23
+2024-01-24 18:40:57 INFO  ./src/app/app.c:45: Hello World 24
+2024-01-24 18:41:01 INFO  ./src/app/app.c:45: Hello World 25
+2024-01-24 18:41:07 INFO  ./src/app/app.c:45: Hello World 26
+2024-01-24 18:41:11 INFO  ./src/app/app.c:45: Hello World 27
+2024-01-24 18:41:17 INFO  ./src/app/app.c:45: Hello World 28
+2024-01-24 18:41:22 INFO  ./src/app/app.c:45: Hello World 29
+2024-01-24 18:41:27 INFO  ./src/app/app.c:45: Hello World 30
+2024-01-24 18:41:32 INFO  ./src/app/app.c:45: Hello World 31
+2024-01-24 18:41:37 INFO  ./src/app/app.c:45: Hello World 32
+2024-01-24 18:41:42 INFO  ./src/app/app.c:45: Hello World 33
+2024-01-24 18:41:47 INFO  ./src/app/app.c:45: Hello World 34
+2024-01-24 18:41:52 INFO  ./src/app/app.c:45: Hello World 35
+2024-01-24 18:41:55 INFO  ./src/app/app.c:82: client [127.0.0.1:39526] connected console.
+
+2024-01-24 18:41:55 INFO  ./src/app/app.c:55: thread 140624730781248 start

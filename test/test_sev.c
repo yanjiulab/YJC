@@ -41,7 +41,7 @@ static EV_RETURN period_hello(evtimer_t* timer, void* arg) {
 
 void test_sev() {
     // For stdin command loop
-    cmdf_init("libcmdf-test> ", PROG_INTRO, NULL, NULL, 0, 1);
+    cmdf_init("libcmdf-test> ", PROG_INTRO, NULL, NULL, 0, 1, 0, 0);
     cmdf_register_command(do_hello, "hello", NULL);
     cmdf_register_command(do_quiet, "quiet", NULL);
     cmdf_register_command(do_noisy, "noisy", NULL);

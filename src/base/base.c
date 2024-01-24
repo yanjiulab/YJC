@@ -342,9 +342,9 @@ void daemonize(const char* cmd) {
      * Change the current working directory to the root so
      * we won't prevent file systems from being unmounted.
      */
-    if (chdir("/") < 0) {
-        err_quit("%s: can't change directory to /", cmd);
-    }
+    // if (chdir("/") < 0) {
+    //     err_quit("%s: can't change directory to /", cmd);
+    // }
 
     /*
      * Close all open file descriptors.

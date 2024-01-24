@@ -82,11 +82,11 @@
 
 /* STDIN and STDOUT */
 #ifndef CMDF_STDIN
-#define CMDF_STDIN stdin
+#define CMDF_STDIN cmdf__settings_stack.top->cmdf_stdin
 #endif
 
 #ifndef CMDF_STDOUT
-#define CMDF_STDOUT stdout
+#define CMDF_STDOUT cmdf__settings_stack.top->cmdf_stdout
 #endif
 
 /* =================================================================================== */
@@ -136,8 +136,8 @@ void cmdf__print_command_list();
 
 /* Init/Free functions */
 void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
-               const char* undoc_header, char ruler, int use_default_exit);
-#define cmdf_init_quick() cmdf_init(NULL, NULL, NULL, NULL, 0, 1)
+               const char* undoc_header, char ruler, int use_default_exit, FILE* in, FILE* out);
+#define cmdf_init_quick() cmdf_init(NULL, NULL, NULL, NULL, 0, 1, 0, 0);
 #define cmdf_quit ;
 
 /* Public interface functions */
@@ -220,6 +220,11 @@ struct cmdf__settings_s {
 
     /* Flags */
     int exit_flag;
+
+    /* in, out, err */
+    FILE* cmdf_stdin;
+    FILE* cmdf_stdout;
+    FILE* cmdf_stderr;
 
     /* Callback pointers */
     cmdf_command_callback do_emptyline;
@@ -398,7 +403,7 @@ void cmdf__print_command_list(void) {
 
 /* Init/Free functions */
 void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
-               const char* undoc_header, char ruler, int use_default_exit) {
+               const char* undoc_header, char ruler, int use_default_exit, FILE* in, FILE* out) {
     /* Create new settings to push them to stack */
     struct cmdf__settings_s settings;
     memset((void*)&settings, 0, sizeof(struct cmdf__settings_s));
@@ -410,6 +415,8 @@ void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
     settings.undoc_header = undoc_header ? undoc_header : cmdf__default_undoc_header;
     settings.ruler = ruler ? ruler : cmdf__default_ruler;
     settings.doc_cmds = settings.undoc_cmds = settings.entry_count = 0;
+    settings.cmdf_stdin = in ? in : stdin;
+    settings.cmdf_stdout = out ? out : stdout;
 
     /* If not first - look for actual entry_start index */
     if (cmdf__settings_stack.top != NULL)
@@ -435,7 +442,7 @@ void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
 
     /* Register exit callback, if required */
     if (use_default_exit)
-        cmdf_register_command(cmdf__default_do_exit, "exit", "Quit the application");
+        cmdf_register_command(cmdf__default_do_exit, "exit", "Exit the cmd framework");
 
 #ifdef CMDF_READLINE_SUPPORT
     /* Set completion function */
@@ -750,7 +757,7 @@ void cmdf__default_commandloop(void) {
 
     /* Print intro, if any. */
     if (cmdf__settings_stack.top->intro)
-        printf("\n%s\n\n", cmdf__settings_stack.top->intro);
+        fprintf(CMDF_STDOUT, "\n%s\n\n", cmdf__settings_stack.top->intro);
 
     while (!cmdf__settings_stack.top->exit_flag) {
 /* Print prompt and get input */

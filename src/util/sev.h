@@ -16,14 +16,14 @@
 #define SEV_POLL 1
 #define SEV_EPOLL 2
 
-#define event_loop(ev) (((struct evtimer*)(ev))->loop)
+#define evloop(ev) (((evbase_t*)(ev))->loop)
 
 typedef enum { EVLOOP_STATUS_STOP,
                EVLOOP_STATUS_RUNNING } evloop_status_e;
 
 typedef int EV_RETURN;
-typedef EV_RETURN (*evtimer_cb)(struct evtimer*, void*);
-typedef EV_RETURN (*evio_cb)(int, fd_set*);
+typedef EV_RETURN (*evtimer_cb)(struct evtimer*);
+typedef EV_RETURN (*evio_cb)(struct evio*);
 
 /* Error codes (for EV_RETURN) */
 #define EV_OK 1
@@ -32,25 +32,38 @@ typedef EV_RETURN (*evio_cb)(int, fd_set*);
 typedef struct evloop_s {
     evloop_status_e status;
     // ios
-    int max_ios;
-    int nios;
-    struct evio* ios;
-    fd_set rfds;   // select read fds
-    fd_set allset; // select all fds
-    int nfds;      // the max fd
+    int max_ios;      // max io number
+    int nios;         // number of ios
+    struct evio* ios; // registed ios
+    fd_set rfds;      // select read fds
+    fd_set allset;    // select all fds
+    int nfds;         // the max number of fd
 
     // timers
     struct evtimer* timers;
 
 } evloop_t;
 
-struct evio {
+#define EVENT_FIELDS \
+    evloop_t* loop;
+
+// uint64_t event_id;
+// void* userdata;
+// void* privdata;
+// int priority;
+
+typedef struct evbase {
+    EVENT_FIELDS
+} evbase_t;
+
+typedef struct evio {
+    EVENT_FIELDS
     int fd;       /* File descriptor				 */
     evio_cb func; /* Function to call with &fd_set */
-};
+} evio_t;
 
 typedef struct evtimer {
-    evloop_t* loop;
+    EVENT_FIELDS
     struct evtimer* next; /* next timer event */
     int id;
     evtimer_cb func; /* function to call */

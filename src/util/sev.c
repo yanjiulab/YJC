@@ -55,7 +55,6 @@ void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms
         while (ptr) {
             if (etimeout_ms < ptr->time) {
                 /* right place */
-
                 node->next = ptr;
                 if (ptr == loop->timers)
                     loop->timers = node;
@@ -153,7 +152,7 @@ void evtimer_callout(evloop_t* loop, int elapsed_time) {
     while (expQ) {
         ptr = expQ;
         if (ptr->func) {
-            ptr->func(ptr, ptr->data);
+            ptr->func(ptr);
         }
         expQ = expQ->next;
         free(ptr);
@@ -241,13 +240,17 @@ int evio_add(evloop_t* loop, int fd, evio_cb cb) {
     if (loop->nios >= loop->max_ios) {
         return -1;
     }
+    loop->ios[loop->nios].loop = loop;
     loop->ios[loop->nios].fd = fd;
-    loop->ios[loop->nios++].func = cb;
+    loop->ios[loop->nios].func = cb;
 
-    FD_SET(loop->ios[loop->nios].fd, &loop->allset);
+    FD_SET(fd, &loop->allset);
+
     if (loop->ios[loop->nios].fd >= loop->nfds) {
         loop->nfds = loop->ios[loop->nios].fd + 1;
     }
+
+    loop->nios++;
 
     return 0;
 }
@@ -312,8 +315,6 @@ int evloop_run(evloop_t* loop) {
             continue;
         }
 
-        // printf("n: %d\n", n);
-
         do {
             /*
              * If the select timed out, then there's no other
@@ -343,7 +344,8 @@ int evloop_run(evloop_t* loop) {
         if (n > 0) {
             for (i = 0; i < loop->nios; i++) {
                 if (FD_ISSET(loop->ios[i].fd, &loop->rfds)) {
-                    (*loop->ios[i].func)(loop->ios[i].fd, &loop->rfds);
+                    // (*loop->ios[i].func)(&(loop->ios[i]));
+                    (*loop->ios[i].func)(loop->ios+i);
                 }
             }
         }

@@ -48,7 +48,7 @@ static CMDF_RETURN do_printargs(cmdf_arglist* arglist) {
 }
 
 static CMDF_RETURN do_submenu(cmdf_arglist* arglist) {
-    cmdf_init("libcmdf-test/submenu> ", SUBMENU_INTRO, NULL, NULL, 0, 1);
+    cmdf_init("libcmdf-test/submenu> ", SUBMENU_INTRO, NULL, NULL, 0, 1, 0, 0);
 
     /* Register our custom commands */
     cmdf_register_command(do_hello, "sub-hello1", NULL);
@@ -88,7 +88,7 @@ static CMDF_RETURN do_submenu(cmdf_arglist* arglist) {
 }
 
 static CMDF_RETURN do_submenu1(cmdf_arglist* arglist) {
-    cmdf_init("libcmdf-test/submenu1> ", SUBMENU_INTRO, NULL, NULL, 0, 1);
+    cmdf_init("libcmdf-test/submenu1> ", SUBMENU_INTRO, NULL, NULL, 0, 1, 0, 0);
 
     /* Register our custom commands */
     cmdf_register_command(do_hello, "sub-hello1", NULL);
@@ -108,7 +108,7 @@ static CMDF_RETURN do_submenu1(cmdf_arglist* arglist) {
 }
 
 void test_cmdf(void) {
-    cmdf_init("libcmdf-test> ", PROG_INTRO, NULL, NULL, 0, 1);
+    cmdf_init("libcmdf-test> ", PROG_INTRO, NULL, NULL, 0, 1, 0, 0);
 
     /* Register our custom commands */
 
