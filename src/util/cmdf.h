@@ -138,7 +138,9 @@ void cmdf__print_command_list();
 void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
                const char* undoc_header, char ruler, int use_default_exit, FILE* in, FILE* out);
 #define cmdf_init_quick() cmdf_init(NULL, NULL, NULL, NULL, 0, 1, 0, 0);
-#define cmdf_quit ;
+#define cmdf_quit                                                          \
+    memset((void*)&cmdf__settings_stack, 0, sizeof(cmdf__settings_stack)); \
+    memset((void*)&cmdf__entries, 0, sizeof(cmdf__entries));
 
 /* Public interface functions */
 void cmdf_commandloop(void);
@@ -419,8 +421,9 @@ void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
     settings.cmdf_stdout = out ? out : stdout;
 
     /* If not first - look for actual entry_start index */
-    if (cmdf__settings_stack.top != NULL)
+    if (cmdf__settings_stack.top != NULL) {
         settings.entry_start = cmdf__settings_stack.top->entry_start + cmdf__settings_stack.top->entry_count;
+    }
 
     /* Set command callbacks */
     settings.do_command = cmdf__default_do_command;

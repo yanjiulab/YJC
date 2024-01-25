@@ -51,7 +51,6 @@ static EV_RETURN on_period_hello(evtimer_t* timer) {
     return EV_OK;
 }
 
-int flag = 1;
 THREAD_ROUTINE(backend_cmdf) {
     log_info("thread %lu start", thread_id());
     int fd = (int)userdata;
@@ -62,6 +61,7 @@ THREAD_ROUTINE(backend_cmdf) {
     cmdf_register_command(do_quit, "quit", "Quit the application");
     cmdf_register_command(do_setlog, "log", "Set log debug level");
     cmdf_commandloop();
+    cmdf_quit
     log_info("thread %lu exit", thread_id());
 }
 
@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
 
     /* Start commandline loop */
     log_info("Start cmd framework");
-    if (isdaemon) {
+    if (!isdaemon) {
         int tcp_fd;
         tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
         bind(tcp_fd, (struct sockaddr*)&addr, sizeof(addr));
