@@ -2,6 +2,9 @@
 #include "test.h"
 
 void test_str() {
+
+    // str str;
+
     char *s = str("Hello %s\n", "World");
     printf(s);
     assert(str_hash("hello") == str_hash("hello"));

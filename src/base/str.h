@@ -1,5 +1,5 @@
-#ifndef STR_H_
-#define STR_H_
+#ifndef _STR_H_
+#define _STR_H_
 
 #include <assert.h>
 #include <ctype.h>
@@ -14,6 +14,31 @@
 #include <string.h>
 #include <sys/time.h>
 #include <time.h>
+
+// new 
+typedef char* string_t;
+
+/* String allocator selection.
+ *
+ * This file is used in order to change the String allocator at compile time.
+ * Just define the following defines to what you want to use. Also add
+ * the include of your alternate allocator if needed (not needed in order
+ * to use the default libc allocator). */
+
+#define s_malloc malloc
+#define s_realloc realloc
+#define s_free free
+
+
+
+
+
+
+
+
+
+// old
+
 
 #define strmatch(s1, s2) (strncmp((s1), (s2), strlen((s2))) == 0)
 #define STR_SPLIT(in, out, sep) str_split(in, out, sizeof(out) / sizeof(out[0]), sep)
