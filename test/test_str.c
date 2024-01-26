@@ -33,26 +33,3 @@ void test_str() {
     // printf("%s\n", str_lower("dfWOJFDSS*FQ"));
     // printf("%s\n", str_reverse("sdfSfdSIDFh"));
 }
-
-void test_str_split() {
-    char in[] = "www.baidu...com.www.baidu.com.www.baidu.com.www.baidu.com.www.baidu.com";
-    char *out[40];
-    int n = STR_SPLIT(in, out, ".");
-    printf("split number %d\n", n);
-
-    for (int i = 0; i < n; i++) {
-        printf("%d:%s\n", i, out[i]);
-    }
-}
-
-void test_str_trim() {
-    char testStr1[] = "     We like helping out people          ";
-    char testStr2[] = "     We like helping out people          ";
-    char testStr3[] = "     We like helping out people          ";
-    printf("|%s|\n", testStr1);
-    printf("|%s|\n", str_ltrim(testStr1, ' '));
-    printf("|%s|\n", testStr2);
-    printf("|%s|\n", str_rtrim(testStr2, ' '));
-    printf("|%s|\n", testStr3);
-    printf("|%s|\n", str_trim(testStr3, ' '));
-}
