@@ -337,7 +337,7 @@ static int callback(void *data, int argc, char **argv, char **colnames) {
 
 int db_table_dump(const char *table_name) {
     struct sqlite3_stmt *ss;
-    const char *sql = str("SELECT * FROM %s ;", table_name);
+    const char *sql = str_fmt("SELECT * FROM %s ;", table_name);
     printf("sqlite> %s\n", sql);
     if (sqlite3_exec(dbp, sql, callback, NULL, NULL) != SQLITE_OK) {
         log_warn("%s: failed to execute statement(s): %s", __func__, sqlite3_errmsg(dbp));

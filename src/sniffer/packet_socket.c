@@ -132,9 +132,9 @@ void packet_socket_set_filter(struct packet_socket* psock,
 void packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
 
     // check filter string based on tcpdump command
-    char* command = str("tcpdump -i lo %s -ddd", fs);
+    char* command = str_fmt("tcpdump -i lo %s -ddd", fs);
     char* result = NULL;
-    int status = system(str("%s > /dev/null 2>&1", command));
+    int status = system(str_fmt("%s > /dev/null 2>&1", command));
     if (status != 0) {
         log_debug("error filter string '%s'", fs);
         return;

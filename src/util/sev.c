@@ -1,6 +1,5 @@
 #include "sev.h"
 
-#include "log.h"
 /* Definitions */
 static int id = 0;
 

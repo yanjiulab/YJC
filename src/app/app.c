@@ -68,7 +68,7 @@ THREAD_ROUTINE(backend_cmdf) {
 THREAD_ROUTINE(frontend_cmdf) {
     char* cmd = (char*)userdata;
     log_info("thread %lu start", thread_id());
-    cmdf_init(str("%s> ", cmd), PROG_INTRO, NULL, NULL, 0, 0, 0, 0);
+    cmdf_init(str_fmt("%s> ", cmd), PROG_INTRO, NULL, NULL, 0, 0, 0, 0);
     cmdf_register_command(do_quit, "quit", "Quit the application");
     cmdf_register_command(do_setlog, "log", "Set log debug level");
     cmdf_commandloop();

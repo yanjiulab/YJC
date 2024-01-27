@@ -41,16 +41,16 @@ extern const char* STR_NOINIT;
 #include <stdint.h>
 #include <sys/types.h>
 
-#include <assert.h>
-#include <ctype.h>
-#include <errno.h>
-#include <limits.h>
-#include <stddef.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <string.h>
-#include <sys/time.h>
-#include <time.h>
+// #include <assert.h>
+// #include <ctype.h>
+// #include <errno.h>
+// #include <limits.h>
+// #include <stddef.h>
+// // #include <stdio.h>
+// // #include <stdlib.h>
+// // #include <string.h>
+// #include <sys/time.h>
+// #include <time.h>
 
 typedef char* string_t;
 
@@ -237,6 +237,7 @@ static inline void str_setalloc(string_t s, size_t newlen) {
 string_t str_newlen(const void* init, size_t initlen);
 string_t str_new(const char* init);
 string_t str_empty(void);
+string_t str_fmt(const char* fmt, ...);
 string_t str_dup(const string_t s);
 void str_free(string_t s);
 string_t str_growzero(string_t s, size_t len);
@@ -290,7 +291,7 @@ bool str_contains(const char* str, const char* sub);
 
 // Prints to an automatically-allocated string. Returns NULL if an encoding error occurs or if sufficient memory cannot
 // be allocated.
-char* str(const char* fmtstr, ...);
+
 // Attempts to parse a string as an integer value, exiting on failure.
 int str2int(const char* string);
 // Attempts to parse a string as a double value, exiting on failure.

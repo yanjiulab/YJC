@@ -33,6 +33,7 @@
 #include "str.h"
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -155,6 +156,18 @@ string_t str_empty(void) {
 string_t str_new(const char* init) {
     size_t initlen = (init == NULL) ? 0 : strlen(init);
     return str_newlen(init, initlen);
+}
+
+/* Create a new string_t string with the printf-alike format. */
+// TODO: support custom fmt
+string_t str_fmt(const char* fmt, ...) {
+    va_list ap;
+    char* t;
+    string_t s = str_empty();
+    va_start(ap, fmt);
+    t = str_catvprintf(s, fmt, ap);
+    va_end(ap);
+    return t;
 }
 
 /* Duplicate an string_t string. */
@@ -1219,35 +1232,6 @@ string_t str_joinstr(string_t* argv, int argc, const char* sep, size_t seplen) {
 
 /* Original char * API */
 
-// Prints a message to stderr and exits with a non-zero error code.
-static void err(const char* msg) {
-    fprintf(stderr, "Error: %s.\n", msg);
-    exit(1);
-}
-
-char* str(const char* fmtstr, ...) {
-    va_list args;
-    va_start(args, fmtstr);
-
-    int len = vsnprintf(NULL, 0, fmtstr, args);
-    if (len < 0) {
-        return NULL;
-    }
-
-    va_end(args);
-    char* string = malloc(len + 1);
-
-    if (string == NULL) {
-        return NULL;
-    }
-    va_start(args, fmtstr);
-
-    vsnprintf(string, len + 1, fmtstr, args);
-
-    va_end(args);
-    return string;
-}
-
 int str2int(const char* string) {
     if (!string)
         return 0;
@@ -1273,10 +1257,10 @@ double str2double(const char* string) {
     errno = 0;
     double result = strtod(string, &endptr);
     if (errno == ERANGE) {
-        err(str("'%s' is out of range", string));
+        fprintf(stderr, "'%s' is out of range", string);
     }
     if (*endptr != '\0') {
-        err(str("cannot parse '%s' as a floating-point value", string));
+        fprintf(stderr, "cannot parse '%s' as a floating-point value", string);
     }
     return result;
 }
