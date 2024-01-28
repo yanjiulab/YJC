@@ -1,3 +1,16 @@
+/**
+ * @file app.c
+ * @author Yanjiu Li (liyanjiu@outlook.com)
+ * @brief 
+ * @version 0.1
+ * @date 2024-01-28
+ * 
+ * @copyright Copyright (c) 2024
+ * 
+ * BUGS:
+ * 1. 退出时的处理，有卡顿。涉及到多线程和事件循环对信号的处理流程优化。
+ */
+
 #include "base.h"
 #include "iniparser.h"
 #include "log.h"
@@ -59,7 +72,7 @@ THREAD_ROUTINE(backend_cmdf) {
     rl_outstream = f;
     cmdf_init("tcp> ", PROG_INTRO, NULL, NULL, 0, 1, f, f);
     cmdf_register_command(do_quit, "quit", "Quit the application");
-    cmdf_register_command(do_setlog, "log", "Set log debug level");
+    cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");
     cmdf_commandloop();
     cmdf_quit
     log_info("thread %lu exit", thread_id());
@@ -69,8 +82,9 @@ THREAD_ROUTINE(frontend_cmdf) {
     char* cmd = (char*)userdata;
     log_info("thread %lu start", thread_id());
     cmdf_init(str_fmt("%s> ", cmd), PROG_INTRO, NULL, NULL, 0, 0, 0, 0);
+    // cmdf_init("ab >", PROG_INTRO, NULL, NULL, 0, 0, 0, 0);
     cmdf_register_command(do_quit, "quit", "Quit the application");
-    cmdf_register_command(do_setlog, "log", "Set log debug level");
+    cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");
     cmdf_commandloop();
     log_info("thread %lu exit", thread_id());
 }
@@ -193,8 +207,8 @@ int main(int argc, char* argv[]) {
     evio_add(loop, udp_fd, on_udp);
 
     /* Start commandline loop */
-    log_info("Start cmd framework");
-    if (!isdaemon) {
+    if (isdaemon) {
+        log_info("Start cmd framework backend mode");
         int tcp_fd;
         tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
         bind(tcp_fd, (struct sockaddr*)&addr, sizeof(addr));
@@ -203,6 +217,7 @@ int main(int argc, char* argv[]) {
         setsockopt(tcp_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(int));
         evio_add(loop, tcp_fd, on_accept);
     } else {
+        log_info("Start cmd framework frontend mode");
         thread_create(frontend_cmdf, cmd);
     }
 

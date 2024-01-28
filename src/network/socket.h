@@ -24,9 +24,6 @@
 
 static inline int socket_errno() { return errno; }
 EXPORT const char* socket_strerror(int err);
-
-#define blocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
-#define nonblocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
 static inline int closesocket(int sockfd) { return close(sockfd); }
 
 #ifndef SAFE_CLOSESOCKET
@@ -121,6 +118,11 @@ EXPORT int ConnectUnixTimeout(const char* path,
 
 EXPORT int Socketpair(int family, int type, int protocol, int sv[2]);
 
+/************************** Socket Option API ***************************************/
+
+#define blocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
+#define nonblocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
+
 static inline int tcp_nodelay(int sockfd, int on DEFAULT(1)) {
     return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on,
                       sizeof(int));
@@ -139,14 +141,12 @@ static inline int tcp_nopush(int sockfd, int on DEFAULT(1)) {
 }
 
 static inline int tcp_keepalive(int sockfd, int on DEFAULT(1), int delay DEFAULT(60)) {
-    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on,
-                   sizeof(int)) != 0) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on, sizeof(int)) != 0) {
         return errno;
     }
 
 #ifdef TCP_KEEPALIVE
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPALIVE, (const char*)&delay,
-                      sizeof(int));
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPALIVE, (const char*)&delay, sizeof(int));
 #elif defined(TCP_KEEPIDLE)
     // TCP_KEEPIDLE     => tcp_keepalive_time
     // TCP_KEEPCNT      => tcp_keepalive_probes
@@ -166,8 +166,7 @@ static inline int udp_broadcast(int sockfd, int on DEFAULT(1)) {
 // send timeout
 static inline int so_sndtimeo(int sockfd, int timeout) {
 #ifdef OS_WIN
-    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout,
-                      sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(int));
 #else
     struct timeval tv = {timeout / 1000, (timeout % 1000) * 1000};
     return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
@@ -177,8 +176,7 @@ static inline int so_sndtimeo(int sockfd, int timeout) {
 // recv timeout
 static inline int so_rcvtimeo(int sockfd, int timeout) {
 #ifdef OS_WIN
-    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout,
-                      sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(int));
 #else
     struct timeval tv = {timeout / 1000, (timeout % 1000) * 1000};
     return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
@@ -187,14 +185,12 @@ static inline int so_rcvtimeo(int sockfd, int timeout) {
 
 // send buffer size
 static inline int so_sndbuf(int sockfd, int len) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (const char*)&len,
-                      sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (const char*)&len, sizeof(int));
 }
 
 // recv buffer size
 static inline int so_rcvbuf(int sockfd, int len) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&len,
-                      sizeof(int));
+    return setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&len, sizeof(int));
 }
 
 static inline int so_reuseaddr(int sockfd, int on DEFAULT(1)) {
