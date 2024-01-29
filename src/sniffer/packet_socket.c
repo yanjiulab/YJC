@@ -19,7 +19,7 @@ static void set_receive_buffer_size(int fd, int bytes) {
 int verbose_popen(char* cmd, char** rst) {
     int ret = -1;
     char cmd_buff[128] = {0};
-    char rst_buff[128]; //= {0};
+    char rst_buff[128];  //= {0};
     strcpy(cmd_buff, cmd);
     FILE* ptr;
     if ((ptr = popen(cmd, "r")) != NULL) {
@@ -69,14 +69,15 @@ static void packet_socket_setup(struct packet_socket* psock) {
         exit(EXIT_FAILURE);
     }
 
-    psock->index = if_nametoindex(psock->name);
-    if (psock->index == 0) {
-        perror("if_nametoindex");
-        exit(EXIT_FAILURE);
+    if (psock->name) {
+        psock->index = if_nametoindex(psock->name);
+        if (psock->index == 0) {
+            perror("if_nametoindex");
+            exit(EXIT_FAILURE);
+        }
+        log_debug("device index: %s -> %d", psock->name, psock->index);
+        bind_to_interface(psock->packet_fd, psock->index);
     }
-    log_debug("device index: %s -> %d", psock->name, psock->index);
-
-    bind_to_interface(psock->packet_fd, psock->index);
 
     set_receive_buffer_size(psock->packet_fd, PACKET_SOCKET_RCVBUF_BYTES);
 
@@ -89,7 +90,7 @@ static void packet_socket_setup(struct packet_socket* psock) {
 struct packet_socket* packet_socket_new(const char* device_name) {
     struct packet_socket* psock = calloc(1, sizeof(struct packet_socket));
 
-    psock->name = strdup(device_name);
+    psock->name = device_name ? strdup(device_name) : NULL;
     psock->packet_fd = -1;
 
     packet_socket_setup(psock);
@@ -130,7 +131,6 @@ void packet_socket_set_filter(struct packet_socket* psock,
 }
 
 void packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
-
     // check filter string based on tcpdump command
     char* command = str_fmt("tcpdump -i lo %s -ddd", fs);
     char* result = NULL;
@@ -246,7 +246,7 @@ int packet_socket_receive(struct packet_socket* psock,
      * buffer before we bind the packet socket to the tun
      * device.
      */
-    if (from.sll_ifindex != psock->index) {
+    if ((psock->index) && (from.sll_ifindex != psock->index)) {
         log_debug("not correct index (%d)", from.sll_ifindex);
         return STATUS_ERR;
     }

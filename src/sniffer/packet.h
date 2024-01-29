@@ -43,6 +43,9 @@ enum packet_layer_t {
     PACKET_LAYER_MAX
 };
 
+typedef struct packet packet_t;
+typedef struct packet_list packet_list_t;
+
 /* Maximum number of headers. */
 #define PACKET_MAX_HEADERS 6
 

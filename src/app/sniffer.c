@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     hread(loop, 0, buf, sizeof(buf), on_stdin);
 
     // t
-    psock = packet_socket_new("ens33");
+    psock = packet_socket_new(NULL);
     pf = pcap_open("build/a.pcap");
     char rbuf[PACKET_READ_BYTES];
     hread(loop, psock->packet_fd, rbuf, sizeof(rbuf), on_packet_socket);
