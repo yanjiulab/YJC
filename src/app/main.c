@@ -53,8 +53,32 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
     }
 }
 
+void on_recvfrom(eio_t* io, void* buf, int readbytes) {
+    printf("on_recvfrom fd=%d readbytes=%d\n", eio_fd(io), readbytes);
+    char localaddrstr[SOCKADDR_STRLEN] = {0};
+    char peeraddrstr[SOCKADDR_STRLEN] = {0};
+    printf("[%s] <=> [%s]\n",
+           SOCKADDR_STR(eio_localaddr(io), localaddrstr),
+           SOCKADDR_STR(eio_peeraddr(io), peeraddrstr));
+
+    char* str = (char*)buf;
+    printf("< %.*s", readbytes, str);
+}
+
+void on_recvfrom2(eio_t* io, void* buf, int readbytes) {
+    printf("on_recvfrom2 fd=%d readbytes=%d\n", eio_fd(io), readbytes);
+    char localaddrstr[SOCKADDR_STRLEN] = {0};
+    char peeraddrstr[SOCKADDR_STRLEN] = {0};
+    printf("[%s] <=> [%s]\n",
+           SOCKADDR_STR(eio_localaddr(io), localaddrstr),
+           SOCKADDR_STR(eio_peeraddr(io), peeraddrstr));
+
+    char* str = (char*)buf;
+    printf("< %.*s", readbytes, str);
+}
+
 int main(int argc, char* argv[]) {
-    
+
     printf("%s", DEFAULT_MOTD);
     // memcheck atexit
     MEMCHECK;
@@ -62,17 +86,17 @@ int main(int argc, char* argv[]) {
     eloop_t* loop = eloop_new(0);
 
     // test idle and priority
-    for (int i = EVENT_LOWEST_PRIORITY; i <= EVENT_HIGHEST_PRIORITY; ++i) {
-        eidle_t* idle = eidle_add(loop, on_idle, 1); // repeate times: 1
-        event_set_priority(idle, i);
-    }
+    // for (int i = EVENT_LOWEST_PRIORITY; i <= EVENT_HIGHEST_PRIORITY; ++i) {
+    //     eidle_t* idle = eidle_add(loop, on_idle, 1); // repeate times: 1
+    //     event_set_priority(idle, i);
+    // }
 
     // test timer timeout
-    printf("now: %llu\n", LLU(eloop_now(loop)));
-    for (int i = 1; i <= 3; ++i) {
-        etimer_t* timer = etimer_add(loop, on_timer, i * 1000, 2);
-        event_set_userdata(timer, (void*)(intptr_t)i);
-    }
+    // printf("now: %llu\n", LLU(eloop_now(loop)));
+    // for (int i = 1; i <= 3; ++i) {
+    //     etimer_t* timer = etimer_add(loop, on_timer, i * 1000, 2);
+    //     event_set_userdata(timer, (void*)(intptr_t)i);
+    // }
 
     // test nonblock stdin
     printf("input 'quit' to quit loop\n");
@@ -80,7 +104,25 @@ int main(int argc, char* argv[]) {
     hread(loop, 0, buf, sizeof(buf), on_stdin);
 
     // test io
-    eio_t* io = eloop_create_udp_server(loop, ANYADDR, 8080);
+    eio_t* io = eloop_create_udp_server(loop, ANYADDR, 520);
+
+    // sockopt_broadcast(sock);
+    // sockopt_reuseaddr(sock);
+    // sockopt_reuseport(sock);
+    // setsockopt_ipv4_multicast_loop(sock, 0);
+    int on = 1;
+    int val = 0;
+    udp_broadcast(eio_fd(io), on);
+    so_reuseaddr(eio_fd(io), on);
+    so_reuseport(eio_fd(io), on);
+    setsockopt(eio_fd(io), IPPROTO_IP, IP_MULTICAST_LOOP, (void *)&val, sizeof(val));
+    eio_setcb_read(io, on_recvfrom);
+
+    eio_read(io);
+
+    // eio_t* io2 = eloop_create_udp_server(loop, "192.168.50.12", 520);
+    // eio_setcb_read(io2, on_recvfrom2);
+    // eio_read(io2);
 
     eloop_run(loop);
     eloop_free(&loop);
