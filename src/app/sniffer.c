@@ -1,16 +1,19 @@
+#include "sniffer.h"
 #include "base.h"
 #include "eventloop.h"
 #include "log.h"
 #include "packet.h"
 #include "packet_parser.h"
+#include "packet_pcap.h"
 #include "packet_socket.h"
 #include "packet_stringify.h"
-#include "packet_pcap.h"
 #include "str.h"
 
 struct packet_socket* psock = NULL;
 int num_packets = 0;
 FILE* pf = NULL;
+
+sniffer_t* sniff = NULL;
 
 void on_stdin(eio_t* io, void* buf, int readbytes) {
     if (strmatch((char*)buf, "q")) {
@@ -21,47 +24,37 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
 }
 
 void on_packet_socket(eio_t* io) {
-    
+
     char* error = NULL;
     char* dump = NULL;
     int in_bytes = 0;
     enum packet_parse_result_t result;
-    struct packet* packet = packet_new(PACKET_READ_BYTES);
+    // struct packet* packet = packet_new(PACKET_READ_BYTES);
+    int rcv_status = sniffer_recv(sniff);
 
-    int rcv_status = packet_socket_receive(psock, DIRECTION_ALL, -1,
-                                           packet, &in_bytes);
+    // int rcv_status = packet_socket_receive(psock, DIRECTION_ALL, -1,
+    //                                        packet, &in_bytes);
 
-    if (rcv_status == STATUS_TIMEOUT) {
-        /* Set an error message indicating what occurred. */
-        asprintf(&error, "Timed out waiting for packet");
-        return STATUS_TIMEOUT;
-    }
-    if (rcv_status) {
-        packet_free(packet);
-        packet = NULL;
-        return;
-    }
-    ++num_packets;
-
-    result = parse_packet(packet, in_bytes, PACKET_LAYER_2_ETHERNET, &error);
+    result = parse_packet(sniff->packet, sniff->packet_len, PACKET_LAYER_2_ETHERNET, &error);
     if (result != PACKET_OK) {
         printf("%s", error);
     }
 
-    result = packet_stringify(packet, DUMP_FULL, &dump, &error);
+    result = packet_stringify(sniff->packet, DUMP_FULL, &dump, &error);
     if (result != STATUS_OK) {
         printf("%s", error);
     }
 
     printf("%s", dump);
 
-    packet_add_pcap(packet, pf);
+    // packet_add_pcap(packet, pf);
 
-    packet_free(packet);
-    packet = NULL;
+    // packet_free(packet);
+    // packet = NULL;
 }
 
 int main(int argc, char* argv[]) {
+
     eloop_t* loop = eloop_new(0);
 
     // set stdin
@@ -70,10 +63,16 @@ int main(int argc, char* argv[]) {
     hread(loop, 0, buf, sizeof(buf), on_stdin);
 
     // t
-    psock = packet_socket_new(NULL);
-    pf = pcap_open("build/a.pcap");
-    char rbuf[PACKET_READ_BYTES];
-    hread(loop, psock->packet_fd, rbuf, sizeof(rbuf), on_packet_socket);
+    sniff = sniffer_new(NULL);
+    sniffer_set_record(sniff, SNIFFER_RECORD_PCAP, 100, NULL);
+    sniffer_set_direction(sniff, DIRECTION_HOST);
+
+    hread(loop, sniff->psock->packet_fd, sniff->packet->buffer, PACKET_READ_BYTES, on_packet_socket);
+
+    // psock = packet_socket_new(NULL);
+    // pf = pcap_open("build/a.pcap");
+    // char rbuf[PACKET_READ_BYTES];
+    // hread(loop, psock->packet_fd, rbuf, sizeof(rbuf), on_packet_socket);
 
     eloop_run(loop);
     eloop_free(&loop);

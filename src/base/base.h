@@ -1,14 +1,16 @@
 #ifndef EV_BASE_H_
 #define EV_BASE_H_
 
+#include "datetime.h"
 #include "defs.h" // for printd
+#include "errors.h"
 #include "export.h"
+#include "log.h"
+#include "math.h"
 #include "platform.h" // for bool
+#include "str.h"
 #include "types.h"
 #include "version.h"
-#include "str.h"
-#include "math.h"
-#include "errors.h"
 
 #include <fcntl.h>
 #include <signal.h>
