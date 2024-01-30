@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <sys/un.h> // sockaddr_un
 #include <unistd.h>
+#include <linux/filter.h>
 
 #include "defs.h"
 #include "export.h"
@@ -230,6 +231,10 @@ static inline int so_linger(int sockfd, int timeout DEFAULT(1)) {
 #else
     return 0;
 #endif
+}
+
+static inline int so_setfilter(int sockfd, struct sock_fprog fprog) {
+    return setsockopt(sockfd, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof(fprog));
 }
 
 #endif // !__SOCKET_H__

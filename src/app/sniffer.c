@@ -24,16 +24,11 @@ void on_stdin(eio_t* io, void* buf, int readbytes) {
 }
 
 void on_packet_socket(eio_t* io) {
-
     char* error = NULL;
     char* dump = NULL;
-    int in_bytes = 0;
     enum packet_parse_result_t result;
-    // struct packet* packet = packet_new(PACKET_READ_BYTES);
-    int rcv_status = sniffer_recv(sniff);
 
-    // int rcv_status = packet_socket_receive(psock, DIRECTION_ALL, -1,
-    //                                        packet, &in_bytes);
+    int rcv_status = sniffer_recv(sniff);
 
     result = parse_packet(sniff->packet, sniff->packet_len, PACKET_LAYER_2_ETHERNET, &error);
     if (result != PACKET_OK) {
@@ -46,11 +41,6 @@ void on_packet_socket(eio_t* io) {
     }
 
     printf("%s", dump);
-
-    // packet_add_pcap(packet, pf);
-
-    // packet_free(packet);
-    // packet = NULL;
 }
 
 int main(int argc, char* argv[]) {
@@ -65,8 +55,9 @@ int main(int argc, char* argv[]) {
     // t
     sniff = sniffer_new(NULL);
     sniffer_set_record(sniff, SNIFFER_RECORD_PCAP, 100, NULL);
-    sniffer_set_direction(sniff, DIRECTION_HOST);
-
+    sniffer_set_direction(sniff, DIRECTION_ALL);
+    sniffer_start(sniff);
+    // sniffer_set_filer(sniff, );
     hread(loop, sniff->psock->packet_fd, sniff->packet->buffer, PACKET_READ_BYTES, on_packet_socket);
 
     // psock = packet_socket_new(NULL);

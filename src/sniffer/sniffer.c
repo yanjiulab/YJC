@@ -1,17 +1,13 @@
 #include "sniffer.h"
 
-// 接口名
-// 方向
-// 过滤器
-// 是否存pcap
-
 sniffer_t* sniffer_new(char* device_name) {
     sniffer_t* sniff = calloc(1, sizeof(sniffer_t));
     sniff->psock = packet_socket_new(device_name);
     sniff->packet = packet_new(PACKET_READ_BYTES);
     sniff->direction = DIRECTION_ALL;
-    sniff->record_type = SNIFFER_RECORD_PACKET;
-    // sniff->record_max = 0;
+    sniff->record = SNIFFER_RECORD_PACKET;
+    // sniff->status = SNIFFER_STOP;
+    // sniff->record_num = 0;
     // sniff->packet_list = NULL;
     // sniff->pcap_file = NULL;
     return sniff;
@@ -21,16 +17,35 @@ void sniffer_free(sniffer_t* sniffer) {
     packet_free(sniffer->packet);
     packet_list_free(sniffer->packet_list);
     pcap_close(sniffer->pcap_file);
+    free(sniffer);
 }
 
+int sniffer_pause(sniffer_t* sniffer) {
+    if (sniffer)
+        sniffer->status = SNIFFER_PAUSE;
+}
+
+int sniffer_start(sniffer_t* sniffer) {
+    if (sniffer)
+        sniffer->status = SNIFFER_RUNNING;
+}
+
+int sniffer_stop(sniffer_t* sniffer) {
+    if (sniffer)
+        sniffer->status = SNIFFER_STOP;
+}
+
+/**************************** SET API ****************************************/
+
 int sniffer_set_record(sniffer_t* sniffer, sniffer_record_t record,
-                       uint32_t max, const char* pcapf) {
+                       uint32_t record_num, const char* pcapf) {
     if (!sniffer)
         return SNIFFER_ERROR;
     if (!record)
         return SNIFFER_OK;
 
-    sniffer->record_max = max ? max : SNIFFER_RECORD_DEFAULT;
+    sniffer->record = record;
+    sniffer->record_num = record_num ? record_num : SNIFFER_RECORD_DEFAULT;
 
     if (record == SNIFFER_RECORD_LIST) {
         sniffer->packet_list = packet_list_new();
@@ -46,8 +61,26 @@ int sniffer_set_record(sniffer_t* sniffer, sniffer_record_t record,
     }
 }
 
+// TODO: filter
+// 1. ether proto
+// 2. ip src dst proto
+// 3. udp srcport dstport
+// 4. tcp srcport dstport
+int sniffer_set_filter(sniffer_t* sniffer, struct sock_filter* filter, int len) {
+    struct sock_fprog bpfcode = {
+        .filter = filter,
+        .len = len,
+    };
+
+    so_setfilter(sniffer->psock->packet_fd, bpfcode);
+}
+
 int sniffer_recv(sniffer_t* sniffer) {
-    // sniffer->direction
+    if (sniffer->status == SNIFFER_STOP)
+        return SNIFFER_ERROR;
+    if (sniffer->status == SNIFFER_PAUSE)
+        return SNIFFER_OK;
+
     int rcv_status;
     rcv_status = packet_socket_receive(sniffer->psock, sniffer->direction, TIMEOUT_NONE,
                                        sniffer->packet, &(sniffer->packet_len));
@@ -62,14 +95,18 @@ int sniffer_recv(sniffer_t* sniffer) {
         return rcv_status;
     }
 
-    if (sniffer->record_type == SNIFFER_RECORD_PCAP) {
-        if (sniffer->total_pkt >= sniffer->record_max) {
+    if (sniffer->record == SNIFFER_RECORD_PCAP) {
+        if (sniffer->total_pkt < sniffer->record_num) {
+            packet_add_pcap(sniffer->packet, sniffer->pcap_file);
+        } else {
+            // TODO: double free bug
             pcap_close(sniffer->pcap_file);
+            sniffer->pcap_file = NULL;
+            log_fatal("sniffer record has been finished.");
         }
-        packet_add_pcap(sniffer->packet, sniffer->pcap_file);
     }
 
-    if (sniffer->record_type == SNIFFER_RECORD_LIST) {
+    if (sniffer->record == SNIFFER_RECORD_LIST) {
         // TODO
     }
 
@@ -78,3 +115,5 @@ int sniffer_recv(sniffer_t* sniffer) {
 
     return rcv_status;
 }
+
+

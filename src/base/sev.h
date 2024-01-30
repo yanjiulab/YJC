@@ -18,8 +18,10 @@
 
 #define evloop(ev) (((evbase_t*)(ev))->loop)
 
-typedef enum { EVLOOP_STATUS_STOP,
-               EVLOOP_STATUS_RUNNING } evloop_status_e;
+typedef enum {
+    EVLOOP_STATUS_STOP,
+    EVLOOP_STATUS_RUNNING
+} evloop_status_t;
 
 typedef int EV_RETURN;
 typedef EV_RETURN (*evtimer_cb)(struct evtimer*);
@@ -30,7 +32,7 @@ typedef EV_RETURN (*evio_cb)(struct evio*);
 // #define EV_ERROR_* -1
 
 typedef struct evloop_s {
-    evloop_status_e status;
+    evloop_status_t status;
     // ios
     int max_ios;      // max io number
     int nios;         // number of ios
