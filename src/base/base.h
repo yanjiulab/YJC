@@ -7,6 +7,7 @@
 #include "export.h"
 #include "log.h"
 #include "math.h"
+#include "macros.h"
 #include "platform.h" // for bool
 #include "str.h"
 #include "types.h"

@@ -3,7 +3,7 @@
 #ifndef __ARP_H__
 #define __ARP_H__
 
-#include <linux/if_arp.h>
+// #include <linux/if_arp.h>
 
 /* ARP IP-Ethernet protocol header. */
 struct arphdr_s {
@@ -29,8 +29,10 @@ typedef struct arphdr_s arp_t;
 #define ARPOP_InREPLY 9   /* InARP reply.  */
 #define ARPOP_NAK 10      /* (ATM)ARP NAK.  */
 
-void arp_neigh_table_get();
-void arp_neigh_table_put();
+/* ARP protocol HARDWARE identifiers. */
+#define ARPHRD_ETHER 1 /* Ethernet */
 
+// void arp_neigh_table_get();
+// void arp_neigh_table_put();
 
 #endif /* __ARP_H__ */

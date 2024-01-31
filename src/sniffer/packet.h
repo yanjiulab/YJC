@@ -87,6 +87,7 @@ struct packet {
     /* Layer 2 */
     ethhdr_t* eth; /* start of Ethernet header, if present */
     /* Layer 3 */
+    arp_t* arp;        /* start of ARP header, if present */
     struct ipv4* ipv4; /* start of IPv4 header, if present */
     struct ipv6* ipv6; /* start of IPv6 header, if present */
     /* Layer 4 */
@@ -164,7 +165,7 @@ static inline int packet_payload_len(const struct packet* packet) {
 /* A TCP/UDP/IP address for an endpoint. */
 struct endpoint {
     struct ipaddr ip; /* IP address */
-    __be16 port;          /* TCP/UDP port (network order) */
+    __be16 port;      /* TCP/UDP port (network order) */
 };
 
 /* The 4-tuple for a TCP/UDP/IP packet. */

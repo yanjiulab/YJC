@@ -3,8 +3,10 @@
 
 #include "base.h"
 #include "packet.h"
+#include "packet_parser.h"
 #include "packet_pcap.h"
 #include "packet_socket.h"
+#include "packet_stringify.h"
 #include "socket.h"
 
 #define SNIFFER_RECORD_DEFAULT 65536
@@ -62,6 +64,12 @@ static inline void sniffer_set_direction(sniffer_t* s, enum direction_t d) {
 int sniffer_set_record(sniffer_t* sniffer, sniffer_record_t type,
                        uint32_t max, const char* pcapf);
 int sniffer_set_filter(sniffer_t* sniffer, struct sock_filter* filter, int len);
+int sniffer_set_filter_str(sniffer_t* sniffer, const char* fs);
+// ether proto [proto]
+int sniffer_set_filter_eth_proto(sniffer_t* sniffer, uint16_t proto);
+// ether[pos]=[val]
+int sniffer_set_filter_eth_byte(sniffer_t* sniffer, uint32_t pos, uint8_t val);
+//
 int sniffer_set_recv_cb();
 int sniffer_set_parse_cb();
 

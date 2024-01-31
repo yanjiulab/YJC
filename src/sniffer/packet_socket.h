@@ -35,10 +35,10 @@ extern packet_socket_t *packet_socket_new(const char *device_name);
 extern void packet_socket_free(struct packet_socket *packet_socket);
 
 /* Add a filter so we only sniff packets we want. */
-extern void packet_socket_set_filter(struct packet_socket *psock,
+extern int packet_socket_set_filter(struct packet_socket *psock,
                                      struct sock_filter *filter, int len);
 
-extern void packet_socket_set_filter_str(struct packet_socket *psock, const char *fs);
+extern int packet_socket_set_filter_str(struct packet_socket *psock, const char *fs);
 
 /* Do a blocking sniff (until timeout) of the next packet going over the given
  * device in the given direction, fill in the given packet with the sniffed

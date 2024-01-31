@@ -16,13 +16,13 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-
+#include "arp.h"
 #include "socket.h"
 
 //-----------------------------headers----------------------------------------------
 typedef struct ethhdr ethhdr_t;
 typedef struct arphdr arphdr_t;
-typedef struct ether_arp arp_t;
+// typedef struct ether_arp arp_t;
 typedef struct iphdr iphdr_t;
 typedef struct icmphdr icmphdr_t;
 typedef struct icmp icmp_t;

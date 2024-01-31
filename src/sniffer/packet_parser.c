@@ -246,6 +246,34 @@ error_out:
     return PACKET_BAD;
 }
 
+static int parse_arp(struct packet* packet, uint8_t* header_start,
+                     uint8_t* packet_end, char** error) {
+    arp_t* arp = (arp_t*)header_start;
+
+    /* Examine ARP header. */
+    if (header_start + sizeof(arp_t) > packet_end) {
+        asprintf(error, "ARP header overflows packet");
+        goto error_out;
+    }
+
+    if (ntohs(arp->ar_hrd) != ARPHRD_ETHER || ntohs(arp->ar_pro) != ETHERTYPE_IP ||
+        arp->ar_hln != ETH_ALEN || arp->ar_pln != 4) {
+        asprintf(error, "ARP not for ethernet and ipv4");
+        goto error_out;
+    }
+
+    if (ntohs(arp->ar_op) != ARPOP_REQUEST && ntohs(arp->ar_op) != ARPOP_REPLY) {
+        asprintf(error, "ARP opcode unknown (%d)", ntohs(arp->ar_op));
+        goto error_out;
+    }
+
+    packet->arp = (arp_t*)header_start;
+    return PACKET_OK;
+
+error_out:
+    return PACKET_BAD;
+}
+
 static int parse_layer3_packet_by_proto(struct packet* packet, uint16_t proto,
                                         uint8_t* header_start,
                                         uint8_t* packet_end, char** error) {
@@ -293,6 +321,8 @@ static int parse_layer3_packet_by_proto(struct packet* packet, uint16_t proto,
         // } else if ((proto == ETHERTYPE_MPLS_UC) || (proto ==
         // ETHERTYPE_MPLS_MC)) {
         //     return parse_mpls(packet, p, packet_end, error);
+    } else if (proto == ETHERTYPE_ARP) {
+        return parse_arp(packet, p, packet_end, error);
     } else {
         asprintf(error, "Unsupported Ethernet proto %s", ether_type2str(proto));
         return PACKET_UNKNOWN_L3;

@@ -19,7 +19,7 @@ static void set_receive_buffer_size(int fd, int bytes) {
 int verbose_popen(char* cmd, char** rst) {
     int ret = -1;
     char cmd_buff[128] = {0};
-    char rst_buff[128];  //= {0};
+    char rst_buff[128]; //= {0};
     strcpy(cmd_buff, cmd);
     FILE* ptr;
     if ((ptr = popen(cmd, "r")) != NULL) {
@@ -110,44 +110,50 @@ void packet_socket_free(struct packet_socket* psock) {
 }
 
 /* Add a filter so we only sniff packets we want. */
-void packet_socket_set_filter(struct packet_socket* psock,
-                              struct sock_filter* filter, int len) {
+int packet_socket_set_filter(struct packet_socket* psock,
+                             struct sock_filter* filter, int len) {
     struct sock_fprog bpfcode = {
         .len = len,
         .filter = filter,
     };
 
-    log_debug("filter constants:");
+    printd("filter constants:\n");
     for (int i = 0; i < bpfcode.len; ++i)
-        log_debug("{ 0x%02x, %3d, %3d, 0x%08x },", bpfcode.filter[i].code,
+        printd("{ 0x%02x, %3d, %3d, 0x%08x },\n", bpfcode.filter[i].code,
                   bpfcode.filter[i].jt, bpfcode.filter[i].jf,
                   bpfcode.filter[i].k);
 
     /* Attach the filter. */
     if (setsockopt(psock->packet_fd, SOL_SOCKET, SO_ATTACH_FILTER, &bpfcode,
                    sizeof(bpfcode)) < 0) {
-        err_quit("setsockopt SOL_SOCKET, SO_ATTACH_FILTER");
+        perror("setsockopt SOL_SOCKET, SO_ATTACH_FILTER");
+        return STATUS_ERR;
     }
+
+    return STATUS_OK;
 }
 
-void packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
+int packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
     // check filter string based on tcpdump command
-    char* command = str_fmt("tcpdump -i lo %s -ddd", fs);
+    char* command = str_fmt("tcpdump -p -n -s 0 -i lo %s -ddd", fs);
     char* result = NULL;
     int status = system(str_fmt("%s > /dev/null 2>&1", command));
     if (status != 0) {
         log_debug("error filter string '%s'", fs);
-        return;
+        return STATUS_ERR;
     }
 
     // parse filter bytecode based on tcpdump command
     struct sock_filter* filter;
-    char line[64];
+    char line[64] = {0};
     FILE* ptr = popen(command, "r");
-    if (!ptr)
-        log_info("%p", ptr);
     fgets(line, sizeof(line), ptr);
-    int len = str2int(str_trim(line, '\n'));
+    // log_info("(%s)", line);
+    // str_new(line);
+    // log_info("(%s)", ;
+    
+    int len = str2int(str_trim(str_new(line), "\n"));
+    // int len = str2int(str_trim(line, '\n'));
     filter = calloc(len, sizeof(*filter));
     for (int i = 0; i < len; i++) {
         sscanf(fgets(line, sizeof(line), ptr), "%hd %hhd %hhd %d\n",
@@ -156,7 +162,7 @@ void packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
     }
 
     // set filter
-    packet_socket_set_filter(psock, filter, len);
+    return packet_socket_set_filter(psock, filter, len);
 }
 
 /**

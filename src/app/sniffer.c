@@ -56,6 +56,7 @@ int main(int argc, char* argv[]) {
     sniff = sniffer_new(NULL);
     sniffer_set_record(sniff, SNIFFER_RECORD_PCAP, 100, NULL);
     sniffer_set_direction(sniff, DIRECTION_ALL);
+    sniffer_set_filter_str(sniff, "arp");
     sniffer_start(sniff);
     // sniffer_set_filer(sniff, );
     hread(loop, sniff->psock->packet_fd, sniff->packet->buffer, PACKET_READ_BYTES, on_packet_socket);

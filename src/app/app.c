@@ -16,6 +16,7 @@
 #include "log.h"
 #include "sev.h"
 #include "thread.h"
+#include "sniffer.h"
 
 #define LIBCMDF_IMPL
 #define CMDF_READLINE_SUPPORT
@@ -24,6 +25,7 @@
                    "You can use this as a reference on how to use the library!"
 
 evloop_t* loop = NULL;
+sniffer_t *sniff = NULL;
 
 static void sig_int() {
     cmdf__default_do_exit(NULL);
@@ -117,6 +119,26 @@ static EV_RETURN on_udp(evio_t* io) {
     return EV_OK;
 }
 
+static void on_sniffer(evio_t* io) {
+    char* error = NULL;
+    char* dump = NULL;
+    enum packet_parse_result_t result;
+
+    int rcv_status = sniffer_recv(sniff);
+
+    result = parse_packet(sniff->packet, sniff->packet_len, PACKET_LAYER_2_ETHERNET, &error);
+    if (result != PACKET_OK) {
+        printf("%s", error);
+    }
+
+    result = packet_stringify(sniff->packet, DUMP_FULL, &dump, &error);
+    if (result != STATUS_OK) {
+        printf("%s", error);
+    }
+
+    printf("%s", dump);
+}
+
 int main(int argc, char* argv[]) {
 
     /* Parse command line args */
@@ -205,6 +227,14 @@ int main(int argc, char* argv[]) {
     addr.sin_port = htons(6688);
     bind(udp_fd, (struct sockaddr*)&addr, sizeof(addr));
     evio_add(loop, udp_fd, on_udp);
+
+    // Sniffer
+    sniff = sniffer_new(NULL);
+    sniffer_set_record(sniff, SNIFFER_RECORD_PCAP, 100, NULL);
+    sniffer_set_direction(sniff, DIRECTION_ALL);
+    sniffer_set_filter_str(sniff, "arp");
+    sniffer_start(sniff);
+    evio_add(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */
     if (isdaemon) {

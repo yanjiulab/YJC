@@ -52,8 +52,11 @@ static void endpoints_to_string(FILE* s, const struct packet* packet) {
     struct tuple tuple;
 
     get_packet_tuple(packet, &tuple);
+    char* proto = packet->tcp   ? "TCP"
+                  : packet->udp ? "UDP"
+                                : "IP";
 
-    fprintf(s, "IP %s:%u > %s:%u",
+    fprintf(s, "%s %s:%u > %s:%u", proto,
             ip_to_string(&tuple.src.ip, src_string), ntohs(tuple.src.port),
             ip_to_string(&tuple.dst.ip, dst_string), ntohs(tuple.dst.port));
 }
@@ -204,6 +207,27 @@ static int eth_packet_to_string(FILE* s, struct packet* packet, enum dump_format
     return result;
 }
 
+static int arp_packet_to_string(FILE* s, struct packet* packet, enum dump_format_t format) {
+    int result = STATUS_OK; /* return value */
+    arp_t* arp = packet->arp;
+    uint16_t op = ntohs(arp->ar_op);
+    if (op == ARPOP_REQUEST) {
+        fprintf(s, "ARP REQUEST Who has %u.%u.%u.%u? Tell %u.%u.%u.%u\n",
+                arp->ar_tip[0], arp->ar_tip[1], arp->ar_tip[2], arp->ar_tip[3],
+                arp->ar_sip[0], arp->ar_sip[1], arp->ar_sip[2], arp->ar_sip[3]);
+    } else if (op == ARPOP_REPLY) {
+        fprintf(s, "ARP REPLY %u.%u.%u.%u is at %.2x:%.2x:%.2x:%.2x:%.2x:%.2x\n",
+                arp->ar_sip[0], arp->ar_sip[1], arp->ar_sip[2], arp->ar_sip[3],
+                arp->ar_sha[0], arp->ar_sha[1], arp->ar_sha[2],
+                arp->ar_sha[3], arp->ar_sha[4], arp->ar_sha[5]);
+    } else {
+        result = STATUS_ERR;
+        packet_buffer_to_string(s, packet);
+    }
+
+    return result;
+}
+
 int packet_stringify(struct packet* packet, enum dump_format_t format,
                      char** ascii_string, char** error) {
     assert(packet != NULL);
@@ -216,6 +240,12 @@ int packet_stringify(struct packet* packet, enum dump_format_t format,
         if ((format == DUMP_FULL) || (format == DUMP_VERBOSE)) {
             eth_packet_to_string(s, packet, format);
         }
+    }
+
+    if (packet->arp) {
+        arp_packet_to_string(s, packet, format);
+        result = STATUS_OK;
+        goto out;
     }
 
     if ((packet->ipv4 == NULL) && (packet->ipv6 == NULL)) {

@@ -67,11 +67,44 @@ int sniffer_set_record(sniffer_t* sniffer, sniffer_record_t record,
 // 3. udp srcport dstport
 // 4. tcp srcport dstport
 int sniffer_set_filter(sniffer_t* sniffer, struct sock_filter* filter, int len) {
-    struct sock_fprog bpfcode = {
-        .filter = filter,
-        .len = len,
-    };
+    return packet_socket_set_filter(sniffer->psock, filter, len);
+}
 
+int sniffer_set_filter_str(sniffer_t* sniffer, const char* fs) {
+    return packet_socket_set_filter_str(sniffer->psock, fs);
+}
+
+int sniffer_set_filter_eth_proto(sniffer_t* sniffer, uint16_t proto) {
+    struct sock_fprog bpfcode;
+    struct sock_filter bpf_eth[] = {
+        {0x28, 0, 0, 0x0000000c},
+        {0x15, 0, 1, 0x00000800}, /* ETHERTYPE_IP */
+        {0x6, 0, 0, 0x00040000},
+        {0x6, 0, 0, 0x00000000}};
+
+    bpf_eth[1].k = proto;
+    log_debug("sniffer_set_filter_eth: eth proto: 0x%.4x\n", proto);
+
+    /* Attach the filter. */
+    bpfcode.len = array_size(bpf_eth);
+    bpfcode.filter = bpf_eth;
+    so_setfilter(sniffer->psock->packet_fd, bpfcode);
+}
+
+int sniffer_set_filter_eth_byte(sniffer_t* sniffer, uint32_t pos, uint8_t val) {
+    struct sock_fprog bpfcode;
+    struct sock_filter bpf_eth[] = {
+        {0x30, 0, 0, 0x0000001e}, /* Position offset to ethernet start */
+        {0x15, 0, 1, 0x000000d1}, /* Value of position */
+        {0x6, 0, 0, 0x00040000},
+        {0x6, 0, 0, 0x00000000}};
+
+    bpf_eth[0].k = pos;
+    bpf_eth[1].k = val;
+
+    /* Attach the filter. */
+    bpfcode.len = array_size(bpf_eth);
+    bpfcode.filter = bpf_eth;
     so_setfilter(sniffer->psock->packet_fd, bpfcode);
 }
 
@@ -115,5 +148,3 @@ int sniffer_recv(sniffer_t* sniffer) {
 
     return rcv_status;
 }
-
-

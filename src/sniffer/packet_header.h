@@ -6,6 +6,7 @@
 
 #include "assert.h"
 #include "ethernet.h"
+#include "arp.h"
 // #include "gre.h"
 // #include "icmp.h"
 // #include "icmpv6.h"
@@ -22,6 +23,7 @@ struct packet;
 enum header_t {
     HEADER_NONE,
     HEADER_ETH,
+    HEADER_ARP,
     HEADER_IPV4,
     HEADER_IPV6,
     HEADER_GRE,
