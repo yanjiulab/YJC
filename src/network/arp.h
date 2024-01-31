@@ -4,7 +4,7 @@
 #define __ARP_H__
 
 // #include <linux/if_arp.h>
-
+#include "ethernet.h"
 /* ARP IP-Ethernet protocol header. */
 struct arphdr_s {
     unsigned short ar_hrd;          /* format of hardware address	*/

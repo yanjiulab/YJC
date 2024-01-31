@@ -20,7 +20,7 @@ int main(void) {
         // cmocka_unit_test(test_log),
         // cmocka_unit_test(test_iniparser),
         // cmocka_unit_test(test_base64_md5_sha1_sha256),
-        cmocka_unit_test(test_str),
+        // cmocka_unit_test(test_str),
         // cmocka_unit_test(test_str_split),
         // cmocka_unit_test(test_str_trim),
         // cmocka_unit_test(test_list),
@@ -65,8 +65,8 @@ int main(void) {
         // cmocka_unit_test(test_linklist),
         // cmocka_unit_test(test_skiplist),
         // cmocka_unit_test(test_sev),
-        // cmocka_unit_test(test_csv)
-        
+        // cmocka_unit_test(test_csv),
+        cmocka_unit_test(test_color),
     };
 
     /* Run the tests */

@@ -5,7 +5,7 @@ void test_str() {
 
     // str str;
 
-    char *s = str("Hello %s\n", "World");
+    char *s = str_fmt("Hello %s\n", "World");
     printf(s);
     assert(str_hash("hello") == str_hash("hello"));
     printf("%s\n", str_replace(s, "World", "String!"));
