@@ -16,7 +16,8 @@ typedef struct poll_ctx_s {
 } poll_ctx_t;
 
 int iowatcher_init(eloop_t* loop) {
-    if (loop->iowatcher) return 0;
+    if (loop->iowatcher)
+        return 0;
     poll_ctx_t* poll_ctx;
     EV_ALLOC_SIZEOF(poll_ctx);
     pollfds_init(&poll_ctx->fds, FDS_INIT_SIZE);
@@ -25,7 +26,8 @@ int iowatcher_init(eloop_t* loop) {
 }
 
 int iowatcher_cleanup(eloop_t* loop) {
-    if (loop->iowatcher == NULL) return 0;
+    if (loop->iowatcher == NULL)
+        return 0;
     poll_ctx_t* poll_ctx = (poll_ctx_t*)loop->iowatcher;
     pollfds_cleanup(&poll_ctx->fds);
     EV_FREE(loop->iowatcher);
@@ -65,11 +67,13 @@ int iowatcher_add_event(eloop_t* loop, int fd, int events) {
 
 int iowatcher_del_event(eloop_t* loop, int fd, int events) {
     poll_ctx_t* poll_ctx = (poll_ctx_t*)loop->iowatcher;
-    if (poll_ctx == NULL) return 0;
+    if (poll_ctx == NULL)
+        return 0;
     eio_t* io = loop->ios.ptr[fd];
 
     int idx = io->event_index[0];
-    if (idx < 0) return 0;
+    if (idx < 0)
+        return 0;
     struct pollfd* pfd = poll_ctx->fds.ptr + idx;
     assert(pfd->fd == fd);
     if (events & EV_READ) {
@@ -92,8 +96,10 @@ int iowatcher_del_event(eloop_t* loop, int fd, int events) {
 
 int iowatcher_poll_events(eloop_t* loop, int timeout) {
     poll_ctx_t* poll_ctx = (poll_ctx_t*)loop->iowatcher;
-    if (poll_ctx == NULL) return 0;
-    if (poll_ctx->fds.size == 0) return 0;
+    if (poll_ctx == NULL)
+        return 0;
+    if (poll_ctx->fds.size == 0)
+        return 0;
     int npoll = poll(poll_ctx->fds.ptr, poll_ctx->fds.size, timeout);
     if (npoll < 0) {
         if (errno == EINTR) {
@@ -102,7 +108,8 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
         perror("poll");
         return npoll;
     }
-    if (npoll == 0) return 0;
+    if (npoll == 0)
+        return 0;
     int nevents = 0;
     for (int i = 0; i < poll_ctx->fds.size; ++i) {
         int fd = poll_ctx->fds.ptr[i].fd;
@@ -120,7 +127,8 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
                 EVENT_PENDING(io);
             }
         }
-        if (nevents == npoll) break;
+        if (nevents == npoll)
+            break;
     }
     return nevents;
 }

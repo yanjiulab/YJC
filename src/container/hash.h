@@ -8,8 +8,8 @@
 
 #include <stdatomic.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 // #include "base.h"
 // #include "frratomic.h"
 
@@ -18,60 +18,60 @@ extern "C" {
 #endif
 
 /* Default hash table size.  */
-#define HASH_INITIAL_SIZE 256
+#define HASH_INITIAL_SIZE          256
 /* Expansion threshold */
 #define HASH_THRESHOLD(used, size) ((used) > (size))
 
-#define HASHWALK_CONTINUE 0
-#define HASHWALK_ABORT -1
+#define HASHWALK_CONTINUE          0
+#define HASHWALK_ABORT             -1
 
 struct hash_bucket {
-	/*
-	 * if this bucket is the head of the linked listed, len denotes the
-	 * number of elements in the list
-	 */
-	int len;
+    /*
+     * if this bucket is the head of the linked listed, len denotes the
+     * number of elements in the list
+     */
+    int len;
 
-	/* Linked list.  */
-	struct hash_bucket *next;
+    /* Linked list.  */
+    struct hash_bucket* next;
 
-	/* Hash key. */
-	unsigned int key;
+    /* Hash key. */
+    unsigned int key;
 
-	/* Data.  */
-	void *data;
+    /* Data.  */
+    void* data;
 };
 
 struct hashstats {
-	/* number of empty hash buckets */
-	atomic_uint_fast32_t empty;
-	/* sum of squares of bucket length */
-	atomic_uint_fast32_t ssq;
+    /* number of empty hash buckets */
+    atomic_uint_fast32_t empty;
+    /* sum of squares of bucket length */
+    atomic_uint_fast32_t ssq;
 };
 
 struct hash {
-	/* Hash bucket. */
-	struct hash_bucket **index;
+    /* Hash bucket. */
+    struct hash_bucket** index;
 
-	/* Hash table size. Must be power of 2 */
-	unsigned int size;
+    /* Hash table size. Must be power of 2 */
+    unsigned int size;
 
-	/* If max_size is 0 there is no limit */
-	unsigned int max_size;
+    /* If max_size is 0 there is no limit */
+    unsigned int max_size;
 
-	/* Key make function. */
-	unsigned int (*hash_key)(const void *);
+    /* Key make function. */
+    unsigned int (*hash_key)(const void*);
 
-	/* Data compare function. */
-	bool (*hash_cmp)(const void *, const void *);
+    /* Data compare function. */
+    bool (*hash_cmp)(const void*, const void*);
 
-	/* Bucket alloc. */
-	unsigned long count;
+    /* Bucket alloc. */
+    unsigned long count;
 
-	struct hashstats stats;
+    struct hashstats stats;
 
-	/* hash name */
-	char *name;
+    /* hash name */
+    char* name;
 };
 
 #define hashcount(X) ((X)->count)
@@ -104,9 +104,9 @@ struct hash {
  * Returns:
  *    a new hash table
  */
-extern struct hash *hash_create(unsigned int (*hash_key)(const void *),
-				bool (*hash_cmp)(const void *, const void *),
-				const char *name);
+extern struct hash* hash_create(unsigned int (*hash_key)(const void*),
+                                bool (*hash_cmp)(const void*, const void*),
+                                const char* name);
 
 /*
  * Create a hash table.
@@ -138,10 +138,10 @@ extern struct hash *hash_create(unsigned int (*hash_key)(const void *),
  * Returns:
  *    a new hash table
  */
-extern struct hash *
-hash_create_size(unsigned int size, unsigned int (*hash_key)(const void *),
-		 bool (*hash_cmp)(const void *, const void *),
-		 const char *name);
+extern struct hash*
+hash_create_size(unsigned int size, unsigned int (*hash_key)(const void*),
+                 bool (*hash_cmp)(const void*, const void*),
+                 const char* name);
 
 /*
  * Retrieve or insert data from / into a hash table.
@@ -175,8 +175,8 @@ hash_create_size(unsigned int size, unsigned int (*hash_key)(const void *),
  *    the data item found or inserted, or NULL if alloc_func is NULL and the
  *    data is not found
  */
-extern void *hash_get(struct hash *hash, void *data,
-		      void *(*alloc_func)(void *));
+extern void* hash_get(struct hash* hash, void* data,
+                      void* (*alloc_func)(void*));
 
 /*
  * Dummy element allocation function.
@@ -189,7 +189,7 @@ extern void *hash_get(struct hash *hash, void *data,
  * Returns:
  *    data
  */
-extern void *hash_alloc_intern(void *data);
+extern void* hash_alloc_intern(void* data);
 
 /*
  * Retrieve an item from a hash table.
@@ -205,7 +205,7 @@ extern void *hash_alloc_intern(void *data);
  * Returns:
  *    the data element if found, or NULL if not found
  */
-extern void *hash_lookup(struct hash *hash, void *data);
+extern void* hash_lookup(struct hash* hash, void* data);
 
 /*
  * Remove an element from a hash table.
@@ -219,7 +219,7 @@ extern void *hash_lookup(struct hash *hash, void *data);
  * Returns:
  *    the removed element if found, or NULL if not found
  */
-extern void *hash_release(struct hash *hash, void *data);
+extern void* hash_release(struct hash* hash, void* data);
 
 /*
  * Iterate over the elements in a hash table.
@@ -242,8 +242,8 @@ extern void *hash_release(struct hash *hash, void *data);
  * arg
  *    arbitrary argument passed as the second parameter in each call to 'func'
  */
-extern void hash_iterate(struct hash *hash,
-			 void (*func)(struct hash_bucket *, void *), void *arg);
+extern void hash_iterate(struct hash* hash,
+                         void (*func)(struct hash_bucket*, void*), void* arg);
 
 /*
  * Iterate over the elements in a hash table, stopping on condition.
@@ -267,8 +267,8 @@ extern void hash_iterate(struct hash *hash,
  * arg
  *    arbitrary argument passed as the second parameter in each call to 'func'
  */
-extern void hash_walk(struct hash *hash,
-		      int (*func)(struct hash_bucket *, void *), void *arg);
+extern void hash_walk(struct hash* hash,
+                      int (*func)(struct hash_bucket*, void*), void* arg);
 
 /*
  * Remove all elements from a hash table.
@@ -279,7 +279,7 @@ extern void hash_walk(struct hash *hash,
  * free_func
  *    function to call with each removed item; intended to free the data
  */
-extern void hash_clean(struct hash *hash, void (*free_func)(void *));
+extern void hash_clean(struct hash* hash, void (*free_func)(void*));
 
 /*
  * Remove all elements from a hash table and free the table,
@@ -290,7 +290,7 @@ extern void hash_clean(struct hash *hash, void (*free_func)(void *));
  * free_func
  *    function to call with each removed item, intended to free the data
  */
-extern void hash_clean_and_free(struct hash **hash, void (*free_func)(void *));
+extern void hash_clean_and_free(struct hash** hash, void (*free_func)(void*));
 
 /*
  * Delete a hash table.
@@ -301,7 +301,7 @@ extern void hash_clean_and_free(struct hash **hash, void (*free_func)(void *));
  * hash
  *    hash table to delete
  */
-extern void hash_free(struct hash *hash);
+extern void hash_free(struct hash* hash);
 
 /*
  * Converts a hash table to an unsorted linked list.
@@ -310,7 +310,7 @@ extern void hash_free(struct hash *hash);
  * hash
  *    hash table to convert
  */
-extern struct list *hash_to_list(struct hash *hash);
+extern struct list* hash_to_list(struct hash* hash);
 
 /*
  * Hash a string using the modified Bernstein hash.
@@ -323,7 +323,7 @@ extern struct list *hash_to_list(struct hash *hash);
  * Returns:
  *    modified Bernstein hash of the string
  */
-extern unsigned int string_hash_make(const char *);
+extern unsigned int string_hash_make(const char*);
 
 #ifdef __cplusplus
 }

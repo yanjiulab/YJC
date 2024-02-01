@@ -25,12 +25,12 @@ static inline void* rb_e2n(const struct rb_type* t, struct rb_entry* rbe) {
     return ((void*)(addr - t->t_offset));
 }
 
-#define RBE_LEFT(_rbe) (_rbe)->rbt_left
-#define RBE_RIGHT(_rbe) (_rbe)->rbt_right
+#define RBE_LEFT(_rbe)   (_rbe)->rbt_left
+#define RBE_RIGHT(_rbe)  (_rbe)->rbt_right
 #define RBE_PARENT(_rbe) (_rbe)->rbt_parent
-#define RBE_COLOR(_rbe) (_rbe)->rbt_color
+#define RBE_COLOR(_rbe)  (_rbe)->rbt_color
 
-#define RBH_ROOT(_rbt) (_rbt)->rbt_root
+#define RBH_ROOT(_rbt)   (_rbt)->rbt_root
 
 static inline void rbe_set(struct rb_entry* rbe, struct rb_entry* parent) {
     RBE_PARENT(rbe) = parent;

@@ -1,4 +1,4 @@
-#include "test.h"
 #include "if.h"
+#include "test.h"
 
 void test_if() {}

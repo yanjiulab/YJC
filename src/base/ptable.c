@@ -10,16 +10,16 @@
 
 #define CPSTART(c) (((unsigned char)(c)) >> (CHAR_BIT - 2) != 2)
 
-static char const *DELIM = "\x1f";
+static char const* DELIM = "\x1f";
 static char const CORNER = '+';
 static char const INTERSECT = '*';
-static char const INTERCORNER = '|';  // '+'
+static char const INTERCORNER = '|'; // '+'
 
 static inline size_t max(size_t a, size_t b) { return a > b ? a : b; }
 
-static size_t utf8len(char const *s) {
+static size_t utf8len(char const* s) {
     size_t len = 0;
-    char const *c;
+    char const* c;
 
     for (c = s; *c; ++c) {
         if (CPSTART(*c)) {
@@ -30,7 +30,7 @@ static size_t utf8len(char const *s) {
     return len;
 }
 
-static size_t b2cp(char const *s, size_t n) {
+static size_t b2cp(char const* s, size_t n) {
     size_t cp, i;
 
     for (cp = i = 0; s[i] && n > 0; ++i, --n) {
@@ -42,14 +42,14 @@ static size_t b2cp(char const *s, size_t n) {
     return cp;
 }
 
-static void fputnc(int c, size_t n, FILE *f) {
+static void fputnc(int c, size_t n, FILE* f) {
     while (n-- > 0) {
         fputc(c, f);
     }
 }
 
-static size_t find_break(char *s, size_t max, bool *hyphen) {
-    char *c;
+static size_t find_break(char* s, size_t max, bool* hyphen) {
+    char* c;
     size_t brk, cp;
 
     if (!*s) {
@@ -85,15 +85,15 @@ static size_t find_break(char *s, size_t max, bool *hyphen) {
     return c - s;
 }
 
-static void print_row(char *const *data, size_t *max, size_t *remaining, size_t cols, FILE *f) {
+static void print_row(char* const* data, size_t* max, size_t* remaining, size_t cols, FILE* f) {
     static size_t alloc = 0;
-    static char const **cells = NULL;
+    static char const** cells = NULL;
 
     size_t i, n, pad;
     bool hyphen, finished;
 
     if (cols > alloc) {
-        char const **tmp;
+        char const** tmp;
         alloc = cols;
         tmp = realloc(cells, alloc * sizeof *cells);
         if (tmp == NULL) {
@@ -149,7 +149,7 @@ ptable_t ptable_new() {
     return t;
 }
 
-bool ptable_init(struct ptable *t, ...) {
+bool ptable_init(struct ptable* t, ...) {
     va_list ap;
     char *header, *fmt, *tmp, **tmph;
     size_t i, fmtlen, totalfmtlen;
@@ -166,13 +166,13 @@ bool ptable_init(struct ptable *t, ...) {
     va_start(ap, t);
 
     for (;; ++t->cols) {
-        header = va_arg(ap, char *);
+        header = va_arg(ap, char*);
         if (header == NULL) {
             break;
         }
-        fmt = va_arg(ap, char *);
+        fmt = va_arg(ap, char*);
 
-        tmph = realloc(t->headers, (t->cols + 1) * sizeof(char *));
+        tmph = realloc(t->headers, (t->cols + 1) * sizeof(char*));
         if (tmph == NULL) {
             free(t->headers);
             return false;
@@ -211,22 +211,22 @@ bool ptable_init(struct ptable *t, ...) {
     return true;
 }
 
-bool ptable_add(struct ptable *t, ...) {
+bool ptable_add(struct ptable* t, ...) {
     va_list ap;
     char *field, **row, buffer[512];
     size_t i;
 
     if (t->rows == t->alloc) {
-        char ***tmp;
+        char*** tmp;
         t->alloc = t->alloc * 2 + 4;
-        tmp = realloc(t->data, t->alloc * sizeof(char **));
+        tmp = realloc(t->data, t->alloc * sizeof(char**));
         if (tmp == NULL) {
             return false;
         }
         t->data = tmp;
     }
 
-    row = (t->data[t->rows++] = malloc(t->cols * sizeof(char *)));
+    row = (t->data[t->rows++] = malloc(t->cols * sizeof(char*)));
 
     if (row == NULL) {
         t->rows -= 1;
@@ -260,7 +260,7 @@ err:
     return false;
 }
 
-bool ptable_print(struct ptable const *t, size_t n, FILE *f) {
+bool ptable_print(struct ptable const* t, size_t n, FILE* f) {
     size_t i, width, avg, trimthrshld, *max, *remaining;
 
     if (n < t->cols * 3 + 4) {
@@ -339,7 +339,7 @@ bool ptable_print(struct ptable const *t, size_t n, FILE *f) {
     return true;
 }
 
-void ptable_free(struct ptable *t) {
+void ptable_free(struct ptable* t) {
     size_t i, j;
 
     for (i = 0; i < t->rows; ++i) {

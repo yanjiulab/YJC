@@ -74,4 +74,4 @@
     struct s
 #endif
 
-#endif  // EV_EXPORT_H_
+#endif // EV_EXPORT_H_

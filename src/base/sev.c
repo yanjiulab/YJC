@@ -344,7 +344,7 @@ int evloop_run(evloop_t* loop) {
             for (i = 0; i < loop->nios; i++) {
                 if (FD_ISSET(loop->ios[i].fd, &loop->rfds)) {
                     // (*loop->ios[i].func)(&(loop->ios[i]));
-                    (*loop->ios[i].func)(loop->ios+i);
+                    (*loop->ios[i].func)(loop->ios + i);
                 }
             }
         }

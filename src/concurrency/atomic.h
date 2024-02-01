@@ -42,7 +42,7 @@ typedef std::atomic<uintptr_t> atomic_uintptr_t;
 #define atomic_add_fetch_explicit __atomic_add_fetch
 #define atomic_sub_fetch_explicit __atomic_sub_fetch
 #define atomic_and_fetch_explicit __atomic_and_fetch
-#define atomic_or_fetch_explicit __atomic_or_fetch
+#define atomic_or_fetch_explicit  __atomic_or_fetch
 
 /* gcc 4.7 and newer */
 #elif defined(HAVE___ATOMIC)
@@ -50,25 +50,25 @@ typedef std::atomic<uintptr_t> atomic_uintptr_t;
 #define _Atomic volatile
 #define _ATOMIC_WANT_TYPEDEFS
 
-#define memory_order_relaxed __ATOMIC_RELAXED
-#define memory_order_consume __ATOMIC_CONSUME
-#define memory_order_acquire __ATOMIC_ACQUIRE
-#define memory_order_release __ATOMIC_RELEASE
-#define memory_order_acq_rel __ATOMIC_ACQ_REL
-#define memory_order_seq_cst __ATOMIC_SEQ_CST
+#define memory_order_relaxed      __ATOMIC_RELAXED
+#define memory_order_consume      __ATOMIC_CONSUME
+#define memory_order_acquire      __ATOMIC_ACQUIRE
+#define memory_order_release      __ATOMIC_RELEASE
+#define memory_order_acq_rel      __ATOMIC_ACQ_REL
+#define memory_order_seq_cst      __ATOMIC_SEQ_CST
 
-#define atomic_load_explicit __atomic_load_n
-#define atomic_store_explicit __atomic_store_n
-#define atomic_exchange_explicit __atomic_exchange_n
+#define atomic_load_explicit      __atomic_load_n
+#define atomic_store_explicit     __atomic_store_n
+#define atomic_exchange_explicit  __atomic_exchange_n
 #define atomic_fetch_add_explicit __atomic_fetch_add
 #define atomic_fetch_sub_explicit __atomic_fetch_sub
 #define atomic_fetch_and_explicit __atomic_fetch_and
-#define atomic_fetch_or_explicit __atomic_fetch_or
+#define atomic_fetch_or_explicit  __atomic_fetch_or
 
 #define atomic_add_fetch_explicit __atomic_add_fetch
 #define atomic_sub_fetch_explicit __atomic_sub_fetch
 #define atomic_and_fetch_explicit __atomic_and_fetch
-#define atomic_or_fetch_explicit __atomic_or_fetch
+#define atomic_or_fetch_explicit  __atomic_or_fetch
 
 #define atomic_compare_exchange_weak_explicit(atom, expect, desire, mem1, \
                                               mem2)                       \

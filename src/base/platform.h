@@ -72,22 +72,22 @@
 #ifdef OS_SAT
 // TODO
 #else
-#include <dirent.h>  // for mkdir,rmdir,chdir,getcwd
+#include <dirent.h> // for mkdir,rmdir,chdir,getcwd
 #include <unistd.h>
 
 // socket
 #include <arpa/inet.h>
-#include <netdb.h>  // for gethostbyname
+#include <netdb.h> // for gethostbyname
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 #include <sys/select.h>
 #include <sys/socket.h>
 
-#define ev_sleep(s) sleep(s)
-#define ev_msleep(ms) usleep((ms)*1000)
+#define ev_sleep(s)   sleep(s)
+#define ev_msleep(ms) usleep((ms) * 1000)
 #define ev_usleep(us) usleep(us)
-#define ev_delay(ms) ev_msleep(ms)
+#define ev_delay(ms)  ev_msleep(ms)
 #define ev_mkdir(dir) mkdir(dir, 0777)
 #endif
 
@@ -96,7 +96,7 @@ typedef unsigned char BYTE;
 typedef unsigned short WORD;
 typedef void* HANDLE;
 #include <strings.h>
-#define stricmp strcasecmp
+#define stricmp  strcasecmp
 #define strnicmp strncasecmp
 
 // ENDIAN
@@ -180,7 +180,7 @@ typedef void (*procedure_t)(void* userdata);
 #endif
 
 #if HAVE_SYS_TIME_H
-#include <sys/time.h>  // for gettimeofday
+#include <sys/time.h> // for gettimeofday
 #endif
 
 #if HAVE_FCNTL_H
@@ -191,4 +191,4 @@ typedef void (*procedure_t)(void* userdata);
 #include <pthread.h>
 #endif
 
-#endif  // PLATFORM_H_
+#endif // PLATFORM_H_

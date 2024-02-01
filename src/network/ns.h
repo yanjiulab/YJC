@@ -70,9 +70,9 @@ RB_PROTOTYPE(ns_head, ns, entry, ns_compare)
  * NS hooks
  */
 
-#define NS_NEW_HOOK 0     /* a new netns is just created */
-#define NS_DELETE_HOOK 1  /* a netns is to be deleted */
-#define NS_ENABLE_HOOK 2  /* a netns is ready to use */
+#define NS_NEW_HOOK     0 /* a new netns is just created */
+#define NS_DELETE_HOOK  1 /* a netns is to be deleted */
+#define NS_ENABLE_HOOK  2 /* a netns is ready to use */
 #define NS_DISABLE_HOOK 3 /* a netns is to be unusable */
 
 /*
@@ -109,7 +109,7 @@ extern char* ns_netns_pathname(const char* name);
 
 /* Parse and execute a function on all the NETNS */
 #define NS_WALK_CONTINUE 0
-#define NS_WALK_STOP 1
+#define NS_WALK_STOP     1
 
 extern void ns_walk_func(int (*func)(struct ns*,
                                      void*,

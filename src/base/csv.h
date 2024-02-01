@@ -26,34 +26,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 extern "C" {
 #endif
 
-#define CSV_MAJOR 3
-#define CSV_MINOR 0
-#define CSV_RELEASE 3
+#define CSV_MAJOR         3
+#define CSV_MINOR         0
+#define CSV_RELEASE       3
 
 /* Error Codes */
-#define CSV_SUCCESS 0
-#define CSV_EPARSE 1   /* Parse error in strict mode */
-#define CSV_ENOMEM 2   /* Out of memory while increasing buffer size */
-#define CSV_ETOOBIG 3  /* Buffer larger than SIZE_MAX needed */
-#define CSV_EINVALID 4 /* Invalid code,should never be received from csv_error*/
+#define CSV_SUCCESS       0
+#define CSV_EPARSE        1 /* Parse error in strict mode */
+#define CSV_ENOMEM        2 /* Out of memory while increasing buffer size */
+#define CSV_ETOOBIG       3 /* Buffer larger than SIZE_MAX needed */
+#define CSV_EINVALID      4 /* Invalid code,should never be received from csv_error*/
 
 /* parser options */
-#define CSV_STRICT 1         /* enable strict mode */
-#define CSV_REPALL_NL 2      /* report all unquoted carriage returns and linefeeds */
-#define CSV_STRICT_FINI 4    /* causes csv_fini to return CSV_EPARSE if last \
+#define CSV_STRICT        1  /* enable strict mode */
+#define CSV_REPALL_NL     2  /* report all unquoted carriage returns and linefeeds */
+#define CSV_STRICT_FINI   4  /* causes csv_fini to return CSV_EPARSE if last \
                                 field is quoted and doesn't containg ending  \
                                 quote */
-#define CSV_APPEND_NULL 8    /* Ensure that all fields are null-terminated */
+#define CSV_APPEND_NULL   8  /* Ensure that all fields are null-terminated */
 #define CSV_EMPTY_IS_NULL 16 /* Pass null pointer to cb1 function when \
                                 empty, unquoted fields are encountered */
 
 /* Character values */
-#define CSV_TAB 0x09
-#define CSV_SPACE 0x20
-#define CSV_CR 0x0d
-#define CSV_LF 0x0a
-#define CSV_COMMA 0x2c
-#define CSV_QUOTE 0x22
+#define CSV_TAB           0x09
+#define CSV_SPACE         0x20
+#define CSV_CR            0x0d
+#define CSV_LF            0x0a
+#define CSV_COMMA         0x2c
+#define CSV_QUOTE         0x22
 
 struct csv_parser {
     int pstate;               /* Parser state */

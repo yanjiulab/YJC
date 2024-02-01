@@ -24,21 +24,21 @@
 
 typedef struct packet_socket {
     int packet_fd; /* socket for sending, sniffing timestamped packets */
-    char *name;    /* malloc-allocated copy of interface name */
+    char* name;    /* malloc-allocated copy of interface name */
     int index;     /* interface index from if_nametoindex */
 } packet_socket_t;
 
 /* Allocate and initialize a packet socket. */
-extern packet_socket_t *packet_socket_new(const char *device_name);
+extern packet_socket_t* packet_socket_new(const char* device_name);
 
 /* Free all the memory used by the packet socket. */
-extern void packet_socket_free(struct packet_socket *packet_socket);
+extern void packet_socket_free(struct packet_socket* packet_socket);
 
 /* Add a filter so we only sniff packets we want. */
-extern int packet_socket_set_filter(struct packet_socket *psock,
-                                     struct sock_filter *filter, int len);
+extern int packet_socket_set_filter(struct packet_socket* psock,
+                                    struct sock_filter* filter, int len);
 
-extern int packet_socket_set_filter_str(struct packet_socket *psock, const char *fs);
+extern int packet_socket_set_filter_str(struct packet_socket* psock, const char* fs);
 
 /* Do a blocking sniff (until timeout) of the next packet going over the given
  * device in the given direction, fill in the given packet with the sniffed
@@ -50,14 +50,14 @@ extern int packet_socket_set_filter_str(struct packet_socket *psock, const char 
  * else return STATUS_ERR (in which case the caller can
  * retry).
  */
-extern int packet_socket_receive(struct packet_socket *psock,
+extern int packet_socket_receive(struct packet_socket* psock,
                                  enum direction_t direction,
-                                 signed int timeout_secs, struct packet *packet,
-                                 int *in_bytes);
+                                 signed int timeout_secs, struct packet* packet,
+                                 int* in_bytes);
 
-extern int packet_socket_writev(struct packet_socket *psock,
-                                const struct iovec *iov, int iovcnt);
-extern int packet_socket_send(struct packet_socket *psock, unsigned char *data,
+extern int packet_socket_writev(struct packet_socket* psock,
+                                const struct iovec* iov, int iovcnt);
+extern int packet_socket_send(struct packet_socket* psock, unsigned char* data,
                               int datalen);
 
 #endif

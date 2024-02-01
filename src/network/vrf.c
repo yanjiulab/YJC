@@ -736,7 +736,7 @@ int vrf_bind(vrf_id_t vrf_id, int fd, const char* ifname) {
                      strlen(ifname) + 1);
     if (ret < 0)
         log_error("bind to interface %s failed, errno=%d", ifname,
-                 errno);
+                  errno);
 #endif /* SO_BINDTODEVICE */
     return ret;
 }

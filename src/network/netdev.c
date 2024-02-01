@@ -9,19 +9,20 @@
 #include "ipaddr.h"
 #include "log.h"
 
-static void verbose_system(const char *command) {
+static void verbose_system(const char* command) {
     int result;
 
     log_debug("running: '%s'", command);
     result = system(command);
     log_debug("result: %d", result);
-    if (result != 0) log_debug("error executing command '%s'", command);
+    if (result != 0)
+        log_debug("error executing command '%s'", command);
 }
 
 /* Configure a local IPv4 address and netmask for the device */
-static void net_add_ipv4_address(const char *dev_name,
-                                 const struct ipaddr *ip, int prefix_len) {
-    char *command = NULL;
+static void net_add_ipv4_address(const char* dev_name,
+                                 const struct ipaddr* ip, int prefix_len) {
+    char* command = NULL;
     char ip_string[ADDR_STR_LEN];
 
     ip_to_string(ip, ip_string);
@@ -37,9 +38,9 @@ static void net_add_ipv4_address(const char *dev_name,
 }
 
 /* Configure a local IPv6 address and prefix length for the device */
-static void net_add_ipv6_address(const char *dev_name,
-                                 const struct ipaddr *ip, int prefix_len) {
-    char *command = NULL;
+static void net_add_ipv6_address(const char* dev_name,
+                                 const struct ipaddr* ip, int prefix_len) {
+    char* command = NULL;
     char ip_string[ADDR_STR_LEN];
 
     ip_to_string(ip, ip_string);
@@ -58,11 +59,12 @@ static void net_add_ipv6_address(const char *dev_name,
      * e.g. "ip addr show" shows:
      * inet6 fd3d:fa7b:d17d::36/48 scope global tentative
      */
-    if (!strstr(dev_name, "tun")) sleep(2);
+    if (!strstr(dev_name, "tun"))
+        sleep(2);
 }
 
-void netdev_add_ipaddr(const char *dev_name, const char *ip_str,
-                           int prefix_len) {
+void netdev_add_ipaddr(const char* dev_name, const char* ip_str,
+                       int prefix_len) {
     struct ipaddr ip;
     int status = ip_parse(ip_str, &ip);
 
@@ -72,21 +74,21 @@ void netdev_add_ipaddr(const char *dev_name, const char *ip_str,
     }
 
     switch (ip.address_family) {
-        case AF_INET:
-            net_add_ipv4_address(dev_name, &ip, prefix_len);
-            break;
-        case AF_INET6:
-            net_add_ipv6_address(dev_name, &ip, prefix_len);
-            break;
-        default:
-            assert(!"bad family");
-            break;
+    case AF_INET:
+        net_add_ipv4_address(dev_name, &ip, prefix_len);
+        break;
+    case AF_INET6:
+        net_add_ipv6_address(dev_name, &ip, prefix_len);
+        break;
+    default:
+        assert(!"bad family");
+        break;
     }
 }
 
-void netdev_del_ipaddr(const char *dev_name, const char *ip_str,
-                           int prefix_len) {
-    char *command = NULL;
+void netdev_del_ipaddr(const char* dev_name, const char* ip_str,
+                       int prefix_len) {
+    char* command = NULL;
     char ip_string[ADDR_STR_LEN];
 
     struct ipaddr ip;
@@ -110,9 +112,9 @@ void netdev_del_ipaddr(const char *dev_name, const char *ip_str,
     free(command);
 }
 
-char *netdev_get_hwaddr(const char *ifname) {
-    DIR *dir;
-    struct dirent *entry;
+char* netdev_get_hwaddr(const char* ifname) {
+    DIR* dir;
+    struct dirent* entry;
     char path[256], buf[256];
 
     dir = opendir(NETDEV_INFO_PATH);
@@ -129,7 +131,7 @@ char *netdev_get_hwaddr(const char *ifname) {
         // Read interface state
         snprintf(path, sizeof(path), NETDEV_INFO_PATH "%s/operstate",
                  entry->d_name);
-        FILE *fp = fopen(path, "r");
+        FILE* fp = fopen(path, "r");
         if (fp) {
             fgets(buf, sizeof(buf), fp);
             fclose(fp);

@@ -3,9 +3,9 @@
 #include "base.h"
 #include "concurrency.h"
 #include "err.h"
+#include "log.h"
 #include "socket.h"
 #include "unpack.h"
-#include "log.h"
 
 uint64_t eloop_next_event_id() {
     static atomic_long s_id = ATOMIC_VAR_INIT(0);
@@ -826,7 +826,7 @@ eio_t* eio_setup_tcp_upstream(eio_t* io, const char* host, int port, int ssl) {
         return NULL;
     if (ssl)
         // eio_enable_ssl(upstream_io);
-    eio_setup_upstream(io, upstream_io);
+        eio_setup_upstream(io, upstream_io);
     eio_setcb_read(io, eio_write_upstream);
     eio_setcb_read(upstream_io, eio_write_upstream);
     eio_setcb_close(io, eio_close_upstream);

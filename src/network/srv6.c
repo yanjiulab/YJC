@@ -5,8 +5,8 @@
  */
 
 #include "srv6.h"
-#include "log.h"
 #include "linklist.h"
+#include "log.h"
 
 const char* seg6local_action2str(uint32_t action) {
     switch (action) {

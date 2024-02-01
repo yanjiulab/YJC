@@ -10,28 +10,28 @@
 /* TCP socket options used by Linux kernels under test but not in
  * standard Linux header files.
  */
-#define SO_REUSEPORT 15
+#define SO_REUSEPORT             15
 
 /* TCP socket options used by Linux kernels under test but not in
  * standard Linux header files.
  */
-#define TCP_COOKIE_TRANSACTIONS 15  /* TCP Cookie Transactions */
+#define TCP_COOKIE_TRANSACTIONS  15 /* TCP Cookie Transactions */
 #define TCP_THIN_LINEAR_TIMEOUTS 16 /* Use linear timeouts for thin streams */
-#define TCP_THIN_DUPACK 17          /* Fast retrans. after 1 dupack */
-#define TCP_USER_TIMEOUT 18         /* How long to retry losses */
-#define TCP_FASTOPEN 23             /* TCP Fast Open: data in SYN */
-#define TCP_TIMESTAMP 24
-#define TCP_NOTSENT_LOWAT 25      /* limit unsent bytes in write queue */
-#define TCP_CC_INFO 26            /* Get Congestion Control (optional) info */
-#define TCP_SAVE_SYN 27           /* Record SYN headers for new connections */
-#define TCP_SAVED_SYN 28          /* Get SYN headers recorded for connection */
-#define TCP_REPAIR_WINDOW 29      /* Get/set window parameters */
-#define TCP_FASTOPEN_CONNECT 30   /* Attempt FastOpen with connect */
-#define TCP_FASTOPEN_KEY 33       /* Set the key for Fast Open (cookie) */
-#define TCP_FASTOPEN_NO_COOKIE 34 /* Enable TFO without a TFO cookie */
+#define TCP_THIN_DUPACK          17 /* Fast retrans. after 1 dupack */
+#define TCP_USER_TIMEOUT         18 /* How long to retry losses */
+#define TCP_FASTOPEN             23 /* TCP Fast Open: data in SYN */
+#define TCP_TIMESTAMP            24
+#define TCP_NOTSENT_LOWAT        25 /* limit unsent bytes in write queue */
+#define TCP_CC_INFO              26 /* Get Congestion Control (optional) info */
+#define TCP_SAVE_SYN             27 /* Record SYN headers for new connections */
+#define TCP_SAVED_SYN            28 /* Get SYN headers recorded for connection */
+#define TCP_REPAIR_WINDOW        29 /* Get/set window parameters */
+#define TCP_FASTOPEN_CONNECT     30 /* Attempt FastOpen with connect */
+#define TCP_FASTOPEN_KEY         33 /* Set the key for Fast Open (cookie) */
+#define TCP_FASTOPEN_NO_COOKIE   34 /* Enable TFO without a TFO cookie */
 
 #ifndef TCP_INQ
-#define TCP_INQ 36
+#define TCP_INQ    36
 #define TCP_CM_INQ TCP_INQ
 #endif
 
@@ -55,24 +55,24 @@
 #endif
 
 /* TCP option numbers and lengths. */
-#define TCPOPT_EOL 0
-#define TCPOPT_NOP 1
-#define TCPOPT_MAXSEG 2
-#define TCPOLEN_MAXSEG 4
-#define TCPOPT_WINDOW 3
-#define TCPOLEN_WINDOW 3
-#define TCPOPT_SACK_PERMITTED 4
+#define TCPOPT_EOL             0
+#define TCPOPT_NOP             1
+#define TCPOPT_MAXSEG          2
+#define TCPOLEN_MAXSEG         4
+#define TCPOPT_WINDOW          3
+#define TCPOLEN_WINDOW         3
+#define TCPOPT_SACK_PERMITTED  4
 #define TCPOLEN_SACK_PERMITTED 2
-#define TCPOPT_SACK 5
-#define TCPOPT_TIMESTAMP 8
-#define TCPOLEN_TIMESTAMP 10
-#define TCPOPT_MD5SIG 19 /* MD5 Signature (RFC2385) */
-#define TCPOLEN_MD5SIG 18
-#define TCPOLEN_MD5_BASE 2
-#define TCPOPT_FASTOPEN 34
-#define TCPOPT_EXP 254 /* Experimental */
+#define TCPOPT_SACK            5
+#define TCPOPT_TIMESTAMP       8
+#define TCPOLEN_TIMESTAMP      10
+#define TCPOPT_MD5SIG          19 /* MD5 Signature (RFC2385) */
+#define TCPOLEN_MD5SIG         18
+#define TCPOLEN_MD5_BASE       2
+#define TCPOPT_FASTOPEN        34
+#define TCPOPT_EXP             254 /* Experimental */
 
-#define TCP_MD5_DIGEST_LEN 16 /* bytes in RFC2385 TCP MD5 digest */
+#define TCP_MD5_DIGEST_LEN     16 /* bytes in RFC2385 TCP MD5 digest */
 
 /* A portable TCP header definition (Linux and *BSD use different names). */
 struct tcp {
@@ -168,28 +168,28 @@ struct _tcp_info {
 /* netlink attributes types for SCM_TIMESTAMPING_OPT_STATS */
 enum {
     _TCP_NLA_PAD,
-    _TCP_NLA_BUSY,           /* Time (usec) busy sending data */
-    _TCP_NLA_RWND_LIMITED,   /* Time (usec) limited by receive window */
-    _TCP_NLA_SNDBUF_LIMITED, /* Time (usec) limited by send buffer */
-    _TCP_NLA_DATA_SEGS_OUT,  /* Data pkts sent including retransmission */
-    _TCP_NLA_TOTAL_RETRANS,  /* Data pkts retransmitted */
-    _TCP_NLA_PACING_RATE,    /* Pacing rate in bytes per second */
-    _TCP_NLA_DELIVERY_RATE,  /* Delivery rate in bytes per second */
-    _TCP_NLA_SND_CWND,       /* Sending congestion window */
-    _TCP_NLA_REORDERING,     /* Reordering metric */
-    _TCP_NLA_MIN_RTT,        /* minimum RTT */
-    _TCP_NLA_RECUR_RETRANS,  /* Recurring retransmits for the current pkt */
+    _TCP_NLA_BUSY,                  /* Time (usec) busy sending data */
+    _TCP_NLA_RWND_LIMITED,          /* Time (usec) limited by receive window */
+    _TCP_NLA_SNDBUF_LIMITED,        /* Time (usec) limited by send buffer */
+    _TCP_NLA_DATA_SEGS_OUT,         /* Data pkts sent including retransmission */
+    _TCP_NLA_TOTAL_RETRANS,         /* Data pkts retransmitted */
+    _TCP_NLA_PACING_RATE,           /* Pacing rate in bytes per second */
+    _TCP_NLA_DELIVERY_RATE,         /* Delivery rate in bytes per second */
+    _TCP_NLA_SND_CWND,              /* Sending congestion window */
+    _TCP_NLA_REORDERING,            /* Reordering metric */
+    _TCP_NLA_MIN_RTT,               /* minimum RTT */
+    _TCP_NLA_RECUR_RETRANS,         /* Recurring retransmits for the current pkt */
     _TCP_NLA_DELIVERY_RATE_APP_LMT, /* delivery rate application limited ? */
     _TCP_NLA_SNDQ_SIZE,             /* Data pending in send queue */
     _TCP_NLA_CA_STATE,              /* ca_state of socket */
     _TCP_NLA_SND_SSTHRESH,          /* Slow start size threshold */
     _TCP_NLA_DELIVERED,             /* Data pkts delivered incl. out-of-order */
     _TCP_NLA_DELIVERED_CE,          /* Like above but only ones w/ CE marks */
-    _TCP_NLA_BYTES_SENT,    /* Data bytes sent including retransmission */
-    _TCP_NLA_BYTES_RETRANS, /* Data bytes retransmitted */
-    _TCP_NLA_DSACK_DUPS,    /* DSACK blocks received */
-    _TCP_NLA_REORD_SEEN,    /* reordering events seen */
-    _TCP_NLA_SRTT,          /* smoothed RTT in usecs */
+    _TCP_NLA_BYTES_SENT,            /* Data bytes sent including retransmission */
+    _TCP_NLA_BYTES_RETRANS,         /* Data bytes retransmitted */
+    _TCP_NLA_DSACK_DUPS,            /* DSACK blocks received */
+    _TCP_NLA_REORD_SEEN,            /* reordering events seen */
+    _TCP_NLA_SRTT,                  /* smoothed RTT in usecs */
 };
 
 /* TCP ca_state */

@@ -4,9 +4,9 @@
 // #include <sys/time.h>
 #include <stdint.h>
 
+#include "arp.h"
 #include "assert.h"
 #include "ethernet.h"
-#include "arp.h"
 // #include "gre.h"
 // #include "icmp.h"
 // #include "icmpv6.h"
@@ -41,15 +41,15 @@ struct header {
     uint32_t header_bytes; /* length of this header */
     uint32_t total_bytes;  /* length of header plus data inside */
     union {
-        uint8_t *ptr; /* a pointer to the header bits */
-        struct ipv4 *ipv4;
-        struct ipv6 *ipv6;
-        struct gre *gre;
-        struct mpls *mpls;
-        struct tcp *tcp;
-        struct udp *udp;
-        struct icmpv4 *icmpv4;
-        struct icmpv6 *icmpv6;
+        uint8_t* ptr; /* a pointer to the header bits */
+        struct ipv4* ipv4;
+        struct ipv6* ipv6;
+        struct gre* gre;
+        struct mpls* mpls;
+        struct tcp* tcp;
+        struct udp* udp;
+        struct icmpv4* icmpv4;
+        struct icmpv6* icmpv6;
     } h;
 };
 

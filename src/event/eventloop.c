@@ -12,15 +12,15 @@
 #include "sys/eventfd.h"
 #endif
 
-#define ELOOP_PAUSE_TIME 10      // ms
-#define ELOOP_MAX_BLOCK_TIME 100 // ms
-#define ELOOP_STAT_TIMEOUT 60000 // ms
+#define ELOOP_PAUSE_TIME             10    // ms
+#define ELOOP_MAX_BLOCK_TIME         100   // ms
+#define ELOOP_STAT_TIMEOUT           60000 // ms
 
-#define IO_ARRAY_INIT_SIZE 1024
+#define IO_ARRAY_INIT_SIZE           1024
 #define CUSTOM_EVENT_QUEUE_INIT_SIZE 16
 
-#define EVENTFDS_READ_INDEX 0
-#define EVENTFDS_WRITE_INDEX 1
+#define EVENTFDS_READ_INDEX          0
+#define EVENTFDS_WRITE_INDEX         1
 
 static void __eidle_del(eidle_t* idle);
 static void __etimer_del(etimer_t* timer);

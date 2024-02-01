@@ -5,15 +5,15 @@
 int eio_unpack(eio_t* io, void* buf, int readbytes) {
     unpack_setting_t* setting = io->unpack_setting;
     switch (setting->mode) {
-        case UNPACK_BY_FIXED_LENGTH:
-            return eio_unpack_by_fixed_length(io, buf, readbytes);
-        case UNPACK_BY_DELIMITER:
-            return eio_unpack_by_delimiter(io, buf, readbytes);
-        case UNPACK_BY_LENGTH_FIELD:
-            return eio_unpack_by_length_field(io, buf, readbytes);
-        default:
-            eio_read_cb(io, buf, readbytes);
-            return readbytes;
+    case UNPACK_BY_FIXED_LENGTH:
+        return eio_unpack_by_fixed_length(io, buf, readbytes);
+    case UNPACK_BY_DELIMITER:
+        return eio_unpack_by_delimiter(io, buf, readbytes);
+    case UNPACK_BY_LENGTH_FIELD:
+        return eio_unpack_by_length_field(io, buf, readbytes);
+    default:
+        eio_read_cb(io, buf, readbytes);
+        return readbytes;
     }
 }
 
@@ -56,7 +56,8 @@ int eio_unpack_by_delimiter(eio_t* io, void* buf, int readbytes) {
     int delimiter_bytes = setting->delimiter_bytes;
 
     const unsigned char* p = (const unsigned char*)buf - delimiter_bytes + 1;
-    if (p < sp) p = sp;
+    if (p < sp)
+        p = sp;
     int remain = ep - p;
     int handled = 0;
     int i = 0;
@@ -127,7 +128,8 @@ int eio_unpack_by_length_field(eio_t* io, void* buf, int readbytes) {
         } else if (setting->length_field_coding == ENCODE_BY_VARINT) {
             int varint_bytes = ep - lp;
             body_len = varint_decode(lp, &varint_bytes);
-            if (varint_bytes == 0) break;
+            if (varint_bytes == 0)
+                break;
             if (varint_bytes == -1) {
                 // hloge("varint is too big!");
                 io->error = ERR_OVER_LIMIT;

@@ -3,11 +3,11 @@
 #include "test.h"
 
 void test_graph() {
-    graph_t *g = graph_new(DiGraph);
-    graph_edge_t *e;
+    graph_t* g = graph_new(DiGraph);
+    graph_edge_t* e;
 
     int i;
-    struct graph_node *gn[10];
+    struct graph_node* gn[10];
     for (i = 0; i < 10; i++) {
         gn[i] = graph_add_node(g, i, 0);
     }
@@ -19,16 +19,16 @@ void test_graph() {
     // printf("alloced:%d\n", g->nodes->alloced);
     // printf("count:%d\n", g->nodes->count);
 
-    graph_add_edge(g, gn[0], gn[1], (void *)1, NULL);
-    graph_add_edge(g, gn[1], gn[2], (void *)1, NULL);
-    graph_add_edge(g, gn[2], gn[3], (void *)1, NULL);
-    graph_add_edge(g, gn[3], gn[4], (void *)1, NULL);
-    graph_add_edge(g, gn[4], gn[5], (void *)1, NULL);
-    graph_add_edge(g, gn[5], gn[6], (void *)1, NULL);
-    graph_add_edge(g, gn[6], gn[7], (void *)1, NULL);
-    graph_add_edge(g, gn[7], gn[8], (void *)1, NULL);
-    graph_add_edge(g, gn[8], gn[9], (void *)1, NULL);
-    graph_add_edge(g, gn[9], gn[0], (void *)1, NULL);
+    graph_add_edge(g, gn[0], gn[1], (void*)1, NULL);
+    graph_add_edge(g, gn[1], gn[2], (void*)1, NULL);
+    graph_add_edge(g, gn[2], gn[3], (void*)1, NULL);
+    graph_add_edge(g, gn[3], gn[4], (void*)1, NULL);
+    graph_add_edge(g, gn[4], gn[5], (void*)1, NULL);
+    graph_add_edge(g, gn[5], gn[6], (void*)1, NULL);
+    graph_add_edge(g, gn[6], gn[7], (void*)1, NULL);
+    graph_add_edge(g, gn[7], gn[8], (void*)1, NULL);
+    graph_add_edge(g, gn[8], gn[9], (void*)1, NULL);
+    graph_add_edge(g, gn[9], gn[0], (void*)1, NULL);
 
     // graph_dump_nodes(g);
     // graph_dump_edges(g);

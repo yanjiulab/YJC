@@ -12,7 +12,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define SRV6_MAX_SIDS 16
+#define SRV6_MAX_SIDS     16
 #define SRV6_LOCNAME_SIZE 256
 
 #ifdef __cplusplus

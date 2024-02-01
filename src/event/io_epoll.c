@@ -17,7 +17,8 @@ typedef struct epoll_ctx_s {
 } epoll_ctx_t;
 
 int iowatcher_init(eloop_t* loop) {
-    if (loop->iowatcher) return 0;
+    if (loop->iowatcher)
+        return 0;
     epoll_ctx_t* epoll_ctx;
     EV_ALLOC_SIZEOF(epoll_ctx);
     epoll_ctx->epfd = epoll_create(EVENTS_INIT_SIZE);
@@ -27,7 +28,8 @@ int iowatcher_init(eloop_t* loop) {
 }
 
 int iowatcher_cleanup(eloop_t* loop) {
-    if (loop->iowatcher == NULL) return 0;
+    if (loop->iowatcher == NULL)
+        return 0;
     epoll_ctx_t* epoll_ctx = (epoll_ctx_t*)loop->iowatcher;
     close(epoll_ctx->epfd);
     events_cleanup(&epoll_ctx->events);
@@ -72,7 +74,8 @@ int iowatcher_add_event(eloop_t* loop, int fd, int events) {
 
 int iowatcher_del_event(eloop_t* loop, int fd, int events) {
     epoll_ctx_t* epoll_ctx = (epoll_ctx_t*)loop->iowatcher;
-    if (epoll_ctx == NULL) return 0;
+    if (epoll_ctx == NULL)
+        return 0;
     eio_t* io = loop->ios.ptr[fd];
 
     struct epoll_event ee;
@@ -102,8 +105,10 @@ int iowatcher_del_event(eloop_t* loop, int fd, int events) {
 
 int iowatcher_poll_events(eloop_t* loop, int timeout) {
     epoll_ctx_t* epoll_ctx = (epoll_ctx_t*)loop->iowatcher;
-    if (epoll_ctx == NULL) return 0;
-    if (epoll_ctx->events.size == 0) return 0;
+    if (epoll_ctx == NULL)
+        return 0;
+    if (epoll_ctx->events.size == 0)
+        return 0;
     int nepoll = epoll_wait(epoll_ctx->epfd, epoll_ctx->events.ptr, epoll_ctx->events.size, timeout);
     if (nepoll < 0) {
         if (errno == EINTR) {
@@ -112,7 +117,8 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
         perror("epoll");
         return nepoll;
     }
-    if (nepoll == 0) return 0;
+    if (nepoll == 0)
+        return 0;
     int nevents = 0;
     for (int i = 0; i < epoll_ctx->events.size; ++i) {
         struct epoll_event* ee = epoll_ctx->events.ptr + i;
@@ -131,7 +137,8 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
                 EVENT_PENDING(io);
             }
         }
-        if (nevents == nepoll) break;
+        if (nevents == nepoll)
+            break;
     }
     return nevents;
 }

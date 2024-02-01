@@ -61,10 +61,10 @@ extern "C" {
         struct type* spe_right; /* right element */ \
     }
 
-#define SPLAY_LEFT(elm, field) (elm)->field.spe_left
+#define SPLAY_LEFT(elm, field)  (elm)->field.spe_left
 #define SPLAY_RIGHT(elm, field) (elm)->field.spe_right
-#define SPLAY_ROOT(head) (head)->sph_root
-#define SPLAY_EMPTY(head) (SPLAY_ROOT(head) == NULL)
+#define SPLAY_ROOT(head)        (head)->sph_root
+#define SPLAY_EMPTY(head)       (SPLAY_ROOT(head) == NULL)
 
 /* SPLAY_ROTATE_{LEFT,RIGHT} expect that tmp hold SPLAY_{RIGHT,LEFT} */
 #define SPLAY_ROTATE_RIGHT(head, tmp, field)                           \
@@ -271,13 +271,13 @@ extern "C" {
         SPLAY_ASSEMBLE(head, &__node, __left, __right, field);              \
     }
 
-#define SPLAY_NEGINF -1
-#define SPLAY_INF 1
+#define SPLAY_NEGINF             -1
+#define SPLAY_INF                1
 
 #define SPLAY_INSERT(name, x, y) name##_SPLAY_INSERT(x, y)
 #define SPLAY_REMOVE(name, x, y) name##_SPLAY_REMOVE(x, y)
-#define SPLAY_FIND(name, x, y) name##_SPLAY_FIND(x, y)
-#define SPLAY_NEXT(name, x, y) name##_SPLAY_NEXT(x, y)
+#define SPLAY_FIND(name, x, y)   name##_SPLAY_FIND(x, y)
+#define SPLAY_NEXT(name, x, y)   name##_SPLAY_NEXT(x, y)
 #define SPLAY_MIN(name, x) \
     (SPLAY_EMPTY(x) ? NULL : name##_SPLAY_MIN_MAX(x, SPLAY_NEGINF))
 #define SPLAY_MAX(name, x) \
@@ -292,7 +292,7 @@ extern "C" {
  */
 
 #define RB_BLACK 0
-#define RB_RED 1
+#define RB_RED   1
 
 struct rb_type {
     int (*t_compare)(const void*, const void*);
@@ -466,25 +466,25 @@ int _rb_check(const struct rb_type*, void*, unsigned long);
 #define RB_GENERATE(_name, _type, _field, _cmp) \
     RB_GENERATE_INTERNAL(_name, _type, _field, _cmp, NULL)
 
-#define RB_INIT(_name, _head) _name##_RB_INIT(_head)
-#define RB_INSERT(_name, _head, _elm) _name##_RB_INSERT(_head, _elm)
-#define RB_REMOVE(_name, _head, _elm) _name##_RB_REMOVE(_head, _elm)
-#define RB_FIND(_name, _head, _key) _name##_RB_FIND(_head, _key)
-#define RB_NFIND(_name, _head, _key) _name##_RB_NFIND(_head, _key)
-#define RB_ROOT(_name, _head) _name##_RB_ROOT(_head)
-#define RB_EMPTY(_name, _head) _name##_RB_EMPTY(_head)
-#define RB_MIN(_name, _head) _name##_RB_MIN(_head)
-#define RB_MAX(_name, _head) _name##_RB_MAX(_head)
-#define RB_NEXT(_name, _elm) _name##_RB_NEXT(_elm)
-#define RB_PREV(_name, _elm) _name##_RB_PREV(_elm)
-#define RB_LEFT(_name, _elm) _name##_RB_LEFT(_elm)
-#define RB_RIGHT(_name, _elm) _name##_RB_RIGHT(_elm)
-#define RB_PARENT(_name, _elm) _name##_RB_PARENT(_elm)
-#define RB_SET_LEFT(_name, _elm, _l) _name##_RB_SET_LEFT(_elm, _l)
-#define RB_SET_RIGHT(_name, _elm, _r) _name##_RB_SET_RIGHT(_elm, _r)
+#define RB_INIT(_name, _head)          _name##_RB_INIT(_head)
+#define RB_INSERT(_name, _head, _elm)  _name##_RB_INSERT(_head, _elm)
+#define RB_REMOVE(_name, _head, _elm)  _name##_RB_REMOVE(_head, _elm)
+#define RB_FIND(_name, _head, _key)    _name##_RB_FIND(_head, _key)
+#define RB_NFIND(_name, _head, _key)   _name##_RB_NFIND(_head, _key)
+#define RB_ROOT(_name, _head)          _name##_RB_ROOT(_head)
+#define RB_EMPTY(_name, _head)         _name##_RB_EMPTY(_head)
+#define RB_MIN(_name, _head)           _name##_RB_MIN(_head)
+#define RB_MAX(_name, _head)           _name##_RB_MAX(_head)
+#define RB_NEXT(_name, _elm)           _name##_RB_NEXT(_elm)
+#define RB_PREV(_name, _elm)           _name##_RB_PREV(_elm)
+#define RB_LEFT(_name, _elm)           _name##_RB_LEFT(_elm)
+#define RB_RIGHT(_name, _elm)          _name##_RB_RIGHT(_elm)
+#define RB_PARENT(_name, _elm)         _name##_RB_PARENT(_elm)
+#define RB_SET_LEFT(_name, _elm, _l)   _name##_RB_SET_LEFT(_elm, _l)
+#define RB_SET_RIGHT(_name, _elm, _r)  _name##_RB_SET_RIGHT(_elm, _r)
 #define RB_SET_PARENT(_name, _elm, _p) _name##_RB_SET_PARENT(_elm, _p)
-#define RB_POISON(_name, _elm, _p) _name##_RB_POISON(_elm, _p)
-#define RB_CHECK(_name, _elm, _p) _name##_RB_CHECK(_elm, _p)
+#define RB_POISON(_name, _elm, _p)     _name##_RB_POISON(_elm, _p)
+#define RB_CHECK(_name, _elm, _p)      _name##_RB_CHECK(_elm, _p)
 
 #define RB_FOREACH(_e, _name, _head)                  \
     for ((_e) = RB_MIN(_name, (_head)); (_e) != NULL; \

@@ -87,9 +87,9 @@ extern "C" {
 /*
  * Singly-linked List access methods.
  */
-#define SLIST_FIRST(head) ((head)->slh_first)
-#define SLIST_END(head) NULL
-#define SLIST_EMPTY(head) (SLIST_FIRST(head) == SLIST_END(head))
+#define SLIST_FIRST(head)      ((head)->slh_first)
+#define SLIST_END(head)        NULL
+#define SLIST_EMPTY(head)      (SLIST_FIRST(head) == SLIST_END(head))
 #define SLIST_NEXT(elm, field) ((elm)->field.sle_next)
 
 #define SLIST_FOREACH(var, head, field)                       \
@@ -167,9 +167,9 @@ extern "C" {
 /*
  * List access methods.
  */
-#define LIST_FIRST(head) ((head)->lh_first)
-#define LIST_END(head) NULL
-#define LIST_EMPTY(head) (LIST_FIRST(head) == LIST_END(head))
+#define LIST_FIRST(head)      ((head)->lh_first)
+#define LIST_END(head)        NULL
+#define LIST_EMPTY(head)      (LIST_FIRST(head) == LIST_END(head))
 #define LIST_NEXT(elm, field) ((elm)->field.le_next)
 
 #define LIST_FOREACH(var, head, field)                      \
@@ -257,9 +257,9 @@ extern "C" {
 /*
  * Simple queue access methods.
  */
-#define SIMPLEQ_FIRST(head) ((head)->sqh_first)
-#define SIMPLEQ_END(head) NULL
-#define SIMPLEQ_EMPTY(head) (SIMPLEQ_FIRST(head) == SIMPLEQ_END(head))
+#define SIMPLEQ_FIRST(head)      ((head)->sqh_first)
+#define SIMPLEQ_END(head)        NULL
+#define SIMPLEQ_EMPTY(head)      (SIMPLEQ_FIRST(head) == SIMPLEQ_END(head))
 #define SIMPLEQ_NEXT(elm, field) ((elm)->field.sqe_next)
 
 #define SIMPLEQ_FOREACH(var, head, field)                         \
@@ -342,9 +342,9 @@ extern "C" {
  */
 #define XSIMPLEQ_XOR(head, ptr) \
     ((__typeof(ptr))((head)->sqx_cookie ^ (unsigned long)(ptr)))
-#define XSIMPLEQ_FIRST(head) XSIMPLEQ_XOR(head, ((head)->sqx_first))
-#define XSIMPLEQ_END(head) NULL
-#define XSIMPLEQ_EMPTY(head) (XSIMPLEQ_FIRST(head) == XSIMPLEQ_END(head))
+#define XSIMPLEQ_FIRST(head)            XSIMPLEQ_XOR(head, ((head)->sqx_first))
+#define XSIMPLEQ_END(head)              NULL
+#define XSIMPLEQ_EMPTY(head)            (XSIMPLEQ_FIRST(head) == XSIMPLEQ_END(head))
 #define XSIMPLEQ_NEXT(head, elm, field) XSIMPLEQ_XOR(head, ((elm)->field.sqx_next))
 
 #define XSIMPLEQ_FOREACH(var, head, field)                          \
@@ -431,8 +431,8 @@ extern "C" {
 /*
  * Tail queue access methods.
  */
-#define TAILQ_FIRST(head) ((head)->tqh_first)
-#define TAILQ_END(head) NULL
+#define TAILQ_FIRST(head)      ((head)->tqh_first)
+#define TAILQ_END(head)        NULL
 #define TAILQ_NEXT(elm, field) ((elm)->field.tqe_next)
 #define TAILQ_LAST(head, headname) \
     (*(((struct headname*)((head)->tqh_last))->tqh_last))

@@ -10,7 +10,7 @@
 
 #include "hashmap.h"
 
-#define GROW_AT 0.60   /* 60% */
+#define GROW_AT   0.60 /* 60% */
 #define SHRINK_AT 0.10 /* 10% */
 
 #ifndef HASHMAP_LOAD_FACTOR

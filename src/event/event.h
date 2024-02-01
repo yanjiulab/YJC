@@ -11,16 +11,16 @@
 #include "list.h"
 #include "queue.h"
 
-#define ELOOP_READ_BUFSIZE 8192              // 8K
-#define READ_BUFSIZE_HIGH_WATER 65536        // 64K
-#define WRITE_BUFSIZE_HIGH_WATER (1U << 23)  // 8M
-#define MAX_READ_BUFSIZE (1U << 24)          // 16M
-#define MAX_WRITE_BUFSIZE (1U << 24)         // 16M
+#define ELOOP_READ_BUFSIZE       8192       // 8K
+#define READ_BUFSIZE_HIGH_WATER  65536      // 64K
+#define WRITE_BUFSIZE_HIGH_WATER (1U << 23) // 8M
+#define MAX_READ_BUFSIZE         (1U << 24) // 16M
+#define MAX_WRITE_BUFSIZE        (1U << 24) // 16M
 
 // eio_read_flags
-#define EIO_READ_ONCE 0x1
-#define EIO_READ_UNTIL_LENGTH 0x2
-#define EIO_READ_UNTIL_DELIM 0x4
+#define EIO_READ_ONCE            0x1
+#define EIO_READ_UNTIL_LENGTH    0x2
+#define EIO_READ_UNTIL_DELIM     0x4
 
 ARRAY_DECL(eio_t*, io_array);
 QUEUE_DECL(event_t, event_queue);
@@ -28,8 +28,8 @@ QUEUE_DECL(event_t, event_queue);
 struct eloop_s {
     uint32_t flags;
     eloop_status_e status;
-    uint64_t start_ms;      // ms
-    uint64_t start_hrtime;  // us
+    uint64_t start_ms;     // ms
+    uint64_t start_hrtime; // us
     uint64_t end_hrtime;
     uint64_t cur_hrtime;
     uint64_t loop_cnt;
@@ -47,8 +47,8 @@ struct eloop_s {
     struct list_head idles;
     uint32_t nidles;
     // timers
-    struct heap timers;      // monotonic time
-    struct heap realtimers;  // realtime
+    struct heap timers;     // monotonic time
+    struct heap realtimers; // realtime
     uint32_t ntimers;
     // ios: with fd as array.index
     struct io_array ios;
@@ -105,17 +105,17 @@ struct eio_s {
     unsigned closed : 1;
     unsigned accept : 1;
     unsigned connect : 1;
-    unsigned connectex : 1;  // for ConnectEx/DisconnectEx
+    unsigned connectex : 1; // for ConnectEx/DisconnectEx
     unsigned recv : 1;
     unsigned send : 1;
     unsigned recvfrom : 1;
     unsigned sendto : 1;
     unsigned close : 1;
-    unsigned alloced_readbuf : 1;  // for eio_alloc_readbuf
-    unsigned alloced_ssl_ctx : 1;  // for eio_new_ssl_ctx
-                                   // public:
+    unsigned alloced_readbuf : 1; // for eio_alloc_readbuf
+    unsigned alloced_ssl_ctx : 1; // for eio_new_ssl_ctx
+                                  // public:
     eio_type_e io_type;
-    uint32_t id;  // fd cannot be used as unique identifier, so we provide an id
+    uint32_t id; // fd cannot be used as unique identifier, so we provide an id
     int fd;
     int error;
     int events;
@@ -133,10 +133,10 @@ struct eio_s {
         unsigned char read_until_delim;
     };
     uint32_t max_read_bufsize;
-    uint32_t small_readbytes_cnt;  // for readbuf autosize
+    uint32_t small_readbytes_cnt; // for readbuf autosize
     // write
     struct write_queue write_queue;
-    pthread_mutex_t write_mutex;  // lock write and write_queue
+    pthread_mutex_t write_mutex; // lock write and write_queue
     uint32_t write_bufsize;
     uint32_t max_write_bufsize;
     // callbacks
@@ -146,12 +146,12 @@ struct eio_s {
     accept_cb accept_cb;
     connect_cb connect_cb;
     // timers
-    int connect_timeout;     // ms
-    int close_timeout;       // ms
-    int read_timeout;        // ms
-    int write_timeout;       // ms
-    int keepalive_timeout;   // ms
-    int heartbeat_interval;  // ms
+    int connect_timeout;    // ms
+    int close_timeout;      // ms
+    int read_timeout;       // ms
+    int write_timeout;      // ms
+    int keepalive_timeout;  // ms
+    int heartbeat_interval; // ms
     eio_send_heartbeat_fn heartbeat_fn;
     etimer_t* connect_timer;
     etimer_t* close_timer;
@@ -160,18 +160,18 @@ struct eio_s {
     etimer_t* keepalive_timer;
     etimer_t* heartbeat_timer;
     // upstream
-    struct eio_s* upstream_io;  // for eio_setup_upstream
+    struct eio_s* upstream_io; // for eio_setup_upstream
     // unpack
-    unpack_setting_t* unpack_setting;  // for eio_set_unpack
+    unpack_setting_t* unpack_setting; // for eio_set_unpack
     // ssl
-    void* ssl;       // for eio_set_ssl
-    void* ssl_ctx;   // for eio_set_ssl_ctx
-    char* hostname;  // for hssl_set_sni_hostname
+    void* ssl;      // for eio_set_ssl
+    void* ssl_ctx;  // for eio_set_ssl_ctx
+    char* hostname; // for hssl_set_sni_hostname
     // context
-    void* ctx;  // for eio_context / eio_set_context
+    void* ctx; // for eio_context / eio_set_context
 // private:
 #if defined(EVENT_POLL) || defined(EVENT_KQUEUE)
-    int event_index[2];  // for poll,kqueue
+    int event_index[2]; // for poll,kqueue
 #endif
 };
 /*
@@ -213,7 +213,7 @@ void eio_free_readbuf(eio_t* io);
 void eio_memmove_readbuf(eio_t* io);
 
 #define EVENT_ENTRY(p) container_of(p, event_t, pending_node)
-#define IDLE_ENTRY(p) container_of(p, eidle_t, node)
+#define IDLE_ENTRY(p)  container_of(p, eidle_t, node)
 #define TIMER_ENTRY(p) container_of(p, etimer_t, node)
 
 #define EVENT_ACTIVE(ev)      \
@@ -262,4 +262,4 @@ void eio_memmove_readbuf(eio_t* io);
         ev->pending = 0;  \
     } while (0)
 
-#endif  // EV_EVENT_H_
+#endif // EV_EVENT_H_

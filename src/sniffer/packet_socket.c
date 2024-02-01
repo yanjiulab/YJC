@@ -120,8 +120,8 @@ int packet_socket_set_filter(struct packet_socket* psock,
     printd("filter constants:\n");
     for (int i = 0; i < bpfcode.len; ++i)
         printd("{ 0x%02x, %3d, %3d, 0x%08x },\n", bpfcode.filter[i].code,
-                  bpfcode.filter[i].jt, bpfcode.filter[i].jf,
-                  bpfcode.filter[i].k);
+               bpfcode.filter[i].jt, bpfcode.filter[i].jf,
+               bpfcode.filter[i].k);
 
     /* Attach the filter. */
     if (setsockopt(psock->packet_fd, SOL_SOCKET, SO_ATTACH_FILTER, &bpfcode,
@@ -151,7 +151,7 @@ int packet_socket_set_filter_str(struct packet_socket* psock, const char* fs) {
     // log_info("(%s)", line);
     // str_new(line);
     // log_info("(%s)", ;
-    
+
     int len = str2int(str_trim(str_new(line), "\n"));
     // int len = str2int(str_trim(line, '\n'));
     filter = calloc(len, sizeof(*filter));

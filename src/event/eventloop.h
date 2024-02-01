@@ -1,9 +1,9 @@
 #ifndef EVENTELOOP_H_
 #define EVENTELOOP_H_
 
+#include "defs.h"
 #include "export.h"
 #include "platform.h"
-#include "defs.h"
 
 typedef struct eloop_s eloop_t;
 typedef struct event_s event_t;
@@ -27,7 +27,9 @@ typedef void (*read_cb)(eio_t* io, void* buf, int readbytes);
 typedef void (*write_cb)(eio_t* io, const void* buf, int writebytes);
 typedef void (*close_cb)(eio_t* io);
 
-typedef enum { ELOOP_STATUS_STOP, ELOOP_STATUS_RUNNING, ELOOP_STATUS_PAUSE } eloop_status_e;
+typedef enum { ELOOP_STATUS_STOP,
+               ELOOP_STATUS_RUNNING,
+               ELOOP_STATUS_PAUSE } eloop_status_e;
 
 typedef enum {
     EVENT_TYPE_NONE = 0,
@@ -36,15 +38,15 @@ typedef enum {
     EVENT_TYPE_PERIOD = 0x00000020,
     EVENT_TYPE_TIMER = EVENT_TYPE_TIMEOUT | EVENT_TYPE_PERIOD,
     EVENT_TYPE_IDLE = 0x00000100,
-    EVENT_TYPE_CUSTOM = 0x00000400,  // 1024
+    EVENT_TYPE_CUSTOM = 0x00000400, // 1024
 } event_type_e;
 
-#define EVENT_LOWEST_PRIORITY (-5)
-#define EVENT_LOW_PRIORITY (-3)
-#define EVENT_NORMAL_PRIORITY 0
-#define EVENT_HIGH_PRIORITY 3
-#define EVENT_HIGHEST_PRIORITY 5
-#define EVENT_PRIORITY_SIZE (EVENT_HIGHEST_PRIORITY - EVENT_LOWEST_PRIORITY + 1)
+#define EVENT_LOWEST_PRIORITY          (-5)
+#define EVENT_LOW_PRIORITY             (-3)
+#define EVENT_NORMAL_PRIORITY          0
+#define EVENT_HIGH_PRIORITY            3
+#define EVENT_HIGHEST_PRIORITY         5
+#define EVENT_PRIORITY_SIZE            (EVENT_HIGHEST_PRIORITY - EVENT_LOWEST_PRIORITY + 1)
 #define EVENT_PRIORITY_INDEX(priority) (priority - EVENT_LOWEST_PRIORITY)
 
 #define EVENT_FLAGS       \
@@ -53,7 +55,7 @@ typedef enum {
     unsigned pending : 1;
 
 #define EVENT_FIELDS              \
-    eloop_t* loop;                 \
+    eloop_t* loop;                \
     event_type_e event_type;      \
     uint64_t event_id;            \
     event_cb cb;                  \
@@ -68,17 +70,17 @@ struct event_s {
     EVENT_FIELDS
 };
 
-#define event_set_id(ev, id) ((event_t*)(ev))->event_id = id
-#define event_set_cb(ev, cb) ((event_t*)(ev))->cb = cb
-#define event_set_priority(ev, prio) ((event_t*)(ev))->priority = prio
+#define event_set_id(ev, id)          ((event_t*)(ev))->event_id = id
+#define event_set_cb(ev, cb)          ((event_t*)(ev))->cb = cb
+#define event_set_priority(ev, prio)  ((event_t*)(ev))->priority = prio
 #define event_set_userdata(ev, udata) ((event_t*)(ev))->userdata = (void*)udata
 
-#define event_loop(ev) (((event_t*)(ev))->loop)
-#define event_type(ev) (((event_t*)(ev))->event_type)
-#define event_id(ev) (((event_t*)(ev))->event_id)
-#define event_cb(ev) (((event_t*)(ev))->cb)
-#define event_priority(ev) (((event_t*)(ev))->priority)
-#define event_userdata(ev) (((event_t*)(ev))->userdata)
+#define event_loop(ev)                (((event_t*)(ev))->loop)
+#define event_type(ev)                (((event_t*)(ev))->event_type)
+#define event_id(ev)                  (((event_t*)(ev))->event_id)
+#define event_cb(ev)                  (((event_t*)(ev))->cb)
+#define event_priority(ev)            (((event_t*)(ev))->priority)
+#define event_userdata(ev)            (((event_t*)(ev))->userdata)
 
 typedef enum {
     EIO_TYPE_UNKNOWN = 0,
@@ -110,14 +112,14 @@ typedef enum {
     EIO_CLIENT_SIDE = 1,
 } eio_side_e;
 
-#define EIO_DEFAULT_CONNECT_TIMEOUT 10000     // ms
-#define EIO_DEFAULT_CLOSE_TIMEOUT 60000       // ms
-#define EIO_DEFAULT_KEEPALIVE_TIMEOUT 75000   // ms
-#define EIO_DEFAULT_HEARTBEAT_INTERVAL 10000  // ms
+#define EIO_DEFAULT_CONNECT_TIMEOUT           10000 // ms
+#define EIO_DEFAULT_CLOSE_TIMEOUT             60000 // ms
+#define EIO_DEFAULT_KEEPALIVE_TIMEOUT         75000 // ms
+#define EIO_DEFAULT_HEARTBEAT_INTERVAL        10000 // ms
 
 // loop
-#define ELOOP_FLAG_RUN_ONCE 0x00000001
-#define ELOOP_FLAG_AUTO_FREE 0x00000002
+#define ELOOP_FLAG_RUN_ONCE                   0x00000001
+#define ELOOP_FLAG_AUTO_FREE                  0x00000002
 #define ELOOP_FLAG_QUIT_WHEN_NO_ACTIVE_EVENTS 0x00000004
 eloop_t* eloop_new(int flags DEFAULT(ELOOP_FLAG_AUTO_FREE));
 
@@ -136,10 +138,10 @@ int eloop_wakeup(eloop_t* loop);
 eloop_status_e eloop_status(eloop_t* loop);
 
 void eloop_update_time(eloop_t* loop);
-uint64_t eloop_now(eloop_t* loop);         // s
-uint64_t eloop_now_ms(eloop_t* loop);      // ms
-uint64_t eloop_now_us(eloop_t* loop);      // us
-uint64_t eloop_now_hrtime(eloop_t* loop);  // us
+uint64_t eloop_now(eloop_t* loop);        // s
+uint64_t eloop_now_ms(eloop_t* loop);     // ms
+uint64_t eloop_now_us(eloop_t* loop);     // us
+uint64_t eloop_now_hrtime(eloop_t* loop); // us
 
 // export some loop's members
 // @return pid of eloop_run
@@ -190,17 +192,17 @@ etimer_t* etimer_add(eloop_t* loop, etimer_cb cb, uint32_t etimeout_ms, uint32_t
  *  30      1        1      -1      10          cron.yearly
  */
 etimer_t* etimer_add_period(eloop_t* loop, etimer_cb cb, int8_t minute DEFAULT(0), int8_t hour DEFAULT(-1),
-                          int8_t day DEFAULT(-1), int8_t week DEFAULT(-1), int8_t month DEFAULT(-1),
-                          uint32_t repeat DEFAULT(INFINITE));
+                            int8_t day DEFAULT(-1), int8_t week DEFAULT(-1), int8_t month DEFAULT(-1),
+                            uint32_t repeat DEFAULT(INFINITE));
 
 void etimer_del(etimer_t* timer);
 void etimer_reset(etimer_t* timer, uint32_t etimeout_ms DEFAULT(0));
 
 // io
 //-----------------------low-level apis---------------------------------------
-#define EV_READ 0x0001
+#define EV_READ  0x0001
 #define EV_WRITE 0x0004
-#define EV_RDWR (EV_READ | EV_WRITE)
+#define EV_RDWR  (EV_READ | EV_WRITE)
 /*
 const char* eio_engine() {
 #ifdef EVENT_SELECT
@@ -280,8 +282,8 @@ void eio_set_max_write_bufsize(eio_t* io, uint32_t size);
 size_t eio_write_bufsize(eio_t* io);
 #define eio_write_is_complete(io) (eio_write_bufsize(io) == 0)
 
-uint64_t eio_last_read_time(eio_t* io);   // ms
-uint64_t eio_last_write_time(eio_t* io);  // ms
+uint64_t eio_last_read_time(eio_t* io);  // ms
+uint64_t eio_last_write_time(eio_t* io); // ms
 
 // set callbacks
 void eio_setcb_accept(eio_t* io, accept_cb accept_cb);
@@ -340,7 +342,7 @@ int eio_connect(eio_t* io);
 // eio_add(io, EV_READ) => read => read_cb
 int eio_read(eio_t* io);
 #define eio_read_start(io) eio_read(io)
-#define eio_read_stop(io) eio_del(io, EV_READ)
+#define eio_read_stop(io)  eio_del(io, EV_READ)
 
 // eio_read_start => read_cb => eio_read_stop
 int eio_read_once(eio_t* io);
@@ -350,9 +352,9 @@ int eio_read_until_length(eio_t* io, unsigned int len);
 int eio_read_until_delim(eio_t* io, unsigned char delim);
 int eio_read_remain(eio_t* io);
 // @see examples/tinyhttpd.c examples/tinyproxyd.c
-#define eio_readline(io) eio_read_until_delim(io, '\n')
-#define eio_readstring(io) eio_read_until_delim(io, '\0')
-#define eio_readbytes(io, len) eio_read_until_length(io, len)
+#define eio_readline(io)        eio_read_until_delim(io, '\n')
+#define eio_readstring(io)      eio_read_until_delim(io, '\0')
+#define eio_readbytes(io, len)  eio_read_until_length(io, len)
 #define eio_read_until(io, len) eio_read_until_length(io, len)
 
 // NOTE: eio_write is thread-safe, locked by recursive_mutex, allow to be called by other threads.
@@ -399,7 +401,7 @@ eio_t* hsendto(eloop_t* loop, int sockfd, const void* buf, size_t len, write_cb 
 // side == EIO_SERVER_SIDE ? bind ->
 // type & EIO_TYPE_SOCK_STREAM ? listen ->
 eio_t* eio_create_socket(eloop_t* loop, const char* host, int port, eio_type_e type DEFAULT(EIO_TYPE_TCP),
-                       eio_side_e side DEFAULT(EIO_SERVER_SIDE));
+                         eio_side_e side DEFAULT(EIO_SERVER_SIDE));
 
 // @tcp_server: eio_create_socket(loop, host, port, EIO_TYPE_TCP, EIO_SERVER_SIDE) -> eio_setcb_accept -> eio_accept
 // @see examples/tcp_echo_server.c
@@ -460,21 +462,21 @@ eio_t* eio_setup_udp_upstream(eio_t* io, const char* host, int port);
 //-----------------unpack---------------------------------------------
 typedef enum {
     UNPACK_MODE_NONE = 0,
-    UNPACK_BY_FIXED_LENGTH = 1,  // Not recommended
-    UNPACK_BY_DELIMITER = 2,     // Suitable for text protocol
-    UNPACK_BY_LENGTH_FIELD = 3,  // Suitable for binary protocol
+    UNPACK_BY_FIXED_LENGTH = 1, // Not recommended
+    UNPACK_BY_DELIMITER = 2,    // Suitable for text protocol
+    UNPACK_BY_LENGTH_FIELD = 3, // Suitable for binary protocol
 } unpack_mode_e;
 
-#define DEFAULT_PACKAGE_MAX_LENGTH (1 << 21)  // 2M
+#define DEFAULT_PACKAGE_MAX_LENGTH  (1 << 21) // 2M
 
 // UNPACK_BY_DELIMITER
 #define PACKAGE_MAX_DELIMITER_BYTES 8
 
 // UNPACK_BY_LENGTH_FIELD
 typedef enum {
-    ENCODE_BY_VARINT = 17,                    // 1 MSB + 7 bits
-    ENCODE_BY_LITTEL_ENDIAN = LITTLE_ENDIAN,  // 1234
-    ENCODE_BY_BIG_ENDIAN = BIG_ENDIAN,        // 4321
+    ENCODE_BY_VARINT = 17,                   // 1 MSB + 7 bits
+    ENCODE_BY_LITTEL_ENDIAN = LITTLE_ENDIAN, // 1234
+    ENCODE_BY_BIG_ENDIAN = BIG_ENDIAN,       // 4321
 } unpack_coding_e;
 
 typedef struct unpack_setting_s {
@@ -503,7 +505,7 @@ typedef struct unpack_setting_s {
          *
          */
         struct {
-            unsigned short body_offset;  // Equal to head length usually
+            unsigned short body_offset; // Equal to head length usually
             unsigned short length_field_offset;
             unsigned short length_field_bytes;
             short length_adjustment;
@@ -552,14 +554,14 @@ unpack_setting_t grpc_unpack_setting = {
 */
 
 //-----------------reconnect----------------------------------------
-#define DEFAULT_RECONNECT_MIN_DELAY 1000   // ms
-#define DEFAULT_RECONNECT_MAX_DELAY 60000  // ms
-#define DEFAULT_RECONNECT_DELAY_POLICY 2   // exponential
+#define DEFAULT_RECONNECT_MIN_DELAY     1000  // ms
+#define DEFAULT_RECONNECT_MAX_DELAY     60000 // ms
+#define DEFAULT_RECONNECT_DELAY_POLICY  2     // exponential
 #define DEFAULT_RECONNECT_MAX_RETRY_CNT INFINITE
 typedef struct reconn_setting_s {
-    uint32_t min_delay;  // ms
-    uint32_t max_delay;  // ms
-    uint32_t cur_delay;  // ms
+    uint32_t min_delay; // ms
+    uint32_t max_delay; // ms
+    uint32_t cur_delay; // ms
     /*
      * @delay_policy
      * 0: fixed

@@ -4,10 +4,10 @@
 #include "packet.h"
 
 /* PCAP related */
-#define PCAP_MAGIC 0xa1b2c3d4
+#define PCAP_MAGIC         0xa1b2c3d4
 #define PCAP_VERSION_MAJOR 2
 #define PCAP_VERSION_MINOR 4
-#define PCAP_SNAPLEN_MAX 0x40000
+#define PCAP_SNAPLEN_MAX   0x40000
 
 typedef struct pcap_file_header_s {
     uint32_t magic; // 0xa1b2c3d4
@@ -41,26 +41,26 @@ extern FILE* pcap_open(char* filename);
 
 /**
  * @brief Close pcap file.
- * 
- * @param pf 
+ *
+ * @param pf
  */
 extern void pcap_close(FILE* pf);
 
 /**
  * @brief Append a packet to an opened pcap file.
- * 
+ *
  * @param p
- * @param pf 
- * @return int 
+ * @param pf
+ * @return int
  */
 extern int packet_add_pcap(struct packet* p, FILE* pf);
 
 /**
  * @brief Append a packet to a pcap file if it exists, otherwise create pcap file and writing.
- * 
- * @param p 
- * @param filename 
- * @return int 
+ *
+ * @param p
+ * @param filename
+ * @return int
  */
 extern int packet_to_pcap(struct packet* p, char* filename);
 

@@ -14,8 +14,8 @@
 #endif
 
 #include "base.h"
-#include "ipaddr.h"
 #include "ethernet.h"
+#include "ipaddr.h"
 #include "sockunion.h"
 
 #ifdef __cplusplus
@@ -37,27 +37,27 @@ typedef enum {
 
 /* value of first byte of ESI */
 #define ESI_TYPE_ARBITRARY 0 /* */
-#define ESI_TYPE_LACP 1      /* <> */
-#define ESI_TYPE_BRIDGE 2    /* <Root bridge Mac-6B>:<Root Br Priority-2B>:00 */
-#define ESI_TYPE_MAC 3       /* <Syst Mac Add-6B>:<Local Discriminator Value-3B> */
-#define ESI_TYPE_ROUTER 4    /* <RouterId-4B>:<Local Discriminator Value-4B> */
-#define ESI_TYPE_AS 5        /* <AS-4B>:<Local Discriminator Value-4B> */
+#define ESI_TYPE_LACP      1 /* <> */
+#define ESI_TYPE_BRIDGE    2 /* <Root bridge Mac-6B>:<Root Br Priority-2B>:00 */
+#define ESI_TYPE_MAC       3 /* <Syst Mac Add-6B>:<Local Discriminator Value-3B> */
+#define ESI_TYPE_ROUTER    4 /* <RouterId-4B>:<Local Discriminator Value-4B> */
+#define ESI_TYPE_AS        5 /* <AS-4B>:<Local Discriminator Value-4B> */
 
 #define MAX_ESI \
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
 
-#define EVPN_ETH_TAG_BYTES 4
-#define ESI_BYTES 10
-#define ESI_STR_LEN (3 * ESI_BYTES)
-#define EVPN_DF_ALG_STR_LEN 24
+#define EVPN_ETH_TAG_BYTES           4
+#define ESI_BYTES                    10
+#define ESI_STR_LEN                  (3 * ESI_BYTES)
+#define EVPN_DF_ALG_STR_LEN          24
 
 /* Maximum number of VTEPs per-ES -
  * XXX - temporary limit for allocating strings etc.
  */
-#define ES_VTEP_MAX_CNT 10
-#define ES_VTEP_LIST_STR_SZ (ES_VTEP_MAX_CNT * 16)
+#define ES_VTEP_MAX_CNT              10
+#define ES_VTEP_LIST_STR_SZ          (ES_VTEP_MAX_CNT * 16)
 
-#define ETHER_ADDR_STRLEN (3 * ETH_ALEN)
+#define ETHER_ADDR_STRLEN            (3 * ETH_ALEN)
 
 /* length is the number of valuable bits of prefix structure
  * 18 bytes is current length in structure, if address is ipv4
@@ -112,10 +112,10 @@ struct evpn_addr {
         struct evpn_es_addr _es_addr;
         struct evpn_prefix_addr _prefix_addr;
     } u;
-#define ead_addr u._ead_addr
-#define macip_addr u._macip_addr
-#define imet_addr u._imet_addr
-#define es_addr u._es_addr
+#define ead_addr    u._ead_addr
+#define macip_addr  u._macip_addr
+#define imet_addr   u._imet_addr
+#define es_addr     u._es_addr
 #define prefix_addr u._prefix_addr
 };
 
@@ -278,22 +278,21 @@ struct prefix_sg {
 };
 
 union prefixptr {
-	prefixtype(prefixptr, struct prefix,      p)
-	prefixtype(prefixptr, struct prefix_ipv4, p4)
-	prefixtype(prefixptr, struct prefix_ipv6, p6)
-	prefixtype(prefixptr, struct prefix_evpn, evp)
-	prefixtype(prefixptr, struct prefix_fs,   fs)
-	prefixtype(prefixptr, struct prefix_rd,   rd)
+    prefixtype(prefixptr, struct prefix, p)
+        prefixtype(prefixptr, struct prefix_ipv4, p4)
+            prefixtype(prefixptr, struct prefix_ipv6, p6)
+                prefixtype(prefixptr, struct prefix_evpn, evp)
+                    prefixtype(prefixptr, struct prefix_fs, fs)
+                        prefixtype(prefixptr, struct prefix_rd, rd)
 } TRANSPARENT_UNION;
 
-
 union prefixconstptr {
-	prefixtype(prefixconstptr, const struct prefix,      p)
-	prefixtype(prefixconstptr, const struct prefix_ipv4, p4)
-	prefixtype(prefixconstptr, const struct prefix_ipv6, p6)
-	prefixtype(prefixconstptr, const struct prefix_evpn, evp)
-	prefixtype(prefixconstptr, const struct prefix_fs,   fs)
-	prefixtype(prefixconstptr, const struct prefix_rd,   rd)
+    prefixtype(prefixconstptr, const struct prefix, p)
+        prefixtype(prefixconstptr, const struct prefix_ipv4, p4)
+            prefixtype(prefixconstptr, const struct prefix_ipv6, p6)
+                prefixtype(prefixconstptr, const struct prefix_evpn, evp)
+                    prefixtype(prefixconstptr, const struct prefix_fs, fs)
+                        prefixtype(prefixconstptr, const struct prefix_rd, rd)
 } TRANSPARENT_UNION;
 
 #ifndef INET_ADDRSTRLEN
@@ -310,7 +309,7 @@ union prefixconstptr {
 #endif /* INET6_BUFSIZ */
 
 /* Maximum string length of the result of prefix2str */
-#define PREFIX_STRLEN 80
+#define PREFIX_STRLEN       80
 
 /*
  * Longest possible length of a (S,G) string is 34 bytes
@@ -319,11 +318,11 @@ union prefixconstptr {
  * NULL Character at end = 1
  * (123.123.123.123,123.123.123.123)
  */
-#define PREFIX_SG_STR_LEN 34
+#define PREFIX_SG_STR_LEN   34
 
 /* Max bit/byte length of IPv4 address. */
-#define IPV4_MAX_BYTELEN 4
-#define IPV4_MAX_BITLEN 32
+#define IPV4_MAX_BYTELEN    4
+#define IPV4_MAX_BITLEN     32
 #define IPV4_ADDR_CMP(D, S) memcmp((D), (S), IPV4_MAX_BYTELEN)
 
 static inline bool ipv4_addr_same(const struct in_addr* a,
@@ -338,28 +337,28 @@ static inline void ipv4_addr_copy(struct in_addr* dst,
 }
 #define IPV4_ADDR_COPY(D, S) ipv4_addr_copy((D), (S))
 
-#define IPV4_NET0(a) ((((uint32_t)(a)) & 0xff000000) == 0x00000000)
-#define IPV4_NET127(a) ((((uint32_t)(a)) & 0xff000000) == 0x7f000000)
-#define IPV4_LINKLOCAL(a) ((((uint32_t)(a)) & 0xffff0000) == 0xa9fe0000)
-#define IPV4_CLASS_D(a) ((((uint32_t)(a)) & 0xf0000000) == 0xe0000000)
-#define IPV4_CLASS_E(a) ((((uint32_t)(a)) & 0xf0000000) == 0xf0000000)
-#define IPV4_CLASS_DE(a) ((((uint32_t)(a)) & 0xe0000000) == 0xe0000000)
+#define IPV4_NET0(a)         ((((uint32_t)(a)) & 0xff000000) == 0x00000000)
+#define IPV4_NET127(a)       ((((uint32_t)(a)) & 0xff000000) == 0x7f000000)
+#define IPV4_LINKLOCAL(a)    ((((uint32_t)(a)) & 0xffff0000) == 0xa9fe0000)
+#define IPV4_CLASS_D(a)      ((((uint32_t)(a)) & 0xf0000000) == 0xe0000000)
+#define IPV4_CLASS_E(a)      ((((uint32_t)(a)) & 0xf0000000) == 0xf0000000)
+#define IPV4_CLASS_DE(a)     ((((uint32_t)(a)) & 0xe0000000) == 0xe0000000)
 #define IPV4_MC_LINKLOCAL(a) ((((uint32_t)(a)) & 0xffffff00) == 0xe0000000)
 
 /* Max bit/byte length of IPv6 address. */
-#define IPV6_MAX_BYTELEN 16
-#define IPV6_MAX_BITLEN 128
-#define IPV6_ADDR_CMP(D, S) memcmp((D), (S), IPV6_MAX_BYTELEN)
+#define IPV6_MAX_BYTELEN     16
+#define IPV6_MAX_BITLEN      128
+#define IPV6_ADDR_CMP(D, S)  memcmp((D), (S), IPV6_MAX_BYTELEN)
 #define IPV6_ADDR_SAME(D, S) (memcmp((D), (S), IPV6_MAX_BYTELEN) == 0)
 #define IPV6_ADDR_COPY(D, S) memcpy((D), (S), IPV6_MAX_BYTELEN)
 
 /* Count prefix size from mask length */
-#define PSIZE(a) (((a) + 7) / (8))
+#define PSIZE(a)             (((a) + 7) / (8))
 
-#define BSIZE(a) ((a) * (8))
+#define BSIZE(a)             ((a) * (8))
 
 /* Prefix's family member. */
-#define PREFIX_FAMILY(p) ((p)->family)
+#define PREFIX_FAMILY(p)     ((p)->family)
 
 /* glibc defines s6_addr32 to __in6_u.__u6_addr32 if __USE_{MISC || GNU} */
 #ifndef s6_addr32

@@ -27,27 +27,27 @@
 
 typedef struct {
     log_LogFn fn;
-    void *udata;
+    void* udata;
     int level;
 } Callback;
 
 static struct {
-    void *udata;
+    void* udata;
     log_LockFn lock;
     int level;
     bool quiet;
     Callback callbacks[MAX_CALLBACKS];
 } L;
 
-static const char *level_strings[] = {"TRACE", "DEBUG", "INFO",
-                                      "WARN",  "ERROR", "FATAL"};
+static const char* level_strings[] = {"TRACE", "DEBUG", "INFO",
+                                      "WARN", "ERROR", "FATAL"};
 
 #ifdef LOG_USE_COLOR
-static const char *level_colors[] = {"\x1b[94m", "\x1b[36m", "\x1b[32m",
+static const char* level_colors[] = {"\x1b[94m", "\x1b[36m", "\x1b[32m",
                                      "\x1b[33m", "\x1b[31m", "\x1b[35m"};
 #endif
 
-static void stdout_callback(log_Event *ev) {
+static void stdout_callback(log_Event* ev) {
     char buf[16];
     buf[strftime(buf, sizeof(buf), "%H:%M:%S", ev->time)] = '\0';
 #ifdef LOG_USE_COLOR
@@ -63,7 +63,7 @@ static void stdout_callback(log_Event *ev) {
     fflush(ev->udata);
 }
 
-static void file_callback(log_Event *ev) {
+static void file_callback(log_Event* ev) {
     char buf[64];
     buf[strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", ev->time)] = '\0';
     fprintf(ev->udata, "%s %-5s %s:%d: ", buf, level_strings[ev->level],
@@ -85,9 +85,9 @@ static void unlock(void) {
     }
 }
 
-const char *log_level_string(int level) { return level_strings[level]; }
+const char* log_level_string(int level) { return level_strings[level]; }
 
-void log_set_lock(log_LockFn fn, void *udata) {
+void log_set_lock(log_LockFn fn, void* udata) {
     L.lock = fn;
     L.udata = udata;
 }
@@ -96,7 +96,7 @@ void log_set_level(int level) { L.level = level; }
 
 void log_set_quiet(bool enable) { L.quiet = enable; }
 
-int log_add_callback(log_LogFn fn, void *udata, int level) {
+int log_add_callback(log_LogFn fn, void* udata, int level) {
     for (int i = 0; i < MAX_CALLBACKS; i++) {
         if (!L.callbacks[i].fn) {
             L.callbacks[i] = (Callback){fn, udata, level};
@@ -106,11 +106,11 @@ int log_add_callback(log_LogFn fn, void *udata, int level) {
     return -1;
 }
 
-int log_add_fp(FILE *fp, int level) {
+int log_add_fp(FILE* fp, int level) {
     return log_add_callback(file_callback, fp, level);
 }
 
-static void init_event(log_Event *ev, void *udata) {
+static void init_event(log_Event* ev, void* udata) {
     if (!ev->time) {
         time_t t = time(NULL);
         ev->time = localtime(&t);
@@ -118,7 +118,7 @@ static void init_event(log_Event *ev, void *udata) {
     ev->udata = udata;
 }
 
-void log_log(int level, const char *file, int line, const char *fmt, ...) {
+void log_log(int level, const char* file, int line, const char* fmt, ...) {
     log_Event ev = {
         .fmt = fmt,
         .file = file,
@@ -136,7 +136,7 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
     }
 
     for (int i = 0; i < MAX_CALLBACKS && L.callbacks[i].fn; i++) {
-        Callback *cb = &L.callbacks[i];
+        Callback* cb = &L.callbacks[i];
         if (level >= cb->level) {
             init_event(&ev, cb->udata);
             va_start(ev.ap, fmt);
@@ -168,10 +168,10 @@ void log_log(int level, const char *file, int line, const char *fmt, ...) {
  * @param kz the message key
  * @return the message
  */
-const char *lookup_msg(const struct message *mz, int kz) {
+const char* lookup_msg(const struct message* mz, int kz) {
     static struct message nt = {0};
-    const char *rz = "(no message found)";
-    const struct message *pnt;
+    const char* rz = "(no message found)";
+    const struct message* pnt;
     for (pnt = mz; memcmp(pnt, &nt, sizeof(struct message)); pnt++)
         if (pnt->key == kz) {
             rz = pnt->str ? pnt->str : rz;
@@ -192,8 +192,8 @@ const char *lookup_msg(const struct message *mz, int kz) {
  * @param nf the message to return if not found
  * @return the message
  */
-const char *bs_msg(const struct message *mz, int sz, int kz, const char *nf) {
-    const char *rz = nf ? nf : "(no message found)";
+const char* bs_msg(const struct message* mz, int sz, int kz, const char* nf) {
+    const char* rz = nf ? nf : "(no message found)";
     int l = 0, r = sz - 2;
     int m;
     while (l <= r) {

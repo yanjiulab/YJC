@@ -7,7 +7,7 @@
 #include "macros.h"
 #include "math.h"
 
-#define FLOAT_PRECISION 1e-6
+#define FLOAT_PRECISION     1e-6
 #define FLOAT_EQUAL_ZERO(f) (ABS(f) < FLOAT_PRECISION)
 
 #ifndef INFINITE
@@ -136,10 +136,10 @@
     } while (0)
 #endif
 
-#define STRINGIFY(x) STRINGIFY_HELPER(x)
-#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x)           STRINGIFY_HELPER(x)
+#define STRINGIFY_HELPER(x)    #x
 
-#define STRINGCAT(x, y) STRINGCAT_HELPER(x, y)
+#define STRINGCAT(x, y)        STRINGCAT_HELPER(x, y)
 #define STRINGCAT_HELPER(x, y) x##y
 
 #ifndef offsetof
@@ -163,7 +163,7 @@
  */
 #ifndef __cplusplus
 #define prefixtype(uname, typename, fieldname) typename* fieldname;
-#define TRANSPARENT_UNION __attribute__((transparent_union))
+#define TRANSPARENT_UNION                      __attribute__((transparent_union))
 #else
 #define prefixtype(uname, typename, fieldname) \
     typename* fieldname;                       \

@@ -4,6 +4,7 @@
 #include <arpa/inet.h> // inet_*, address
 #include <errno.h>     // errno
 #include <fcntl.h>
+#include <linux/filter.h>
 #include <netdb.h> // dns
 #include <netinet/in.h>
 #include <netinet/tcp.h> // TCP
@@ -13,14 +14,13 @@
 #include <sys/time.h>
 #include <sys/un.h> // sockaddr_un
 #include <unistd.h>
-#include <linux/filter.h>
 
 #include "defs.h"
 #include "export.h"
 
 //-----------------------------socket----------------------------------------------
-#define LOCALHOST "127.0.0.1"
-#define ANYADDR "0.0.0.0"
+#define LOCALHOST      "127.0.0.1"
+#define ANYADDR        "0.0.0.0"
 #define INVALID_SOCKET -1
 
 static inline int socket_errno() { return errno; }
@@ -121,7 +121,7 @@ EXPORT int Socketpair(int family, int type, int protocol, int sv[2]);
 
 /************************** Socket Option API ***************************************/
 
-#define blocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
+#define blocking(s)    fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
 #define nonblocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
 
 static inline int tcp_nodelay(int sockfd, int on DEFAULT(1)) {

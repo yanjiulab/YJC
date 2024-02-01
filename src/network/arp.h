@@ -21,16 +21,16 @@ struct arphdr_s {
 typedef struct arphdr_s arp_t;
 
 /* ARP protocol opcodes. */
-#define ARPOP_REQUEST 1   /* ARP request.  */
-#define ARPOP_REPLY 2     /* ARP reply.  */
-#define ARPOP_RREQUEST 3  /* RARP request.  */
-#define ARPOP_RREPLY 4    /* RARP reply.  */
-#define ARPOP_InREQUEST 8 /* InARP request.  */
-#define ARPOP_InREPLY 9   /* InARP reply.  */
-#define ARPOP_NAK 10      /* (ATM)ARP NAK.  */
+#define ARPOP_REQUEST   1  /* ARP request.  */
+#define ARPOP_REPLY     2  /* ARP reply.  */
+#define ARPOP_RREQUEST  3  /* RARP request.  */
+#define ARPOP_RREPLY    4  /* RARP reply.  */
+#define ARPOP_InREQUEST 8  /* InARP request.  */
+#define ARPOP_InREPLY   9  /* InARP reply.  */
+#define ARPOP_NAK       10 /* (ATM)ARP NAK.  */
 
 /* ARP protocol HARDWARE identifiers. */
-#define ARPHRD_ETHER 1 /* Ethernet */
+#define ARPHRD_ETHER    1 /* Ethernet */
 
 // void arp_neigh_table_get();
 // void arp_neigh_table_put();

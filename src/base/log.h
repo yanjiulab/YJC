@@ -36,17 +36,17 @@ enum { _LOG_TRACE,
        _LOG_ERROR,
        _LOG_FATAL };
 
-#define log_trace(...) log_log(_LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
-#define log_debug(...) log_log(_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
-#define log_info(...) log_log(_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
-#define log_warn(...) log_log(_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
-#define log_error(...) log_log(_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
-#define log_fatal(...) log_log(_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
+#define log_trace(...)  log_log(_LOG_TRACE, __FILE__, __LINE__, __VA_ARGS__)
+#define log_debug(...)  log_log(_LOG_DEBUG, __FILE__, __LINE__, __VA_ARGS__)
+#define log_info(...)   log_log(_LOG_INFO, __FILE__, __LINE__, __VA_ARGS__)
+#define log_warn(...)   log_log(_LOG_WARN, __FILE__, __LINE__, __VA_ARGS__)
+#define log_error(...)  log_log(_LOG_ERROR, __FILE__, __LINE__, __VA_ARGS__)
+#define log_fatal(...)  log_log(_LOG_FATAL, __FILE__, __LINE__, __VA_ARGS__)
 
 #define log_set_trace() log_set_level(_LOG_TRACE)
 #define log_set_debug() log_set_level(_LOG_DEBUG)
-#define log_set_info() log_set_level(_LOG_INFO)
-#define log_set_warn() log_set_level(_LOG_WARN)
+#define log_set_info()  log_set_level(_LOG_INFO)
+#define log_set_warn()  log_set_level(_LOG_WARN)
 #define log_set_error() log_set_level(_LOG_ERROR)
 #define log_set_fatal() log_set_level(_LOG_FATAL)
 

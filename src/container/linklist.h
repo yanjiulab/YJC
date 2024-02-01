@@ -52,31 +52,31 @@ struct list {
 };
 
 /* Basic API */
-#define listnextnode(X) ((X) ? ((X)->next) : NULL)
+#define listnextnode(X)           ((X) ? ((X)->next) : NULL)
 #define listnextnode_unchecked(X) ((X)->next)
-#define listhead(X) ((X) ? ((X)->head) : NULL)
-#define listhead_unchecked(X) ((X)->head)
-#define listtail(X) ((X) ? ((X)->tail) : NULL)
-#define listtail_unchecked(X) ((X)->tail)
-#define list_count(X) ((X)->count)
-#define list_isempty(X) ((X)->head == NULL && (X)->tail == NULL)
+#define listhead(X)               ((X) ? ((X)->head) : NULL)
+#define listhead_unchecked(X)     ((X)->head)
+#define listtail(X)               ((X) ? ((X)->tail) : NULL)
+#define listtail_unchecked(X)     ((X)->tail)
+#define list_count(X)             ((X)->count)
+#define list_isempty(X)           ((X)->head == NULL && (X)->tail == NULL)
 /* return X->data only if X and X->data are not NULL */
-#define listgetdata(X) (assert(X), assert((X)->data != NULL), (X)->data)
+#define listgetdata(X)            (assert(X), assert((X)->data != NULL), (X)->data)
 /* App is going to manage listnode memory */
-#define listset_app_node_mem(X) ((X)->flags |= LINKLIST_FLAG_NODE_MEM_BY_APP)
-#define listnode_init(X, val) ((X)->data = (val))
+#define listset_app_node_mem(X)   ((X)->flags |= LINKLIST_FLAG_NODE_MEM_BY_APP)
+#define listnode_init(X, val)     ((X)->data = (val))
 
 /* Easy API */
-#define list_add listnode_add
-#define list_add_head listnode_add_head
-#define list_add_tail listnode_add
-#define list_add_sort listnode_add_sort
-#define list_add_aftr listnode_add_after
-#define list_add_before listnode_add_before
-#define list_del listnode_delete
-#define list_get listnode_getdata
-#define list_clear list_delete_all_node
-#define list_free list_delete
+#define list_add                  listnode_add
+#define list_add_head             listnode_add_head
+#define list_add_tail             listnode_add
+#define list_add_sort             listnode_add_sort
+#define list_add_aftr             listnode_add_after
+#define list_add_before           listnode_add_before
+#define list_del                  listnode_delete
+#define list_get                  listnode_getdata
+#define list_clear                list_delete_all_node
+#define list_free                 list_delete
 
 /* List iteration macro.
  * Usage: for (ALL_LIST_ELEMENTS (...) { ... }

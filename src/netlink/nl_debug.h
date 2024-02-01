@@ -23,7 +23,7 @@
                    ntohs((addr).s6_addr16[5]), \
                    ntohs((addr).s6_addr16[6]), \
                    ntohs((addr).s6_addr16[7])
-#define NIP6_FMT "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x"
+#define NIP6_FMT    "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x"
 #define NIP6_SEQFMT "%04x%04x%04x%04x%04x%04x%04x%04x"
 
 #define ETH_FMT

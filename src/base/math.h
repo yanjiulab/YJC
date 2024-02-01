@@ -6,9 +6,11 @@
 static inline unsigned long floor2e(unsigned long num) {
     unsigned long n = num;
     int e = 0;
-    while (n >>= 1) ++e;
+    while (n >>= 1)
+        ++e;
     unsigned long ret = 1;
-    while (e--) ret <<= 1;
+    while (e--)
+        ret <<= 1;
     return ret;
 }
 
@@ -18,9 +20,11 @@ static inline unsigned long ceil2e(unsigned long num) {
         return 1;
     unsigned long n = num - 1;
     int e = 1;
-    while (n >>= 1) ++e;
+    while (n >>= 1)
+        ++e;
     unsigned long ret = 1;
-    while (e--) ret <<= 1;
+    while (e--)
+        ret <<= 1;
     return ret;
 }
 
@@ -67,4 +71,4 @@ static inline long long varint_decode(const unsigned char* buf, int* len) {
         *len = -1;
     return ret;
 }
-#endif  // !MATH_H_
+#endif // !MATH_H_

@@ -9,12 +9,12 @@ static inline int socket_errno_negative() {
 
 int ResolveAddr(const char* host, sockaddr_u* addr) {
     if (inet_pton(AF_INET, host, &addr->sin.sin_addr) == 1) {
-        addr->sa.sa_family = AF_INET;  // host is ipv4, so easy ;)
+        addr->sa.sa_family = AF_INET; // host is ipv4, so easy ;)
         return 0;
     }
 
     if (inet_pton(AF_INET6, host, &addr->sin6.sin6_addr) == 1) {
-        addr->sa.sa_family = AF_INET6;  // host is ipv6
+        addr->sa.sa_family = AF_INET6; // host is ipv6
     }
 
     struct addrinfo* ais = NULL;
@@ -25,10 +25,12 @@ int ResolveAddr(const char* host, sockaddr_u* addr) {
     }
     struct addrinfo* pai = ais;
     while (pai != NULL) {
-        if (pai->ai_family == AF_INET) break;
+        if (pai->ai_family == AF_INET)
+            break;
         pai = pai->ai_next;
     }
-    if (pai == NULL) pai = ais;
+    if (pai == NULL)
+        pai = ais;
     memcpy(addr, pai->ai_addr, pai->ai_addrlen);
     freeaddrinfo(ais);
     return 0;
@@ -78,7 +80,8 @@ int sockaddr_set_ipport(sockaddr_u* addr, const char* host, int port) {
     }
 #endif
     int ret = sockaddr_set_ip(addr, host);
-    if (ret != 0) return ret;
+    if (ret != 0)
+        return ret;
     sockaddr_set_port(addr, port);
     // SOCKADDR_PRINT(addr);
     return 0;
@@ -182,7 +185,8 @@ static int sockaddr_connect(sockaddr_u* peeraddr, int nonblock) {
 }
 
 static int ListenFD(int sockfd) {
-    if (sockfd < 0) return sockfd;
+    if (sockfd < 0)
+        return sockfd;
     if (listen(sockfd, SOMAXCONN) < 0) {
         perror("listen");
         closesocket(sockfd);
@@ -229,7 +233,8 @@ int Bind(int port, const char* host, int type) {
 
 int Listen(int port, const char* host) {
     int sockfd = Bind(port, host, SOCK_STREAM);
-    if (sockfd < 0) return sockfd;
+    if (sockfd < 0)
+        return sockfd;
     return ListenFD(sockfd);
 }
 
@@ -247,7 +252,8 @@ int ConnectNonblock(const char* host, int port) { return Connect(host, port, 1);
 
 int ConnectTimeout(const char* host, int port, int ms) {
     int connfd = Connect(host, port, 1);
-    if (connfd < 0) return connfd;
+    if (connfd < 0)
+        return connfd;
     return ConnectFDTimeout(connfd, ms);
 }
 
@@ -261,7 +267,8 @@ int BindUnix(const char* path, int type) {
 
 int ListenUnix(const char* path) {
     int sockfd = BindUnix(path, SOCK_STREAM);
-    if (sockfd < 0) return sockfd;
+    if (sockfd < 0)
+        return sockfd;
     return ListenFD(sockfd);
 }
 
@@ -276,7 +283,8 @@ int ConnectUnixNonblock(const char* path) { return ConnectUnix(path, 1); }
 
 int ConnectUnixTimeout(const char* path, int ms) {
     int connfd = ConnectUnix(path, 1);
-    if (connfd < 0) return connfd;
+    if (connfd < 0)
+        return connfd;
     return ConnectFDTimeout(connfd, ms);
 }
 #endif

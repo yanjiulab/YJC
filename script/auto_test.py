@@ -7,6 +7,7 @@ test = 'test'
 
 funcs = []
 
+
 def update_header():
     # create test.h
     with open('test/test.h', 'w') as f:

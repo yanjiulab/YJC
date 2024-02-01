@@ -22,10 +22,10 @@ struct ipaddr {
 typedef struct ipaddr ipaddr_t;
 
 #define IS_IPADDR_NONE(p) ((p)->address_family == AF_UNSPEC)
-#define IS_IPADDR_V4(p) ((p)->address_family == AF_INET)
-#define IS_IPADDR_V6(p) ((p)->address_family == AF_INET6)
-#define SET_IPADDR_V4(p) (p)->address_family = AF_INET
-#define SET_IPADDR_V6(p) (p)->address_family = AF_INET6
+#define IS_IPADDR_V4(p)   ((p)->address_family == AF_INET)
+#define IS_IPADDR_V6(p)   ((p)->address_family == AF_INET6)
+#define SET_IPADDR_V4(p)  (p)->address_family = AF_INET
+#define SET_IPADDR_V6(p)  (p)->address_family = AF_INET6
 
 #define IPADDRSZ(p) \
     (IS_IPADDR_V4((p)) ? sizeof(struct in_addr) : sizeof(struct in6_addr))

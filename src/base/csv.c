@@ -27,11 +27,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "csv.h"
 
-#define VERSION "3.0.3"
+#define VERSION                "3.0.3"
 
-#define ROW_NOT_BEGUN 0
-#define FIELD_NOT_BEGUN 1
-#define FIELD_BEGUN 2
+#define ROW_NOT_BEGUN          0
+#define FIELD_NOT_BEGUN        1
+#define FIELD_BEGUN            2
 #define FIELD_MIGHT_HAVE_ENDED 3
 
 /*
@@ -44,7 +44,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
                    field is either ended or the quote is literal
 */
 
-#define MEM_BLK_SIZE 128
+#define MEM_BLK_SIZE           128
 
 #define SUBMIT_FIELD(p)                                                           \
     do {                                                                          \

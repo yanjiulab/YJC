@@ -56,11 +56,11 @@
 #include "skiplist.h"
 #include "log.h"
 
-#define BitsInRandom 31
+#define BitsInRandom       31
 
-#define MaxNumberOfLevels 16
-#define MaxLevel (MaxNumberOfLevels - 1)
-#define newNodeOfLevel(l) calloc(1, sizeof(struct skiplistnode) + (l) * sizeof(struct skiplistnode *))
+#define MaxNumberOfLevels  16
+#define MaxLevel           (MaxNumberOfLevels - 1)
+#define newNodeOfLevel(l)  calloc(1, sizeof(struct skiplistnode) + (l) * sizeof(struct skiplistnode*))
 
 /* XXX must match type of (struct skiplist).level_stats */
 #define newStatsOfLevel(l) calloc(1, ((l) + 1) * sizeof(int))
@@ -69,10 +69,12 @@ static int randomsLeft;
 static int randomBits;
 
 #ifdef SKIPLIST_DEBUG
-#define CHECKLAST(sl)                                           \
-    do {                                                        \
-        if ((sl)->header->forward[0] && !(sl)->last) assert(0); \
-        if (!(sl)->header->forward[0] && (sl)->last) assert(0); \
+#define CHECKLAST(sl)                                \
+    do {                                             \
+        if ((sl)->header->forward[0] && !(sl)->last) \
+            assert(0);                               \
+        if (!(sl)->header->forward[0] && (sl)->last) \
+            assert(0);                               \
     } while (0)
 #else
 #define CHECKLAST(sl)
@@ -93,23 +95,26 @@ static int randomLevel(void) {
 
         if (!b) {
             level++;
-            if (level >= MaxLevel) return MaxLevel;
+            if (level >= MaxLevel)
+                return MaxLevel;
         }
     } while (!b);
 
     return level;
 }
 
-static int default_cmp(const void *key1, const void *key2) {
-    if (key1 < key2) return -1;
-    if (key1 > key2) return 1;
+static int default_cmp(const void* key1, const void* key2) {
+    if (key1 < key2)
+        return -1;
+    if (key1 > key2)
+        return 1;
     return 0;
 }
 
-unsigned int skiplist_count(struct skiplist *l) { return l->count; }
+unsigned int skiplist_count(struct skiplist* l) { return l->count; }
 
-struct skiplist *skiplist_new(int flags, int (*cmp)(const void *key1, const void *key2), void (*del)(void *val)) {
-    struct skiplist *new;
+struct skiplist* skiplist_new(int flags, int (*cmp)(const void* key1, const void* key2), void (*del)(void* val)) {
+    struct skiplist* new;
 
     new = calloc(1, sizeof(struct skiplist));
     assert(new);
@@ -125,19 +130,21 @@ struct skiplist *skiplist_new(int flags, int (*cmp)(const void *key1, const void
     else
         new->cmp = default_cmp;
 
-    if (del) new->del = del;
+    if (del)
+        new->del = del;
 
     return new;
 }
 
-void skiplist_free(struct skiplist *l) {
+void skiplist_free(struct skiplist* l) {
     register struct skiplistnode *p, *q;
 
     p = l->header;
 
     do {
         q = p->forward[0];
-        if (l->del && p != l->header) (*l->del)(p->value);
+        if (l->del && p != l->header)
+            (*l->del)(p->value);
         free(p);
         p = q;
     } while (p);
@@ -146,9 +153,9 @@ void skiplist_free(struct skiplist *l) {
     free(l);
 }
 
-int skiplist_insert(register struct skiplist *l, register void *key, register void *value) {
+int skiplist_insert(register struct skiplist* l, register void* key, register void* value) {
     register int k;
-    struct skiplistnode *update[MaxNumberOfLevels];
+    struct skiplistnode* update[MaxNumberOfLevels];
     register struct skiplistnode *p, *q;
 
     CHECKLAST(l);
@@ -163,7 +170,8 @@ int skiplist_insert(register struct skiplist *l, register void *key, register vo
     p = l->header;
     k = l->level;
     do {
-        while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0) p = q;
+        while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0)
+            p = q;
         update[k] = p;
     } while (--k >= 0);
 
@@ -210,22 +218,24 @@ int skiplist_insert(register struct skiplist *l, register void *key, register vo
     return 0;
 }
 
-int skiplist_delete(register struct skiplist *l, register void *key,
-                    register void *value) /* used only if duplicates allowed */
+int skiplist_delete(register struct skiplist* l, register void* key,
+                    register void* value) /* used only if duplicates allowed */
 {
     register int k, m;
-    struct skiplistnode *update[MaxNumberOfLevels];
+    struct skiplistnode* update[MaxNumberOfLevels];
     register struct skiplistnode *p, *q;
 
     CHECKLAST(l);
 
     /* to make debugging easier */
-    for (k = 0; k < MaxNumberOfLevels; ++k) update[k] = NULL;
+    for (k = 0; k < MaxNumberOfLevels; ++k)
+        update[k] = NULL;
 
     p = l->header;
     k = m = l->level;
     do {
-        while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0) p = q;
+        while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0)
+            p = q;
         update[k] = p;
     } while (--k >= 0);
 
@@ -233,7 +243,8 @@ int skiplist_delete(register struct skiplist *l, register void *key,
         while (q && ((*l->cmp)(q->key, key) == 0) && (q->value != value)) {
             int i;
             for (i = 0; i <= l->level; ++i) {
-                if (update[i]->forward[i] == q) update[i] = q;
+                if (update[i]->forward[i] == q)
+                    update[i] = q;
             }
             q = q->forward[0];
         }
@@ -265,9 +276,11 @@ int skiplist_delete(register struct skiplist *l, register void *key,
 #ifdef SKIPLIST_DEBUG
             log_debug("%s: decremented level_stats @%p:%d, now %d", __func__, l, k - 1, l->level_stats[k - 1]);
 #endif
-            if (l->del) (*l->del)(q->value);
+            if (l->del)
+                (*l->del)(q->value);
             free(q);
-            while (l->header->forward[m] == NULL && m > 0) m--;
+            while (l->header->forward[m] == NULL && m > 0)
+                m--;
             l->level = m;
             CHECKLAST(l);
             --(l->count);
@@ -285,10 +298,10 @@ int skiplist_delete(register struct skiplist *l, register void *key,
  *
  * Also set a cursor for use with skiplist_next_value.
  */
-int skiplist_first_value(register struct skiplist *l, /* in */
-                         register const void *key,    /* in */
-                         void **valuePointer,         /* out */
-                         void **cursor)               /* out */
+int skiplist_first_value(register struct skiplist* l, /* in */
+                         register const void* key,    /* in */
+                         void** valuePointer,         /* out */
+                         void** cursor)               /* out */
 {
     register int k;
     register struct skiplistnode *p, *q;
@@ -297,20 +310,24 @@ int skiplist_first_value(register struct skiplist *l, /* in */
     k = l->level;
 
     do {
-        while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0) p = q;
+        while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0)
+            p = q;
 
     } while (--k >= 0);
 
-    if (!q || (*l->cmp)(q->key, key)) return -1;
+    if (!q || (*l->cmp)(q->key, key))
+        return -1;
 
-    if (valuePointer) *valuePointer = q->value;
+    if (valuePointer)
+        *valuePointer = q->value;
 
-    if (cursor) *cursor = q;
+    if (cursor)
+        *cursor = q;
 
     return 0;
 }
 
-int skiplist_search(register struct skiplist *l, register void *key, void **valuePointer) {
+int skiplist_search(register struct skiplist* l, register void* key, void** valuePointer) {
     return skiplist_first_value(l, key, valuePointer, NULL);
 }
 
@@ -323,10 +340,10 @@ int skiplist_search(register struct skiplist *l, register void *key, void **valu
  * do not correspond to a list element, or if they specify the
  * last element with the given key, -1 is returned.
  */
-int skiplist_next_value(register struct skiplist *l, /* in */
-                        register const void *key,    /* in */
-                        void **valuePointer,         /* in/out */
-                        void **cursor)               /* in/out */
+int skiplist_next_value(register struct skiplist* l, /* in */
+                        register const void* key,    /* in */
+                        void** valuePointer,         /* in/out */
+                        void** cursor)               /* in/out */
 {
     register int k;
     register struct skiplistnode *p, *q;
@@ -345,7 +362,8 @@ int skiplist_next_value(register struct skiplist *l, /* in */
          * Find matching key
          */
         do {
-            while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0) p = q;
+            while (q = p->forward[k], q && (*l->cmp)(q->key, key) < 0)
+                p = q;
         } while (--k >= 0);
 
         /*
@@ -363,7 +381,7 @@ int skiplist_next_value(register struct skiplist *l, /* in */
             return -1;
         }
     } else {
-        q = (struct skiplistnode *)*cursor;
+        q = (struct skiplistnode*)*cursor;
     }
 
     /*
@@ -375,35 +393,42 @@ int skiplist_next_value(register struct skiplist *l, /* in */
      * If we reached end-of-list or if the key is no longer the same,
      * then return error
      */
-    if (!q || ((*l->cmp)(q->key, key) != 0)) return -1;
+    if (!q || ((*l->cmp)(q->key, key) != 0))
+        return -1;
 
     *valuePointer = q->value;
-    if (cursor) *cursor = q;
+    if (cursor)
+        *cursor = q;
     CHECKLAST(l);
     return 0;
 }
 
-int skiplist_first(register struct skiplist *l, void **keyPointer, void **valuePointer) {
-    register struct skiplistnode *p;
+int skiplist_first(register struct skiplist* l, void** keyPointer, void** valuePointer) {
+    register struct skiplistnode* p;
 
     CHECKLAST(l);
     p = l->header->forward[0];
-    if (!p) return -1;
+    if (!p)
+        return -1;
 
-    if (keyPointer) *keyPointer = p->key;
+    if (keyPointer)
+        *keyPointer = p->key;
 
-    if (valuePointer) *valuePointer = p->value;
+    if (valuePointer)
+        *valuePointer = p->value;
 
     CHECKLAST(l);
 
     return 0;
 }
 
-int skiplist_last(register struct skiplist *l, void **keyPointer, void **valuePointer) {
+int skiplist_last(register struct skiplist* l, void** keyPointer, void** valuePointer) {
     CHECKLAST(l);
     if (l->last) {
-        if (keyPointer) *keyPointer = l->last->key;
-        if (valuePointer) *valuePointer = l->last->value;
+        if (keyPointer)
+            *keyPointer = l->last->key;
+        if (valuePointer)
+            *valuePointer = l->last->value;
         return 0;
     }
     return -1;
@@ -412,9 +437,10 @@ int skiplist_last(register struct skiplist *l, void **keyPointer, void **valuePo
 /*
  * true = empty
  */
-int skiplist_empty(register struct skiplist *l) {
+int skiplist_empty(register struct skiplist* l) {
     CHECKLAST(l);
-    if (l->last) return 0;
+    if (l->last)
+        return 0;
     return 1;
 }
 
@@ -423,14 +449,15 @@ int skiplist_empty(register struct skiplist *l) {
  * first element. Return value of 0 indicates valid cursor/element
  * returned, otherwise NULL cursor arg or EOL.
  */
-int skiplist_next(register struct skiplist *l, /* in */
-                  void **keyPointer,           /* out */
-                  void **valuePointer,         /* out */
-                  void **cursor)               /* in/out */
+int skiplist_next(register struct skiplist* l, /* in */
+                  void** keyPointer,           /* out */
+                  void** valuePointer,         /* out */
+                  void** cursor)               /* in/out */
 {
-    struct skiplistnode *p;
+    struct skiplistnode* p;
 
-    if (!cursor) return -1;
+    if (!cursor)
+        return -1;
 
     CHECKLAST(l);
 
@@ -442,18 +469,21 @@ int skiplist_next(register struct skiplist *l, /* in */
     }
     *cursor = p;
 
-    if (!p) return -1;
+    if (!p)
+        return -1;
 
-    if (keyPointer) *keyPointer = p->key;
+    if (keyPointer)
+        *keyPointer = p->key;
 
-    if (valuePointer) *valuePointer = p->value;
+    if (valuePointer)
+        *valuePointer = p->value;
 
     CHECKLAST(l);
 
     return 0;
 }
 
-int skiplist_delete_first(register struct skiplist *l) {
+int skiplist_delete_first(register struct skiplist* l) {
     register int k;
     register struct skiplistnode *p, *q;
     int nodelevel = 0;
@@ -463,13 +493,16 @@ int skiplist_delete_first(register struct skiplist *l) {
     p = l->header;
     q = l->header->forward[0];
 
-    if (!q) return -1;
+    if (!q)
+        return -1;
 
     for (k = l->level; k >= 0; --k) {
         if (p->forward[k] == q) {
             p->forward[k] = q->forward[k];
-            if ((k == l->level) && (p->forward[k] == NULL) && (l->level > 0)) --(l->level);
-            if (!nodelevel) nodelevel = k;
+            if ((k == l->level) && (p->forward[k] == NULL) && (l->level > 0))
+                --(l->level);
+            if (!nodelevel)
+                nodelevel = k;
         }
     }
 
@@ -489,7 +522,8 @@ int skiplist_delete_first(register struct skiplist *l) {
     log_debug("%s: decremented level_stats @%p:%d, now %d", __func__, l, nodelevel, l->level_stats[nodelevel]);
 #endif
 
-    if (l->del) (*l->del)(q->value);
+    if (l->del)
+        (*l->del)(q->value);
 
     free(q);
 
@@ -500,21 +534,21 @@ int skiplist_delete_first(register struct skiplist *l) {
     return 0;
 }
 
-static void *scramble(int i) {
+static void* scramble(int i) {
     uintptr_t result;
 
     result = (unsigned)(i & 0xff) << 24;
     result |= (unsigned)i >> 8;
 
-    return (void *)result;
+    return (void*)result;
 }
 
 #define sampleSize 65536
 void skiplist_test() {
-    struct skiplist *l;
+    struct skiplist* l;
     register int i, k;
-    void *keys[sampleSize];
-    void *v = NULL;
+    void* keys[sampleSize];
+    void* v = NULL;
 
     log_debug("%s: entry", __func__);
 
@@ -529,28 +563,37 @@ void skiplist_test() {
             }
             // keys[k] = (void *)random();
             keys[k] = scramble(k);
-            if (skiplist_insert(l, keys[k], keys[k])) log_debug("error in insert #%d,#%d", i, k);
+            if (skiplist_insert(l, keys[k], keys[k]))
+                log_debug("error in insert #%d,#%d", i, k);
         }
 
         log_debug("%s: inserts done", __func__);
 
         for (k = 0; k < sampleSize; k++) {
-            if (!(k % 1000)) log_debug("[%d:%d]", i, k);
-            if (skiplist_search(l, keys[k], &v)) log_debug("error in search #%d,#%d", i, k);
+            if (!(k % 1000))
+                log_debug("[%d:%d]", i, k);
+            if (skiplist_search(l, keys[k], &v))
+                log_debug("error in search #%d,#%d", i, k);
 
-            if (v != keys[k]) log_debug("search returned wrong value");
+            if (v != keys[k])
+                log_debug("search returned wrong value");
         }
 
         for (k = 0; k < sampleSize; k++) {
-            if (!(k % 1000)) log_debug("<%d:%d>", i, k);
-            if (skiplist_delete(l, keys[k], keys[k])) log_debug("error in delete");
+            if (!(k % 1000))
+                log_debug("<%d:%d>", i, k);
+            if (skiplist_delete(l, keys[k], keys[k]))
+                log_debug("error in delete");
             keys[k] = scramble(k ^ 0xf0f0f0f0);
-            if (skiplist_insert(l, keys[k], keys[k])) log_debug("error in insert #%d,#%d", i, k);
+            if (skiplist_insert(l, keys[k], keys[k]))
+                log_debug("error in insert #%d,#%d", i, k);
         }
 
         for (k = 0; k < sampleSize; k++) {
-            if (!(k % 1000)) log_debug("{%d:%d}", i, k);
-            if (skiplist_delete_first(l)) log_debug("error in delete_first");
+            if (!(k % 1000))
+                log_debug("{%d:%d}", i, k);
+            if (skiplist_delete_first(l))
+                log_debug("error in delete_first");
         }
     }
 

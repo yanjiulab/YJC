@@ -1,8 +1,8 @@
 #include "ethernet.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <assert.h>
 
 const char* ether_type2str(uint16_t type) {
     switch (type) {

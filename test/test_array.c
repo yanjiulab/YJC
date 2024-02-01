@@ -15,14 +15,13 @@ void test_array() {
     // {
     //     // ip_array_back
     // }
-    
+
     int i = 1;
     ip_array_push_back(&ips, &i);
     ip_array_push_back(&ips, &i);
     ip_array_push_back(&ips, &i);
     ip_array_push_back(&ips, &i);
 
-    
     for (int i = 0; i < ip_array_size(&ips); i++) {
         printf("%d ", *ip_array_at(&ips, i));
     }

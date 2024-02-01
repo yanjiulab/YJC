@@ -1,12 +1,12 @@
 #ifndef CONCURRENCY_H_
 #define CONCURRENCY_H_
 
+#include "atomic.h"
 #include "datetime.h"
 #include "platform.h"
-#include "atomic.h"
-#include "thread.h"
 #include "proc.h"
 #include "thpool.h"
+#include "thread.h"
 
 // //-----------------------------atomic----------------------------------------------
 // #ifdef HAVE_STDATOMIC_H
@@ -106,6 +106,4 @@
 // #define hatomic_inc ATOMIC_INC
 // #define hatomic_dec ATOMIC_DEC
 
-
-
-#endif  // HV_MUTEX_H_
+#endif // HV_MUTEX_H_

@@ -61,9 +61,9 @@ typedef char* string_t;
  * the include of your alternate allocator if needed (not needed in order
  * to use the default libc allocator). */
 
-#define s_malloc malloc
+#define s_malloc  malloc
 #define s_realloc realloc
-#define s_free free
+#define s_free    free
 
 /* Note: strhdr5 is never used, we just access the flags byte directly.
  * However is here to document the layout of type 5 string_t strings. */
@@ -96,15 +96,15 @@ struct __attribute__((__packed__)) strhdr64 {
     char buf[];
 };
 
-#define STR_TYPE_5 0
-#define STR_TYPE_8 1
-#define STR_TYPE_16 2
-#define STR_TYPE_32 3
-#define STR_TYPE_64 4
-#define STR_TYPE_MASK 7
-#define STR_TYPE_BITS 3
+#define STR_TYPE_5        0
+#define STR_TYPE_8        1
+#define STR_TYPE_16       2
+#define STR_TYPE_32       3
+#define STR_TYPE_64       4
+#define STR_TYPE_MASK     7
+#define STR_TYPE_BITS     3
 #define STR_HDR_VAR(T, s) struct strhdr##T* sh = (void*)((s) - (sizeof(struct strhdr##T)));
-#define STR_HDR(T, s) ((struct strhdr##T*)((s) - (sizeof(struct strhdr##T))))
+#define STR_HDR(T, s)     ((struct strhdr##T*)((s) - (sizeof(struct strhdr##T))))
 #define STR_TYPE_5_LEN(f) ((f) >> STR_TYPE_BITS)
 
 static inline size_t str_len(const string_t s) {
@@ -281,8 +281,8 @@ void* strAllocPtr(string_t s);
 
 /* Original char * API */
 #define strmatch(s1, s2) (strncmp((s1), (s2), strlen((s2))) == 0)
-#define strlcpy strncpy
-#define strlcat strncat
+#define strlcpy          strncpy
+#define strlcat          strncat
 
 bool str_startswith(const char* str, const char* prefix);
 bool str_endswith(const char* str, const char* suffix);

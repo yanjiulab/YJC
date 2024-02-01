@@ -1,6 +1,6 @@
 /**
  * Print Pretty Table like below:
- * 
+ *
     +--------------------------------------------------------+
     | Name                               | Age       | Score |
     *--------------------------------------------------------*
@@ -33,7 +33,7 @@
     |------------------------------------|-----------|-------|
     | Ё Ђ Ѓ Є Ѕ І Ї Ј Љ                  | 21        | 14.12 |
     +--------------------------------------------------------+
- * 
+ *
  */
 
 #ifndef PTABLE_H
@@ -47,18 +47,18 @@ struct ptable {
     size_t cols;
     size_t rows;
     size_t alloc;
-    size_t *max;
-    char ***data;
-    char **headers;
-    char *fmt;
+    size_t* max;
+    char*** data;
+    char** headers;
+    char* fmt;
 };
 
-typedef struct ptable *ptable_t;
+typedef struct ptable* ptable_t;
 
 ptable_t ptable_new();
-bool ptable_init(struct ptable *t, ...);
-bool ptable_add(struct ptable *t, ...);
-bool ptable_print(struct ptable const *t, size_t maxwidth, FILE *f);
-void ptable_free(struct ptable *t);
+bool ptable_init(struct ptable* t, ...);
+bool ptable_add(struct ptable* t, ...);
+bool ptable_print(struct ptable const* t, size_t maxwidth, FILE* f);
+void ptable_free(struct ptable* t);
 
 #endif

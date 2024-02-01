@@ -25,24 +25,24 @@ extern "C" {
     "labels in the range (16-1048575) separated by '/'\n"
 
 /* Well-known MPLS label values (RFC 3032 etc). */
-#define MPLS_LABEL_IPV4_EXPLICIT_NULL 0 /* [RFC3032] */
-#define MPLS_LABEL_ROUTER_ALERT 1       /* [RFC3032] */
-#define MPLS_LABEL_IPV6_EXPLICIT_NULL 2 /* [RFC3032] */
-#define MPLS_LABEL_IMPLICIT_NULL 3      /* [RFC3032] */
-#define MPLS_LABEL_ELI 7                /* [RFC6790] */
-#define MPLS_LABEL_GAL 13               /* [RFC5586] */
-#define MPLS_LABEL_OAM_ALERT 14         /* [RFC3429] */
-#define MPLS_LABEL_EXTENSION 15         /* [RFC7274] */
-#define MPLS_LABEL_MAX 1048575
-#define MPLS_LABEL_VALUE_MASK 0x000FFFFF
-#define MPLS_LABEL_NONE 0xFFFFFFFF /* for internal use only */
+#define MPLS_LABEL_IPV4_EXPLICIT_NULL 0  /* [RFC3032] */
+#define MPLS_LABEL_ROUTER_ALERT       1  /* [RFC3032] */
+#define MPLS_LABEL_IPV6_EXPLICIT_NULL 2  /* [RFC3032] */
+#define MPLS_LABEL_IMPLICIT_NULL      3  /* [RFC3032] */
+#define MPLS_LABEL_ELI                7  /* [RFC6790] */
+#define MPLS_LABEL_GAL                13 /* [RFC5586] */
+#define MPLS_LABEL_OAM_ALERT          14 /* [RFC3429] */
+#define MPLS_LABEL_EXTENSION          15 /* [RFC7274] */
+#define MPLS_LABEL_MAX                1048575
+#define MPLS_LABEL_VALUE_MASK         0x000FFFFF
+#define MPLS_LABEL_NONE               0xFFFFFFFF /* for internal use only */
 
 /* Minimum and maximum label values */
-#define MPLS_LABEL_RESERVED_MIN 0
-#define MPLS_LABEL_RESERVED_MAX 15
-#define MPLS_LABEL_UNRESERVED_MIN 16
-#define MPLS_LABEL_UNRESERVED_MAX 1048575
-#define MPLS_LABEL_BASE_ANY 0
+#define MPLS_LABEL_RESERVED_MIN       0
+#define MPLS_LABEL_RESERVED_MAX       15
+#define MPLS_LABEL_UNRESERVED_MIN     16
+#define MPLS_LABEL_UNRESERVED_MAX     1048575
+#define MPLS_LABEL_BASE_ANY           0
 
 /* Default min and max SRGB label range */
 /* Even if the SRGB allows to manage different Label space between routers,
@@ -51,13 +51,13 @@ extern "C" {
  * its SRGB at 16384 for OSPF. Thus, by fixing the minimum SRGB label to
  * 8000 we could deal with both Cisco and Juniper.
  */
-#define MPLS_DEFAULT_MIN_SRGB_LABEL 8000
-#define MPLS_DEFAULT_MAX_SRGB_LABEL 50000
-#define MPLS_DEFAULT_MIN_SRGB_SIZE 5000
-#define MPLS_DEFAULT_MAX_SRGB_SIZE 20000
+#define MPLS_DEFAULT_MIN_SRGB_LABEL   8000
+#define MPLS_DEFAULT_MAX_SRGB_LABEL   50000
+#define MPLS_DEFAULT_MIN_SRGB_SIZE    5000
+#define MPLS_DEFAULT_MAX_SRGB_SIZE    20000
 
 /* Maximum # labels that can be pushed. */
-#define MPLS_MAX_LABELS 16
+#define MPLS_MAX_LABELS               16
 
 #define IS_MPLS_RESERVED_LABEL(label) (label <= MPLS_LABEL_RESERVED_MAX)
 
@@ -69,24 +69,24 @@ extern "C" {
  */
 typedef unsigned int mpls_lse_t;
 
-#define MPLS_LS_LABEL_MASK 0xFFFFF000
+#define MPLS_LS_LABEL_MASK  0xFFFFF000
 #define MPLS_LS_LABEL_SHIFT 12
-#define MPLS_LS_EXP_MASK 0x00000E00
-#define MPLS_LS_EXP_SHIFT 9
-#define MPLS_LS_S_MASK 0x00000100
-#define MPLS_LS_S_SHIFT 8
-#define MPLS_LS_TTL_MASK 0x000000FF
-#define MPLS_LS_TTL_SHIFT 0
+#define MPLS_LS_EXP_MASK    0x00000E00
+#define MPLS_LS_EXP_SHIFT   9
+#define MPLS_LS_S_MASK      0x00000100
+#define MPLS_LS_S_SHIFT     8
+#define MPLS_LS_TTL_MASK    0x000000FF
+#define MPLS_LS_TTL_SHIFT   0
 
 #define MPLS_LABEL_VALUE(lse) \
     ((lse & MPLS_LS_LABEL_MASK) >> MPLS_LS_LABEL_SHIFT)
-#define MPLS_LABEL_EXP(lse) ((lse & MPLS_LS_EXP_MASK) >> MPLS_LS_EXP_SHIFT)
-#define MPLS_LABEL_BOS(lse) ((lse & MPLS_LS_S_MASK) >> MPLS_LS_S_SHIFT)
-#define MPLS_LABEL_TTL(lse) ((lse & MPLS_LS_TTL_MASK) >> MPLS_LS_TTL_SHIFT)
+#define MPLS_LABEL_EXP(lse)   ((lse & MPLS_LS_EXP_MASK) >> MPLS_LS_EXP_SHIFT)
+#define MPLS_LABEL_BOS(lse)   ((lse & MPLS_LS_S_MASK) >> MPLS_LS_S_SHIFT)
+#define MPLS_LABEL_TTL(lse)   ((lse & MPLS_LS_TTL_MASK) >> MPLS_LS_TTL_SHIFT)
 
 #define IS_MPLS_LABEL_BOS(ls) (MPLS_LABEL_BOS(ls) == 1)
 
-#define MPLS_LABEL_LEN_BITS 20
+#define MPLS_LABEL_LEN_BITS   20
 
 /* MPLS label value as a 32-bit (mostly we only care about the label value). */
 typedef unsigned int mpls_label_t;

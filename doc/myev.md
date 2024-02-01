@@ -6,7 +6,4 @@ fd_set 实际上是一个 long 型数组 `long fds_bits[FD_SETSIZE / NFDBITS]`�
 
 当调用 select() 时，内核根据 IO 状态修改 fd_set 的内容，由此来通知进程哪一个 fd 可读。
 
-
 ## Poll
-
-

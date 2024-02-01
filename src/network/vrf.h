@@ -30,14 +30,14 @@ enum { IFLA_VRF_UNSPEC,
 #define IFLA_VRF_MAX (__IFLA_VRF_MAX - 1)
 #endif
 
-#define VRF_NAMSIZ 36
-#define NS_NAMSIZ 36
+#define VRF_NAMSIZ            36
+#define NS_NAMSIZ             36
 
 /*
  * The command strings
  */
-#define VRF_CMD_HELP_STR "Specify the VRF\nThe VRF name\n"
-#define VRF_ALL_CMD_HELP_STR "Specify the VRF\nAll VRFs\n"
+#define VRF_CMD_HELP_STR      "Specify the VRF\nThe VRF name\n"
+#define VRF_ALL_CMD_HELP_STR  "Specify the VRF\nAll VRFs\n"
 #define VRF_FULL_CMD_HELP_STR "Specify the VRF\nThe VRF name\nAll VRFs\n"
 
 /*
@@ -65,7 +65,7 @@ struct vrf {
 
     /* Zebra internal VRF status */
     uint8_t status;
-#define VRF_ACTIVE (1 << 0)     /* VRF is up in kernel */
+#define VRF_ACTIVE     (1 << 0) /* VRF is up in kernel */
 #define VRF_CONFIGURED (1 << 1) /* VRF has some FRR configuration */
 
     /* Interfaces belonging to this VRF */

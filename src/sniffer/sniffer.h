@@ -10,7 +10,7 @@
 #include "socket.h"
 
 #define SNIFFER_RECORD_DEFAULT 65536
-#define SNIFFER_PCAP_PATH "./capture"
+#define SNIFFER_PCAP_PATH      "./capture"
 
 typedef enum sniffer_record_e {
     SNIFFER_RECORD_PACKET,
@@ -25,7 +25,7 @@ typedef enum {
     SNIFFER_PAUSE,
 } sniffer_status_t;
 
-#define SNIFFER_OK 1
+#define SNIFFER_OK    1
 #define SNIFFER_ERROR -1
 
 struct sniffer {
@@ -73,7 +73,7 @@ int sniffer_set_filter_eth_byte(sniffer_t* sniffer, uint32_t pos, uint8_t val);
 int sniffer_set_recv_cb();
 int sniffer_set_parse_cb();
 
-#define sniffer_fd(snif) (snif->psock->packet_fd)
+#define sniffer_fd(snif)    (snif->psock->packet_fd)
 #define sniffer_ifnam(snif) (snif->psock->name)
 #define sniffer_ifidx(snif) (snif->psock->name)
 

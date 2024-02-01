@@ -17,16 +17,16 @@
 
 /*---------------------------- Defines -------------------------------------*/
 /** Maximum value size for integers and doubles. */
-#define MAXVALSZ 1024
+#define MAXVALSZ         1024
 
 /** Minimal allocated number of entries in a dictionary */
-#define DICTMINSZ 128
+#define DICTMINSZ        128
 
 /** Invalid key token */
 #define DICT_INVALID_KEY ((char*)-1)
 
-#define ASCIILINESZ (1024)
-#define INI_INVALID_KEY ((char*)-1)
+#define ASCIILINESZ      (1024)
+#define INI_INVALID_KEY  ((char*)-1)
 
 /*---------------------------------------------------------------------------
                             Private to this module

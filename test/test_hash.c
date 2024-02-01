@@ -28,12 +28,12 @@ void test_hash() {
     h = hash_create(my_struct_key, my_struct_hash_equal, NULL);
     struct my_struct s1 = {1, 1};
     struct my_struct s2 = {2, 2};
-    
+
     hash_get(h, &s1, hash_alloc_intern);
     hash_get(h, &s2, hash_alloc_intern);
 
-    struct my_struct *res = NULL;
-    res = (struct my_struct *)hash_lookup(h, &(struct my_struct){ .i1=1 });
+    struct my_struct* res = NULL;
+    res = (struct my_struct*)hash_lookup(h, &(struct my_struct){.i1 = 1});
 
     s1.i1 = 8;
 

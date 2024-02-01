@@ -2,10 +2,10 @@
 #define _YJC_NETDEV_H_
 #include <ifaddrs.h>
 
-#define NETDEV_INFO_PATH "/sys/class/net/"
-#define RUNTIME_NETINFO_PATH "/proc/net/"
+#define NETDEV_INFO_PATH          "/sys/class/net/"
+#define RUNTIME_NETINFO_PATH      "/proc/net/"
 #define RUNTIME_NETDEV_STATISTICS "/proc/net/dev"
-#define TUN_PATH "/dev/net/tun"
+#define TUN_PATH                  "/dev/net/tun"
 
 struct netdev_info {
     /* data */
@@ -21,13 +21,13 @@ char* netdev_get_ipaddr(const char* ifname);
  * to the given device.
  */
 extern void netdev_add_ipaddr(const char* dev_name, const char* ip,
-                                  int prefix_len);
+                              int prefix_len);
 
 /* Delete the given IP address, with the given subnet/prefix length,
  * from the given device.
  */
 extern void netdev_del_ipaddr(const char* dev_name, const char* ip,
-                                  int prefix_len);
+                              int prefix_len);
 
 /* See if the given IP address, with the given subnet/prefix length,
  * is already on the given device. If so, return without doing
@@ -35,6 +35,6 @@ extern void netdev_del_ipaddr(const char* dev_name, const char* ip,
  * add it to the given network device.
  */
 extern void netdev_setup_ipaddr(const char* dev_name, const char* ip,
-                                    int prefix_len);
+                                int prefix_len);
 
 #endif

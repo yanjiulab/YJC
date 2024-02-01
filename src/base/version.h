@@ -3,19 +3,19 @@
 
 #include <stdio.h>
 
-#define FULL_NAME "YJC"
+#define FULL_NAME     "YJC"
 
-#define VERSION COMPILE_VERSION
+#define VERSION       COMPILE_VERSION
 
 #define MAJOR_VERSION "1"
 
 #define MINOR_VERSION "1"
 
-#define COMPILE_VERSION 
+#define COMPILE_VERSION
 
-#define ADDRESS "https://github.com/yanjiulab/YJC"
+#define ADDRESS     "https://github.com/yanjiulab/YJC"
 
-#define COPYRIGHT "Copyright 2020-2023 Yanjiu Li."
+#define COPYRIGHT   "Copyright 2020-2023 Yanjiu Li."
 
 #define CONFIG_ARGS ""
 
@@ -23,7 +23,7 @@
     "\n"             \
     "Hello, this is " FULL_NAME " (version " VERSION ").\n" ADDRESS "\n" COPYRIGHT "\n" CONFIG_ARGS "\n"
 
-#define DATE_YEAR ((((__DATE__[7] - '0') * 10 + (__DATE__[8] - '0')) * 10 + (__DATE__[9] - '0')) * 10 + (__DATE__[10] - '0'))
+#define DATE_YEAR  ((((__DATE__[7] - '0') * 10 + (__DATE__[8] - '0')) * 10 + (__DATE__[9] - '0')) * 10 + (__DATE__[10] - '0'))
 
 #define DATE_MONTH (__DATE__[2] == 'n'   ? 0                            \
                     : __DATE__[2] == 'b' ? 1                            \
@@ -37,11 +37,11 @@
                     : __DATE__[2] == 'v' ? 10                           \
                                          : 11)
 
-#define DATE_DAY ((__DATE__[4] == ' ' ? 0 : __DATE__[4] - '0') * 10 + (__DATE__[5] - '0'))
+#define DATE_DAY    ((__DATE__[4] == ' ' ? 0 : __DATE__[4] - '0') * 10 + (__DATE__[5] - '0'))
 
 #define DATE_AS_INT (((YEAR - 2000) * 12 + MONTH) * 31 + DAY)
 
-#define TIME_HOUR ((__TIME__[0] - '0') * 10 + (__TIME__[1] - '0'))
+#define TIME_HOUR   ((__TIME__[0] - '0') * 10 + (__TIME__[1] - '0'))
 
 #define TIME_MINUTE ((__TIME__[3] - '0') * 10 + (__TIME__[4] - '0'))
 

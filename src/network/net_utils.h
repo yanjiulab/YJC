@@ -1,23 +1,23 @@
 #ifndef __NET_UTILS_H__
 #define __NET_UTILS_H__
 
+#include "arp.h"
+#include "socket.h"
 #include <arpa/inet.h>
-#include <net/if_arp.h>       // ARP
-#include <netinet/ether.h>    // Ethernet
-#include <netinet/igmp.h>     // IGMP
-#include <netinet/in.h>       // IP address
-#include <netinet/ip.h>       // IPv4
-#include <netinet/ip6.h>      // IPv6
-#include <netinet/ip_icmp.h>  // ICMP
-#include <netinet/tcp.h>      // TCP
-#include <netinet/udp.h>      // UDP
+#include <net/if_arp.h>      // ARP
+#include <netinet/ether.h>   // Ethernet
+#include <netinet/igmp.h>    // IGMP
+#include <netinet/in.h>      // IP address
+#include <netinet/ip.h>      // IPv4
+#include <netinet/ip6.h>     // IPv6
+#include <netinet/ip_icmp.h> // ICMP
+#include <netinet/tcp.h>     // TCP
+#include <netinet/udp.h>     // UDP
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include "arp.h"
-#include "socket.h"
 
 //-----------------------------headers----------------------------------------------
 typedef struct ethhdr ethhdr_t;

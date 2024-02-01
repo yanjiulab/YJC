@@ -23,30 +23,30 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
-struct ringbuf *ringbuf_new(size_t size) {
-    struct ringbuf *buf = calloc(1, sizeof(struct ringbuf));
+struct ringbuf* ringbuf_new(size_t size) {
+    struct ringbuf* buf = calloc(1, sizeof(struct ringbuf));
     buf->data = calloc(1, size);
     buf->size = size;
     buf->empty = true;
     return buf;
 }
 
-void ringbuf_del(struct ringbuf *buf) {
+void ringbuf_del(struct ringbuf* buf) {
     free(buf->data);
     free(buf);
 }
 
-size_t ringbuf_remain(struct ringbuf *buf) {
+size_t ringbuf_remain(struct ringbuf* buf) {
     ssize_t diff = buf->end - buf->start;
     diff += ((diff == 0) && !buf->empty) ? buf->size : 0;
     diff += (diff < 0) ? buf->size : 0;
     return (size_t)diff;
 }
 
-size_t ringbuf_space(struct ringbuf *buf) { return buf->size - ringbuf_remain(buf); }
+size_t ringbuf_space(struct ringbuf* buf) { return buf->size - ringbuf_remain(buf); }
 
-size_t ringbuf_put(struct ringbuf *buf, const void *data, size_t size) {
-    const uint8_t *dp = data;
+size_t ringbuf_put(struct ringbuf* buf, const void* data, size_t size) {
+    const uint8_t* dp = data;
     size_t space = ringbuf_space(buf);
     size_t copysize = MIN(size, space);
     size_t tocopy = copysize;
@@ -63,8 +63,8 @@ size_t ringbuf_put(struct ringbuf *buf, const void *data, size_t size) {
     return copysize;
 }
 
-size_t ringbuf_get(struct ringbuf *buf, void *data, size_t size) {
-    uint8_t *dp = data;
+size_t ringbuf_get(struct ringbuf* buf, void* data, size_t size) {
+    uint8_t* dp = data;
     size_t remain = ringbuf_remain(buf);
     size_t copysize = MIN(remain, size);
     size_t tocopy = copysize;
@@ -81,10 +81,11 @@ size_t ringbuf_get(struct ringbuf *buf, void *data, size_t size) {
     return copysize;
 }
 
-size_t ringbuf_peek(struct ringbuf *buf, size_t offset, void *data, size_t size) {
-    uint8_t *dp = data;
+size_t ringbuf_peek(struct ringbuf* buf, size_t offset, void* data, size_t size) {
+    uint8_t* dp = data;
     size_t remain = ringbuf_remain(buf);
-    if (offset >= remain) return 0;
+    if (offset >= remain)
+        return 0;
     size_t copysize = MAX(MIN(remain - offset, size), (size_t)0);
     size_t tocopy = copysize;
     size_t cstart = (buf->start + offset) % buf->size;
@@ -99,21 +100,21 @@ size_t ringbuf_peek(struct ringbuf *buf, size_t offset, void *data, size_t size)
     return copysize;
 }
 
-size_t ringbuf_copy(struct ringbuf *to, struct ringbuf *from, size_t size) {
+size_t ringbuf_copy(struct ringbuf* to, struct ringbuf* from, size_t size) {
     size_t tocopy = MIN(ringbuf_space(to), size);
-    uint8_t *cbuf = calloc(1, tocopy);
+    uint8_t* cbuf = calloc(1, tocopy);
     tocopy = ringbuf_peek(from, 0, cbuf, tocopy);
     size_t put = ringbuf_put(to, cbuf, tocopy);
     free(cbuf);
     return put;
 }
 
-void ringbuf_reset(struct ringbuf *buf) {
+void ringbuf_reset(struct ringbuf* buf) {
     buf->start = buf->end = 0;
     buf->empty = true;
 }
 
-void ringbuf_wipe(struct ringbuf *buf) {
+void ringbuf_wipe(struct ringbuf* buf) {
     memset(buf->data, 0x00, buf->size);
     ringbuf_reset(buf);
 }

@@ -1,8 +1,8 @@
 #ifndef EV_BUF_H_
 #define EV_BUF_H_
 
-#include "base.h"  // for EV_ALLOC, EV_FREE
-#include "defs.h"  // for MAX
+#include "base.h" // for EV_ALLOC, EV_FREE
+#include "defs.h" // for MAX
 
 typedef struct buf_s {
     char* base;
@@ -22,4 +22,4 @@ typedef struct fifo_buf_s {
     size_t tail;
 } fifo_buf_t;
 
-#endif  // EV_BUF_H_
+#endif // EV_BUF_H_

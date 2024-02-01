@@ -95,7 +95,7 @@ void print_data(unsigned char* data, int size) {
                 if (data[j] >= 32 && data[j] <= 128) {
                     printf("%c", (unsigned char)data[j]);
                 } else {
-                    printf(".");  // otherwise print a dot
+                    printf("."); // otherwise print a dot
                 }
             }
             printf("\n");
@@ -104,10 +104,10 @@ void print_data(unsigned char* data, int size) {
             printf("   ");
         }
         printf(" %02X", (unsigned int)data[i]);
-        if (i == size - 1)  // print the last spaces
+        if (i == size - 1) // print the last spaces
         {
             for (j = 0; j < 15 - i % 16; j++) {
-                printf("   ");  // extra spaces
+                printf("   "); // extra spaces
             }
             printf("         ");
             for (j = i - i % 16; j <= i; j++) {
@@ -123,10 +123,13 @@ void print_data(unsigned char* data, int size) {
 #else
     int i, j;
     for (i = 0; i < size; i++) {
-        if (i != 0 && i % 20 == 0) printf("\n");
-        if (i % 20 == 0) printf("   ");
+        if (i != 0 && i % 20 == 0)
+            printf("\n");
+        if (i % 20 == 0)
+            printf("   ");
         printf(" %02X", (unsigned int)data[i]);
-        if (i == size - 1) printf("\n");
+        if (i == size - 1)
+            printf("\n");
     }
 #endif
 }

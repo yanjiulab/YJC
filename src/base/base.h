@@ -6,8 +6,8 @@
 #include "errors.h"
 #include "export.h"
 #include "log.h"
-#include "math.h"
 #include "macros.h"
+#include "math.h"
 #include "platform.h" // for bool
 #include "str.h"
 #include "types.h"
@@ -62,9 +62,9 @@ static inline void ev_memcheck(void) { printf("Memcheck => alloc:%ld free:%ld\n"
         EV_FREE(ptr);                          \
     }
 
-#define EV_DEFAULT_STACKBUF_SIZE 1024
+#define EV_DEFAULT_STACKBUF_SIZE  1024
 #define EV_STACK_ALLOC(ptr, size) STACK_OR_HEAP_ALLOC(ptr, size, EV_DEFAULT_STACKBUF_SIZE)
-#define EV_STACK_FREE(ptr) STACK_OR_HEAP_FREE(ptr)
+#define EV_STACK_FREE(ptr)        STACK_OR_HEAP_FREE(ptr)
 
 //--------------------path-------------------------------
 EXPORT int mkdir_p(const char* dir); // mkdir -p

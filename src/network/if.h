@@ -87,7 +87,7 @@ enum zebra_link_type {
    #define IFNAMSIZ        16
 */
 
-#define INTERFACE_NAMSIZ 16
+#define INTERFACE_NAMSIZ     16
 #define INTERFACE_HWADDR_MAX 20
 
 #ifdef HAVE_PROC_NET_DEV
@@ -122,18 +122,18 @@ struct if_stats {
 #endif /* HAVE_PROC_NET_DEV */
 
 /* Here are "non-official" architectural constants. */
-#define TE_EXT_MASK 0x00FFFFFF
-#define TE_EXT_ANORMAL 0x80000000
-#define LOSS_PRECISION 0.000003
+#define TE_EXT_MASK       0x00FFFFFF
+#define TE_EXT_ANORMAL    0x80000000
+#define LOSS_PRECISION    0.000003
 /* TE_MEGA_BIT and TE_BYTE are utilized to convert TE bandwidth */
-#define TE_MEGA_BIT 1000000
-#define TE_BYTE 8
+#define TE_MEGA_BIT       1000000
+#define TE_BYTE           8
 /* Default TE bandwidth when no value in config.
  * The value is in Mbps (will be multiplied by TE_BYTE)
  */
 #define DEFAULT_BANDWIDTH 10
-#define MAX_CLASS_TYPE 8
-#define MAX_PKT_LOSS 50.331642
+#define MAX_CLASS_TYPE    8
+#define MAX_PKT_LOSS      50.331642
 
 enum affinity_mode {
     /* RFC7308 Extended Administrative group */
@@ -149,29 +149,29 @@ enum affinity_mode {
  *  equal to 0: unset
  *  different from 0: set
  */
-#define LP_UNSET 0x0000
-#define LP_TE_METRIC 0x0001
-#define LP_MAX_BW 0x0002
-#define LP_MAX_RSV_BW 0x0004
-#define LP_UNRSV_BW 0x0008
-#define LP_ADM_GRP 0x0010
-#define LP_RMT_AS 0x0020
-#define LP_DELAY 0x0040
-#define LP_MM_DELAY 0x0080
-#define LP_DELAY_VAR 0x0100
-#define LP_PKT_LOSS 0x0200
-#define LP_RES_BW 0x0400
-#define LP_AVA_BW 0x0800
-#define LP_USE_BW 0x1000
-#define LP_EXTEND_ADM_GRP 0x2000
+#define LP_UNSET               0x0000
+#define LP_TE_METRIC           0x0001
+#define LP_MAX_BW              0x0002
+#define LP_MAX_RSV_BW          0x0004
+#define LP_UNRSV_BW            0x0008
+#define LP_ADM_GRP             0x0010
+#define LP_RMT_AS              0x0020
+#define LP_DELAY               0x0040
+#define LP_MM_DELAY            0x0080
+#define LP_DELAY_VAR           0x0100
+#define LP_PKT_LOSS            0x0200
+#define LP_RES_BW              0x0400
+#define LP_AVA_BW              0x0800
+#define LP_USE_BW              0x1000
+#define LP_EXTEND_ADM_GRP      0x2000
 
 #define IS_PARAM_UNSET(lp, st) !(lp->lp_status & st)
-#define IS_PARAM_SET(lp, st) (lp->lp_status & st)
+#define IS_PARAM_SET(lp, st)   (lp->lp_status & st)
 #define IS_LINK_PARAMS_SET(lp) (lp->lp_status != LP_UNSET)
 
-#define SET_PARAM(lp, st) (lp->lp_status) |= (st)
-#define UNSET_PARAM(lp, st) (lp->lp_status) &= ~(st)
-#define RESET_LINK_PARAM(lp) (lp->lp_status = LP_UNSET)
+#define SET_PARAM(lp, st)      (lp->lp_status) |= (st)
+#define UNSET_PARAM(lp, st)    (lp->lp_status) &= ~(st)
+#define RESET_LINK_PARAM(lp)   (lp->lp_status = LP_UNSET)
 
 /* Link Parameters for Traffic Engineering
  * Do not forget to update if_link_params_copy()
@@ -200,7 +200,7 @@ struct if_link_params {
 };
 
 #define INTERFACE_LINK_PARAMS_SIZE sizeof(struct if_link_params)
-#define HAS_LINK_PARAMS(ifp) ((ifp)->link_params != NULL)
+#define HAS_LINK_PARAMS(ifp)       ((ifp)->link_params != NULL)
 
 /* Interface structure */
 struct interface {
@@ -235,10 +235,10 @@ struct interface {
 
     /* Zebra internal interface status */
     uint8_t status;
-#define ZEBRA_INTERFACE_ACTIVE (1 << 0)
-#define ZEBRA_INTERFACE_SUB (1 << 1)
+#define ZEBRA_INTERFACE_ACTIVE        (1 << 0)
+#define ZEBRA_INTERFACE_SUB           (1 << 1)
 #define ZEBRA_INTERFACE_LINKDETECTION (1 << 2)
-#define ZEBRA_INTERFACE_VRF_LOOPBACK (1 << 3)
+#define ZEBRA_INTERFACE_VRF_LOOPBACK  (1 << 3)
 
     /* Interface flags. */
     uint64_t flags;
@@ -250,7 +250,7 @@ struct interface {
     uint32_t speed;
 
     /* Interface MTU. */
-    unsigned int mtu; /* IPv4 MTU */
+    unsigned int mtu;  /* IPv4 MTU */
     unsigned int mtu6; /* IPv6 MTU - probably, but not necessarily same as mtu */
 
     /* Link-layer information and hardware address */
@@ -382,10 +382,10 @@ struct connected {
 
     /* Flags for configuration. */
     uint8_t conf;
-#define ZEBRA_IFC_REAL (1 << 0)
+#define ZEBRA_IFC_REAL       (1 << 0)
 #define ZEBRA_IFC_CONFIGURED (1 << 1)
-#define ZEBRA_IFC_QUEUED (1 << 2)
-#define ZEBRA_IFC_DOWN (1 << 3)
+#define ZEBRA_IFC_QUEUED     (1 << 2)
+#define ZEBRA_IFC_DOWN       (1 << 3)
     /*
        The ZEBRA_IFC_REAL flag should be set if and only if this address
        exists in the kernel and is actually usable. (A case where it exists
@@ -401,8 +401,8 @@ struct connected {
 
     /* Flags for connected address. */
     uint8_t flags;
-#define ZEBRA_IFA_SECONDARY (1 << 0)
-#define ZEBRA_IFA_PEER (1 << 1)
+#define ZEBRA_IFA_SECONDARY  (1 << 0)
+#define ZEBRA_IFA_PEER       (1 << 1)
 #define ZEBRA_IFA_UNNUMBERED (1 << 2)
     /* N.B. the ZEBRA_IFA_PEER flag should be set if and only if
        a peer address has been configured.  If this flag is set,

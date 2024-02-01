@@ -92,12 +92,12 @@
 /* =================================================================================== */
 
 /* Error codes (for CMDF_RETURN) */
-#define CMDF_OK 1
-#define CMDF_ERROR_TOO_MANY_COMMANDS -1
-#define CMDF_ERROR_TOO_MANY_ARGS -2
-#define CMDF_ERROR_UNKNOWN_COMMAND -3
-#define CMDF_ERROR_ARGUMENT_ERROR -4
-#define CMDF_ERROR_OUT_OF_MEMORY -5
+#define CMDF_OK                         1
+#define CMDF_ERROR_TOO_MANY_COMMANDS    -1
+#define CMDF_ERROR_TOO_MANY_ARGS        -2
+#define CMDF_ERROR_UNKNOWN_COMMAND      -3
+#define CMDF_ERROR_ARGUMENT_ERROR       -4
+#define CMDF_ERROR_OUT_OF_MEMORY        -5
 
 /* Max processes count reached */
 #define CMDF_ERROR_OUT_OF_PROCESS_STACK -6

@@ -14,7 +14,8 @@ typedef struct select_ctx_s {
 } select_ctx_t;
 
 int iowatcher_init(eloop_t* loop) {
-    if (loop->iowatcher) return 0;
+    if (loop->iowatcher)
+        return 0;
     select_ctx_t* select_ctx;
     EV_ALLOC_SIZEOF(select_ctx);
     select_ctx->max_fd = -1;
@@ -56,7 +57,8 @@ int iowatcher_add_event(eloop_t* loop, int fd, int events) {
 
 int iowatcher_del_event(eloop_t* loop, int fd, int events) {
     select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
-    if (select_ctx == NULL) return 0;
+    if (select_ctx == NULL)
+        return 0;
     if (fd == select_ctx->max_fd) {
         select_ctx->max_fd = -1;
     }
@@ -79,14 +81,16 @@ static int find_max_active_fd(eloop_t* loop) {
     eio_t* io = NULL;
     for (int i = loop->ios.maxsize - 1; i >= 0; --i) {
         io = loop->ios.ptr[i];
-        if (io && io->active && io->events) return i;
+        if (io && io->active && io->events)
+            return i;
     }
     return -1;
 }
 
 static int remove_bad_fds(eloop_t* loop) {
     select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
-    if (select_ctx == NULL) return 0;
+    if (select_ctx == NULL)
+        return 0;
     int badfds = 0;
     int error = 0;
     socklen_t optlen = sizeof(error);
@@ -108,7 +112,8 @@ static int remove_bad_fds(eloop_t* loop) {
 
 int iowatcher_poll_events(eloop_t* loop, int timeout) {
     select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
-    if (select_ctx == NULL) return 0;
+    if (select_ctx == NULL)
+        return 0;
     if (select_ctx->nread == 0 && select_ctx->nwrite == 0) {
         return 0;
     }
@@ -139,7 +144,8 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
         }
         return nselect;
     }
-    if (nselect == 0) return 0;
+    if (nselect == 0)
+        return 0;
     int nevents = 0;
     int revents = 0;
     for (int fd = 0; fd <= max_fd; ++fd) {
@@ -159,7 +165,8 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
                 EVENT_PENDING(io);
             }
         }
-        if (nevents == nselect) break;
+        if (nevents == nselect)
+            break;
     }
     return nevents;
 }

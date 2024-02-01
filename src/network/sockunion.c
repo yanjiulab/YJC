@@ -182,8 +182,8 @@ enum connect_result sockunion_connect(int fd, const union sockunion* peersu,
         if (errno != EINPROGRESS) {
             char str[SU_ADDRSTRLEN];
             log_info("can't connect to %s fd %d : %s",
-                      sockunion_log(&su, str, sizeof(str)), fd,
-                      strerr(errno));
+                     sockunion_log(&su, str, sizeof(str)), fd,
+                     strerr(errno));
             return connect_error;
         }
     }

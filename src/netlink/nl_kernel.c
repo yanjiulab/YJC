@@ -297,7 +297,7 @@ const char* nl_rttype_to_str(uint8_t rttype) {
     ((attrlen) -= NLA_ALIGN((nla)->nla_len), \
      (struct nlattr*)(((char*)(nla)) + NLA_ALIGN((nla)->nla_len)))
 #define NLA_LENGTH(len) (NLA_ALIGN(sizeof(struct nlattr)) + (len))
-#define NLA_DATA(nla) ((struct nlattr*)(((char*)(nla)) + NLA_LENGTH(0)))
+#define NLA_DATA(nla)   ((struct nlattr*)(((char*)(nla)) + NLA_LENGTH(0)))
 
 #define ERR_NLA(err, inner_len) \
     ((struct nlattr*)(((char*)(err)) + NLMSG_ALIGN(sizeof(struct nlmsgerr)) + NLMSG_ALIGN((inner_len))))

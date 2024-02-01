@@ -11,8 +11,8 @@
 #include "mpls.h"
 #include "prefix.h"
 #include "srv6.h"
-#include "vxlan.h"
 #include "vrf.h"
+#include "vxlan.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +47,7 @@ enum nh_encap_type {
 };
 
 /* Fixed limit on the number of backup nexthops per primary nexthop */
-#define NEXTHOP_MAX_BACKUPS 8
+#define NEXTHOP_MAX_BACKUPS    8
 
 /* Backup index value is limited */
 #define NEXTHOP_BACKUP_IDX_MAX 255
@@ -68,20 +68,20 @@ struct nexthop {
     enum nexthop_types_t type;
 
     uint16_t flags;
-#define NEXTHOP_FLAG_ACTIVE (1 << 0)       /* This nexthop is alive. */
-#define NEXTHOP_FLAG_FIB (1 << 1)          /* FIB nexthop. */
-#define NEXTHOP_FLAG_RECURSIVE (1 << 2)    /* Recursive nexthop. */
-#define NEXTHOP_FLAG_ONLINK (1 << 3)       /* Nexthop should be installed \
+#define NEXTHOP_FLAG_ACTIVE       (1 << 0) /* This nexthop is alive. */
+#define NEXTHOP_FLAG_FIB          (1 << 1) /* FIB nexthop. */
+#define NEXTHOP_FLAG_RECURSIVE    (1 << 2) /* Recursive nexthop. */
+#define NEXTHOP_FLAG_ONLINK       (1 << 3) /* Nexthop should be installed \
                                             * onlink.                     \
                                             */
-#define NEXTHOP_FLAG_DUPLICATE (1 << 4)    /* nexthop duplicates another \
+#define NEXTHOP_FLAG_DUPLICATE    (1 << 4) /* nexthop duplicates another \
                                             * active one                 \
                                             */
 #define NEXTHOP_FLAG_RNH_FILTERED (1 << 5) /* rmap filtered, used by rnh */
-#define NEXTHOP_FLAG_HAS_BACKUP (1 << 6)   /* Backup nexthop index is set */
-#define NEXTHOP_FLAG_SRTE (1 << 7)         /* SR-TE color used for BGP traffic */
-#define NEXTHOP_FLAG_EVPN (1 << 8)         /* nexthop is EVPN */
-#define NEXTHOP_FLAG_LINKDOWN (1 << 9)     /* is not removed on link down */
+#define NEXTHOP_FLAG_HAS_BACKUP   (1 << 6) /* Backup nexthop index is set */
+#define NEXTHOP_FLAG_SRTE         (1 << 7) /* SR-TE color used for BGP traffic */
+#define NEXTHOP_FLAG_EVPN         (1 << 8) /* nexthop is EVPN */
+#define NEXTHOP_FLAG_LINKDOWN     (1 << 9) /* is not removed on link down */
 
 #define NEXTHOP_IS_ACTIVE(flags) \
     (CHECK_FLAG(flags, NEXTHOP_FLAG_ACTIVE) && !CHECK_FLAG(flags, NEXTHOP_FLAG_DUPLICATE))

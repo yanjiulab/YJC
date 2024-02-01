@@ -9,14 +9,14 @@
 #include <sys/time.h>
 #include <time.h>
 
-#define NHANDLERS 16
+#define NHANDLERS          16
 #define TIMER_SECOND_MICRO 1000000L
 
-#define SEV_SELECT 0
-#define SEV_POLL 1
-#define SEV_EPOLL 2
+#define SEV_SELECT         0
+#define SEV_POLL           1
+#define SEV_EPOLL          2
 
-#define evloop(ev) (((evbase_t*)(ev))->loop)
+#define evloop(ev)         (((evbase_t*)(ev))->loop)
 
 typedef enum {
     EVLOOP_STATUS_STOP,

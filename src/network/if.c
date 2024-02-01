@@ -500,7 +500,7 @@ size_t if_lookup_by_hwaddr(const uint8_t* hw_addr, size_t addrsz,
     }
 
     if (rs->count) {
-        *result = calloc(1,sizeof(struct interface*) * rs->count);
+        *result = calloc(1, sizeof(struct interface*) * rs->count);
         list_to_array(rs, (void**)*result, rs->count);
     }
 

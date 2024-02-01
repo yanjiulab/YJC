@@ -46,4 +46,4 @@ static inline int proc_spawn(proc_ctx_t* ctx) {
     return pid;
 }
 
-#endif  // PROC_H_
+#endif // PROC_H_

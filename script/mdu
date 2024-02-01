@@ -14,7 +14,7 @@ if args.table:
     row = args.table[0]
     col = args.table[1]
 
-    t = ['col%d' %  i for i in range(col)]
+    t = ['col%d' % i for i in range(col)]
     print(*t, sep='|')
     s = [':---:' for i in range(col)]
     print(*s, sep='|')

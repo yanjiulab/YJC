@@ -127,7 +127,7 @@ extern const char* nl_family_to_str(uint8_t family);
 extern const char* nl_rttype_to_str(uint8_t rttype);
 
 typedef struct nlsock {
-    int sock;  /* socket for sending, sniffing timestamped netlinks */
+    int sock; /* socket for sending, sniffing timestamped netlinks */
     int seq;
     struct sockaddr_nl snl;
     char* name; /* malloc-allocated copy of netlink name */

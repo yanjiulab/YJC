@@ -20,7 +20,7 @@
 
 #define PROG_INTRO "test - A simple test program for libcmdf.\n" \
                    "You can use this as a reference on how to use the library!"
-#define SUBMENU_INTRO "This is a submenu!"
+#define SUBMENU_INTRO  "This is a submenu!"
 #define PRINTARGS_HELP "This is a very long help string for a command.\n" \
                        "As you can see, this is concatenated properly. It's pretty good!"
 
