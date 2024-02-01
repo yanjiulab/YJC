@@ -1,6 +1,7 @@
 #ifndef _MACROS_H_
 #define _MACROS_H_
 
+#include "color.h"
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -68,26 +69,25 @@
 #define LOWER(c)       ((c) | 0x20)
 #define UPPER(c)       ((c) & ~0x20)
 
-/* Print color macros */
-#define GRAY           "\x1b[30m"
-#define L_GRAY         "\x1b[1;30m"
-#define NOCOLOR        "\x1b[0m"
-
 /* Debug macros */
 #ifdef PRINT_DEBUG
 // #define printd(...) printf(__VA_ARGS__)
 // fprintf(stdout, GRAY "%s %d] " NOCOLOR fmt, __FILE__, __LINE__, ##__VA_ARGS__);
-#define printd(fmt, ...)                                  \
-    do {                                                  \
-        fprintf(stdout, GRAY fmt NOCOLOR, ##__VA_ARGS__); \
-        fflush(stdout);                                   \
+#define printd(fmt, ...)                                     \
+    do {                                                     \
+        fprintf(stdout, L_DKGREY fmt NORMAL, ##__VA_ARGS__); \
+        fflush(stdout);                                      \
     } while (0)
 #else
 #define printd(...)
 #endif
 
 #ifdef PRINT_ERROR
-#define printe(...) fprintf(stderr, __VA_ARGS__)
+#define printe(fmt, ...)                                \
+    do {                                                \
+        fprintf(stderr, RED fmt NORMAL, ##__VA_ARGS__); \
+        fflush(stderr);                                 \
+    } while (0)
 #else
 #define printe(...)
 #endif
