@@ -2,22 +2,6 @@
 #include "test.h"
 
 void test_color() {
-    // printf(RED "RED\n" NORMAL);
-    // printf(RED_B "RED_B\n" NORMAL);
-    // printf(GREEN "GREEN\n" NORMAL);
-    // printf(GREEN_B "GREEN_B\n" NORMAL);
-    // printf(YELLOW "YELLOW\n" NORMAL);
-    // printf(YELLOW_B "YELLOW_B\n" NORMAL);
-    // printf(BLUE "BLUE\n" NORMAL);
-    // printf(BLUE_B "BLUE_B\n" NORMAL);
-    // printf(PURPLE "PURPLE\n" NORMAL);
-    // printf(PURPLE_B "PURPLE_B\n" NORMAL);
-    // printf(CYAN "CYAN\n" NORMAL);
-    // printf(CYAN_B "CYAN_B\n" NORMAL);
-    // printf(GREY "GREY\n" NORMAL);
-    // printf(GREY_B "GREY_B\n" NORMAL);
-    // printf(ORANGE "ORANGE\n" NORMAL);
-    // printf(ORANGE_B "ORANGE_B\n" NORMAL);
 
     printf(RED "RED         \n" NORMAL);
     printf(GREEN "GREEN       \n" NORMAL);

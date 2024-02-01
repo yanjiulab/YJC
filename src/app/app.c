@@ -1,12 +1,12 @@
 /**
  * @file app.c
  * @author Yanjiu Li (liyanjiu@outlook.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2024-01-28
- * 
+ *
  * @copyright Copyright (c) 2024
- * 
+ *
  * BUGS:
  * 1. 退出时的处理，有卡顿。涉及到多线程和事件循环对信号的处理流程优化。
  */
@@ -15,8 +15,8 @@
 #include "iniparser.h"
 #include "log.h"
 #include "sev.h"
-#include "thread.h"
 #include "sniffer.h"
+#include "thread.h"
 
 #define LIBCMDF_IMPL
 #define CMDF_READLINE_SUPPORT
@@ -25,7 +25,7 @@
                    "You can use this as a reference on how to use the library!"
 
 evloop_t* loop = NULL;
-sniffer_t *sniff = NULL;
+sniffer_t* sniff = NULL;
 
 static void sig_int() {
     cmdf__default_do_exit(NULL);
@@ -76,7 +76,7 @@ THREAD_ROUTINE(backend_cmdf) {
     cmdf_register_command(do_quit, "quit", "Quit the application");
     cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");
     cmdf_commandloop();
-    cmdf_quit
+    cmdf_quit;
     log_info("thread %lu exit", thread_id());
 }
 
