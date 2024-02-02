@@ -1,7 +1,24 @@
+---
 BasedOnStyle: LLVM
-UseTab: Never
-IndentWidth: 4 
+Language: Cpp
+IndentWidth: 4
 TabWidth: 4
+UseTab: Never
+# BreakBeforeBraces: Linux
 ColumnLimit: 0
 AlignConsecutiveMacros: AcrossEmptyLinesAndComments
 PointerAlignment: Left
+AlwaysBreakBeforeMultilineStrings: true
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: false
+IndentCaseLabels: false
+AlignEscapedNewlinesLeft: false
+AlignTrailingComments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AlignAfterOpenBracket: true
+SpaceAfterCStyleCast: false
+# MaxEmptyLinesToKeep: 2
+BreakBeforeBinaryOperators: None
+BreakStringLiterals: false
+SortIncludes: false

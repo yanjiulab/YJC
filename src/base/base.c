@@ -11,9 +11,13 @@
 static atomic_long s_alloc_cnt = ATOMIC_VAR_INIT(0);
 static atomic_long s_free_cnt = ATOMIC_VAR_INIT(0);
 
-long ev_alloc_cnt() { return s_alloc_cnt; }
+long ev_alloc_cnt() {
+    return s_alloc_cnt;
+}
 
-long ev_free_cnt() { return s_free_cnt; }
+long ev_free_cnt() {
+    return s_free_cnt;
+}
 
 inline void* ev_malloc(size_t size) {
     atomic_inc(&s_alloc_cnt);
@@ -97,70 +101,7 @@ int rand_int(int min, int max) {
 }
 
 char* rand_str(char* buf, int len) {
-    static char s_characters[] = {
-        'A',
-        'B',
-        'C',
-        'D',
-        'E',
-        'F',
-        'G',
-        'H',
-        'I',
-        'J',
-        'K',
-        'L',
-        'M',
-        'N',
-        'O',
-        'P',
-        'Q',
-        'R',
-        'S',
-        'T',
-        'U',
-        'V',
-        'W',
-        'X',
-        'Y',
-        'Z',
-        'a',
-        'b',
-        'c',
-        'd',
-        'e',
-        'f',
-        'g',
-        'h',
-        'i',
-        'j',
-        'k',
-        'l',
-        'm',
-        'n',
-        'o',
-        'p',
-        'q',
-        'r',
-        's',
-        't',
-        'u',
-        'v',
-        'w',
-        'x',
-        'y',
-        'z',
-        '0',
-        '1',
-        '2',
-        '3',
-        '4',
-        '5',
-        '6',
-        '7',
-        '8',
-        '9',
-    };
+    static char* s_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     if (buf == NULL)
         buf = (char*)calloc(1, len + 1);
@@ -168,7 +109,7 @@ char* rand_str(char* buf, int len) {
     int i = 0;
     srand(time(NULL));
     for (; i < len; i++) {
-        buf[i] = s_characters[rand() % (sizeof(s_characters))];
+        buf[i] = s_characters[rand() % 62];
     }
     buf[i] = '\0';
     return buf;

@@ -316,8 +316,6 @@ char* str_lower(char* str);
 // Reverses the string in place.
 char* str_reverse(char* str);
 char* str_hex(char* buff, size_t bufsiz, const uint8_t* str, size_t num);
-// Generates a random string of len in heap if buf is NULL, otherwise in buf.
-char* str_random(char* buf, int len);
 
 #ifdef REDIS_TEST
 int strTest(int argc, char* argv[]);

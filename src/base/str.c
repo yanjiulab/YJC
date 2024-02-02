@@ -1489,20 +1489,7 @@ char* str_hex(char* buff, size_t bufsiz, const uint8_t* str, size_t num) {
     return buff;
 }
 
-char* str_random(char* buf, int len) {
-    static char* s_characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-    if (buf == NULL)
-        buf = (char*)calloc(1, len + 1);
-
-    int i = 0;
-    srand(time(NULL));
-    for (; i < len; i++) {
-        buf[i] = s_characters[rand() % 62];
-    }
-    buf[i] = '\0';
-    return buf;
-}
 
 #if defined(STR_TEST_MAIN)
 #include "limits.h"

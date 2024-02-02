@@ -28,7 +28,9 @@ EXPORT void ev_free(void* ptr);
 
 EXPORT long ev_alloc_cnt();
 EXPORT long ev_free_cnt();
-static inline void ev_memcheck(void) { printf("Memcheck => alloc:%ld free:%ld\n", ev_alloc_cnt(), ev_free_cnt()); }
+static inline void ev_memcheck(void) {
+    printf("Memcheck => alloc:%ld free:%ld\n", ev_alloc_cnt(), ev_free_cnt());
+}
 #define MEMCHECK atexit(ev_memcheck);
 
 #define EV_ALLOC(ptr, size)                                                                                \
@@ -77,6 +79,7 @@ EXPORT size_t filesize(const char* filepath);
 
 //--------------------random-------------------------------
 EXPORT int rand_int(int min, int max);
+// Generates a random string of len in heap if buf is NULL, otherwise in buf.
 EXPORT char* rand_str(char* buf, int len);
 
 //--------------------daemon-------------------------------
