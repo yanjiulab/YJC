@@ -21,7 +21,7 @@ CC = gcc
 # Compiler Flags
 CFLAGS = -g3 -DPRINT_DEBUG -DPRINT_ERROR #-std=c99 #-Wall -g3
 # Test Compiler flags
-TCFLAGS = -O2 -g3 -DNETLINK_DEBUG -DPRINT_DEBUG 
+TCFLAGS = -O2 -g3 -DNETLINK_DEBUG -DPRINT_DEBUG -DPRINT_ERROR
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 # Used libraries

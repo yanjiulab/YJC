@@ -23,9 +23,13 @@
 #define ANYADDR        "0.0.0.0"
 #define INVALID_SOCKET -1
 
-static inline int socket_errno() { return errno; }
+static inline int socket_errno() {
+    return errno;
+}
 EXPORT const char* socket_strerror(int err);
-static inline int closesocket(int sockfd) { return close(sockfd); }
+static inline int closesocket(int sockfd) {
+    return close(sockfd);
+}
 
 #ifndef SAFE_CLOSESOCKET
 #define SAFE_CLOSESOCKET(fd) \
