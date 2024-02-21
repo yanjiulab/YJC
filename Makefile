@@ -1,62 +1,121 @@
-# C Makefile using gcc, gdb and valgrind. 
-# Modified version of Makefile using g++ & gdb by Roberto Nicolas Savinelli <rsavinelli@est.frba.utn.edu.ar>
-# Tomas Agustin Sanchez <tosanchez@est.frba.utn.edu.ar>
+# Thanks to Job Vranish (https://spin.atomicobject.com/2016/08/26/makefile-c-projects/)
+# Modified by Yanjiu Li
+INC_DIRS := ./include
+SRC_DIRS := ./src
+APP_DIR := ./src/app
+BUILD_DIR := ./build
+BIN_DIR := ./bin
 
-# Includes the project configurations
-include project.conf
+# Find all the C and C++ files we want to compile
+# Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
+APP_FILES=$(shell find $(APP_DIR) -name '*.c')
+SRCS := $(filter-out $(APP_FILES), $(shell find $(SRC_DIRS) -name '*.cpp' -or -name '*.c' -or -name '*.s'))
 
-# Validating project variables defined in project.conf
-ifndef PROJECT_NAME
-$(error Missing PROJECT_NAME. Put variables at project.conf file)
-endif
-ifndef BINARY
-$(error Missing BINARY. Put variables at project.conf file)
-endif
-ifndef PROJECT_PATH
-$(error Missing PROJECT_PATH. Put variables at project.conf file)
-endif
+# Prepends BUILD_DIR and appends .o to every src file
+# As an example, ./your_dir/hello.cpp turns into ./build/./your_dir/hello.cpp.o
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 
-# C Compiler
-CC = gcc
+# String substitution (suffix version without %).
+# As an example, ./build/hello.cpp.o turns into ./build/hello.cpp.d
+DEPS := $(OBJS:.o=.d)
+
+# Every folder in ./src will need to be passed to GCC so that it can find header files
+INC_DIRS := $(shell find $(SRC_DIRS) $(INC_DIRS) -type d)
+# Add a prefix to INC_DIRS. So moduleA would become -ImoduleA. GCC understands this -I flag
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+
+# The -MMD and -MP flags together generate Makefiles for us!
+# These files will have .d instead of .o as the output.
+CPPFLAGS := $(INC_FLAGS) -MMD -MP
+
 # Compiler Flags
 CFLAGS = -g3 -DPRINT_DEBUG -DPRINT_ERROR #-std=c99 #-Wall -g3
-# Test Compiler flags
-TCFLAGS = -O2 -g3 -DNETLINK_DEBUG -DPRINT_DEBUG -DPRINT_ERROR
-# TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
-# TCFLAGS = -Wall -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
+
 # Used libraries
-LIBS = -lm -lreadline -lpthread -lncurses -lpanel -lmenu -lform -lsqlite3 -ldl #-L lib
-# Test libraries
-TEST_LIBS = -lcmocka -L /usr/lib 
-# Include directory
-INCLUDE_DIRECTORY=./include/ ./src/
-# Source directory
-SOURCE_DIRECTORY=./src
-# Test Directory
-TEST_DIRECTORY=./test
-# Application name
-APPNAME = sniffer
-APP_DIRECTORY=./src/app
-APP_FILE=$(shell find $(APP_DIRECTORY) -name '*.c')
-MAIN_FILE=$(APP_DIRECTORY)/$(APPNAME).c
-# Inlcude folder
-INCLUDES = $(foreach dir, $(shell find $(INCLUDE_DIRECTORY) -type d -print), $(addprefix -I , $(dir)))
-# Source files
-SOURCES = $(filter-out $(APP_FILE), $(shell find $(SOURCE_DIRECTORY) -name '*.c'))
-# Test cases files
-TESTS = $(shell find $(TEST_DIRECTORY) -name '*.c')
-# Output file name
-OUTPUT = build/$(APPNAME)
-# Test Output file
-TEST_OUTPUT = build/_test
+LDFLAGS = -lm -lreadline -lpthread -lncurses -lpanel -lmenu -lform -lsqlite3 -ldl #-L lib
+
+# All files in the APP_DIR are considered compilation targets and each file should contain the main function.
+TARGETS = $(notdir $(patsubst %.c, %, $(APP_FILES)))
+
+# Build step for C source
+$(BUILD_DIR)/%.c.o: %.c
+	mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+# Build step for C++ source
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
+
+# The final build step will build all the target.
+all: $(OBJS)
+	@mkdir -pv $(BIN_DIR)
+	@for target in $(TARGETS); \
+	do					\
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(APP_DIR)/$$target.c $(OBJS) -o $(BIN_DIR)/$$target $(LDFLAGS); \
+	done
+
+.PHONY: all
+
+clean:
+	$(RM) -r $(BUILD_DIR)
+
+cleanLogs:
+	$(RM) -r log || true
+
+remove: clean cleanLogs
+
+# Include the .d makefiles. The - at the front suppresses the errors of missing
+# Makefiles. Initially, all the .d files will be missing, and we don't want those
+# errors to show up.
+-include $(DEPS)
+
+###########################################################
+#                    CMoka test section                   #
+###########################################################
+TEST_DIR = ./test
+TEST_LIBS = -lcmocka
+TESTS = $(shell find $(TEST_DIR) -name '*.c')
+TEST_OUTPUT = $(TEST_DIR)/a.out
+# TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
+
+test-build: $(OBJS)
+	echo $(TEST_OUTPUT)
+	@mkdir -pv $(BIN_DIR)
+	@echo Preparing tests...
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(TESTS) $(OBJS) -o $(TEST_OUTPUT) $(LDFLAGS) $(TEST_LIBS)
+
+test: test-build
+	./$(TEST_OUTPUT)
+	@echo Tests completed.
+
+###########################################################
+#                    Debug Check section                  #
+###########################################################
 # Leaks log file
 LEAKS = log/leaks.log
 # Thread chek log file
 HELGRIND = log/threads.log
+CHECK_BIN = app
 
-all : compile run
+leaks:
+	@mkdir -p log
+	valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes $(BIN_DIR)/$(CHECK_BIN)
 
-.PHONY: all
+tleaks: test-build
+	@mkdir -p log
+	valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes $(TEST_OUTPUT)
+
+threads:
+	@mkdir -p log
+	valgrind --tool=helgrind --log-file="$(HELGRIND)" $(BIN_DIR)/$(CHECK_BIN)
+
+###########################################################
+#             Project generation section                  #
+###########################################################
+PROJECT_NAME := project
+PROJECT_PATH := ~/projects/$(PROJECT_NAME)
+BINARY := project
 
 start:
 	@echo "Creating project: $(PROJECT_NAME)"
@@ -65,52 +124,10 @@ start:
 	@cp -rvf ./* $(PROJECT_PATH)/
 	@echo
 	@echo "Go to $(PROJECT_PATH) and compile your project: make"
-	@echo "Then execute it: build/$(BINARY) --help"
+	@echo "Then execute it: bin/$(BINARY) --help"
 	@echo "Happy hacking :-P"
 
 install:
 	@echo Installing dependencies...
 # Install required libraries here.
 	@echo Installed
-
-dirs: 
-	@echo $(DIRS)
-
-compile:
-	@mkdir -p build
-	@echo Building...
-	$(CC) $(CFLAGS) $(MAIN_FILE) $(SOURCES) $(INCLUDES) $(LIBS) -o $(OUTPUT)
-	@echo Build completed.
-
-run: compile
-	@echo 
-	./$(OUTPUT)
-
-test-build:
-	@mkdir -p build
-	@echo Preparing tests...
-	$(CC) $(TCFLAGS) $(TESTS) $(SOURCES) $(INCLUDES) $(LIBS) $(TEST_LIBS) -o $(TEST_OUTPUT)
-
-test: test-build
-	./$(TEST_OUTPUT)
-	@echo Tests completed.
-	
-leaks: compile
-	@mkdir -p log
-	valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes ./$(OUTPUT)
-
-tleaks: test-build
-	@mkdir -p log
-	valgrind --leak-check=yes --log-file="$(LEAKS)" --track-origins=yes ./$(TEST_OUTPUT)
-
-threads: compile
-	@mkdir -p log
-	valgrind --tool=helgrind --log-file="$(HELGRIND)" ./$(OUTPUT)
-
-clean:
-	$(RM) ./$(OUTPUT)
-
-cleanLogs:
-	$(RM) -r log || true
-
-remove: clean cleanLogs
