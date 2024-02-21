@@ -9,7 +9,8 @@ bin/app: src/app/app.c src/base/base.h src/base/datetime.h \
  src/network/tcp.h src/base/types.h src/network/udp.h \
  src/sniffer/packet_parser.h src/sniffer/packet_pcap.h \
  src/sniffer/packet_socket.h src/sniffer/packet_stringify.h \
- src/network/socket.h src/base/export.h src/base/thread.h src/base/cmdf.h
+ src/network/socket.h src/base/export.h src/base/thread.h src/util/term.h \
+ src/base/cmdf.h
 src/base/base.h:
 src/base/datetime.h:
 src/base/defs.h:
@@ -47,4 +48,5 @@ src/sniffer/packet_stringify.h:
 src/network/socket.h:
 src/base/export.h:
 src/base/thread.h:
+src/util/term.h:
 src/base/cmdf.h:

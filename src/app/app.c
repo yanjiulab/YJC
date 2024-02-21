@@ -17,13 +17,16 @@
 #include "sev.h"
 #include "sniffer.h"
 #include "thread.h"
+#include "term.h"
 
 #define LIBCMDF_IMPL
 #define CMDF_READLINE_SUPPORT
 #include "cmdf.h"
-#define PROG_INTRO "A simple program for network programming.\n" \
-                   "You can use this as a reference on how to use the library!"
+#define PROG_INTRO                                \
+    "A simple program for network programming.\n" \
+    "You can use this as a reference on how to use the library!"
 
+/* Global vars */
 evloop_t* loop = NULL;
 sniffer_t* sniff = NULL;
 
@@ -136,6 +139,7 @@ static void on_sniffer(evio_t* io) {
         printf("%s", error);
     }
 
+    print_line('-', 0);
     printf("%s", dump);
 }
 
