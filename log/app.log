@@ -1,6 +1,0 @@
-2024-01-28 16:04:16 INFO  ./src/app/app.c:159: Set file log level: DEBUG
-2024-01-28 16:04:16 ERROR ./src/app/app.c:167: app was already running!
--01-28 16:04:16 INFO  ./src/app/app.c:45: Hello World 1
-2024-01-28 16:04:21 INFO  ./src/app/app.c:45: Hello World 2
-2024-01-28 16:04:26 INFO  ./src/app/app.c:45: Hello World 3
-2024-01-28 16:04:31 INFO  ./src/app/app.c:45: Hello World 4
