@@ -152,6 +152,23 @@ API|链表|哈希表
 删除节点|list_del|hashmap_del
 获取节点|list_get|hashmap_get
 
+## 网络
+
+### 网络地址相关
+
+在编程中，常常涉及到与网络地址相关的地方，通常情况下，网络地址是指 IPv4 或 IPv6 地址。涉及到的数据结构包括：
+
+- 整型：IP 地址本身就是一个整型数据，其中 IPv4 地址占用 32 位，IPv5 地址占用 128 位，**用于实际存储使用**，例如 IPv4 头中使用 4 字节存储。
+  - `uint32_t`：IPv4 地址可直接使用 int 表示。
+  - `typedef uint32_t in_addr_t;`：`in.h` 中定义用于 IPv4 的整型的别名。
+  - `struct in_addr {in_addr_t s_addr;};`：`in.h` 中定义的 IPv4 结构体。
+  - `struct in6_addr {...};`：`in.h` 中定义的 IPv6 结构体。
+- 字符串：点分十进制表示的用户友好的显示格式，例如 `127.0.0.1`，或 `:1/128`，**用于日志打印及用户交互使用**。
+- 套接字地址族：**用于套接字操作时与内核进行交互**的 IP 地址族结构体，例如 `bind()`、`accept()`、`sendto()`、`recvfrom()` 等函数中需要传入套接字地址结构。其不仅包含了表示 IP 地址的结构体，还增加了地址族，或端口号等其他信息。
+  - `struct sockaddr`：通用结构。
+  - `struct sockaddr_in`：IPv4 地址族结构。
+  - `struct sockaddr_in6`：IPv6 地址族结构。
+
 ## TODO
 
 - 完善 atomic
