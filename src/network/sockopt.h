@@ -8,8 +8,9 @@
 #include <linux/filter.h>
 #include <errno.h> // errno
 
-#define blocking(s)    fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
-#define nonblocking(s) fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
+#define SO_ATTACH_FILTER 26 // for remove warning
+#define blocking(s)      fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
+#define nonblocking(s)   fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
 
 static inline int tcp_nodelay(int sockfd, int on) {
     return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on,

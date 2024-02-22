@@ -1,8 +1,6 @@
 # YJC
 
-## base
-
-TODO: 其余移出 base 模块
+## 基础库 base
 
 `base` 为基础组件
 
@@ -13,19 +11,26 @@ math.h|
 platform.h|
 export.h|
 types.h|常用类型|变量以t结尾
+iniparser.h|ini 配置文件读写|[N.Devillard/iniparser](todo)
+thread.h|pthread 线程相关|简单包装了常用 API
+thpool.h|基于 pthread 线程的线程池基本实现|[Pithikos/C-Thread-Pool](https://github.com/Pithikos/C-Thread-Pool)
+cmdf.h|命令行控制台库|
+csv.h|CSV 文件读写|
 
-## event
+### 并发
 
-`event` 为事件库。
+并发主要涉及以下方面内容：
 
-`event_t` 为事件结构体，主要成员包括：
+- 原子性：atomic.h
+- 线程：thread.h
+- 线程池：thpool.h
+- 进程：proc.h
 
-- 事件所属 eventloop
-- 事件类型
-- 事件回调函数
-- 事件状态
+### 事件循环
 
-## network
+### 常用工具
+
+## 网络编程库 network
 
 `network` 为网络编程基础库
 
@@ -35,7 +40,20 @@ types.h|常用类型|变量以t结尾
 `ipaddr.h`|IP 地址操作|
 `netdev.h`|网卡操作（添加/删除/读取网卡信息）|基于 ip 命令实现
 
-### IP 地址
+### 网络地址相关
+
+在编程中，常常涉及到与网络地址相关的地方，通常情况下，网络地址是指 IPv4 或 IPv6 地址。涉及到的数据结构包括：
+
+- 整型：IP 地址本身就是一个整型数据，其中 IPv4 地址占用 32 位，IPv5 地址占用 128 位，**用于实际存储使用**，例如 IPv4 头中使用 4 字节存储。
+  - `uint32_t`：IPv4 地址可直接使用 int 表示。
+  - `typedef uint32_t in_addr_t;`：`in.h` 中定义用于 IPv4 的整型的别名。
+  - `struct in_addr {in_addr_t s_addr;};`：`in.h` 中定义的 IPv4 结构体。
+  - `struct in6_addr {...};`：`in.h` 中定义的 IPv6 结构体。
+- 字符串：点分十进制表示的用户友好的显示格式，例如 `127.0.0.1`，或 `:1/128`，**用于日志打印及用户交互使用**。
+- 套接字地址族：**用于套接字操作时与内核进行交互**的 IP 地址族结构体，例如 `bind()`、`accept()`、`sendto()`、`recvfrom()` 等函数中需要传入套接字地址结构。其不仅包含了表示 IP 地址的结构体，还增加了地址族，或端口号等其他信息。
+  - `struct sockaddr`：通用结构。
+  - `struct sockaddr_in`：IPv4 地址族结构。
+  - `struct sockaddr_in6`：IPv6 地址族结构。
 
 格式|定义|说明
 :---:|:---:|:---:
@@ -47,12 +65,11 @@ IPv6 字符串|`char *ip_str;` 或者 `char ip_str[]` |一般采用点分十六�
 IPv4 套接字地址结构|`struct sockaddr_in6 saddr;`|实际使用 IPv4 通信需要定义的地址，主要包含协议族、端口号、IPv4 地址信息
 IPv6 套接字地址结构|`struct sockaddr_in6 s6addr;`|实际使用 IPv6 通信需要定义的地址，主要包含协议族、端口号、IPv6 地址信息等。
 
-### 数据包
+### 套接字操作相关
 
-头文件 | 名称 | 说明
-:---:|:---:|:---:
+### 数据读取相关
 
-## sniffer
+## 数据包嗅探库 sniffer
 
 `sniffer` 为网络数据包嗅探库，主要包括网卡数据包接收（基于 Linux packet socket）、协议解析、数据包处理；
 
@@ -67,7 +84,7 @@ IPv6 套接字地址结构|`struct sockaddr_in6 s6addr;`|实际使用 IPv6 通�
 
 TODO：支持自定义协议热挂载。
 
-## util
+## 工具库 util
 
 `util` 为工具库，包含了各种常用工具、数据结构及算法，每个功能均使用一对 `.c` 和 `.h` 文件实现，个别功能仅用 `.h` 实现，**没有外部依赖**，可以根据需要直接拖到自己的项目中使用。
 
@@ -87,15 +104,13 @@ sha256.h|SHA256 安全散列算法|标准 256 位安全散列实现，支持二�
 头文件 | 名称 | 说明
 :---:|:---:|:---:
 args.h|命令行参数解析|[dmulholl/Args](https://github.com/dmulholl/args)
-iniparser.h|ini 配置文件读写|[N.Devillard/iniparser](todo)
 xml.h|xml 文件生成/解析|TODO
 json.h|json 文件生成/解析|TODO
-cmd.h|命令行控制台库|TODO
-protobuf.h|protobuf 相关|TODO，查看protobuf-c
-thread.h|pthread 线程相关|简单包装了常用 API
-thpool.h|基于 pthread 线程的线程池基本实现|[Pithikos/C-Thread-Pool](https://github.com/Pithikos/C-Thread-Pool)
 
-## 数据结构
+protobuf.h|protobuf 相关|TODO，查看protobuf-c
+
+
+## 数据结构库 container
 
 头文件 | 名称 | 说明
 :---:|:---:|:---:
@@ -152,22 +167,18 @@ API|链表|哈希表
 删除节点|list_del|hashmap_del
 获取节点|list_get|hashmap_get
 
-## 网络
+## 数据库操作库 dbo（TODO）
 
-### 网络地址相关
+## 事件循环库 event (TODO)
 
-在编程中，常常涉及到与网络地址相关的地方，通常情况下，网络地址是指 IPv4 或 IPv6 地址。涉及到的数据结构包括：
+`event` 为事件库。
 
-- 整型：IP 地址本身就是一个整型数据，其中 IPv4 地址占用 32 位，IPv5 地址占用 128 位，**用于实际存储使用**，例如 IPv4 头中使用 4 字节存储。
-  - `uint32_t`：IPv4 地址可直接使用 int 表示。
-  - `typedef uint32_t in_addr_t;`：`in.h` 中定义用于 IPv4 的整型的别名。
-  - `struct in_addr {in_addr_t s_addr;};`：`in.h` 中定义的 IPv4 结构体。
-  - `struct in6_addr {...};`：`in.h` 中定义的 IPv6 结构体。
-- 字符串：点分十进制表示的用户友好的显示格式，例如 `127.0.0.1`，或 `:1/128`，**用于日志打印及用户交互使用**。
-- 套接字地址族：**用于套接字操作时与内核进行交互**的 IP 地址族结构体，例如 `bind()`、`accept()`、`sendto()`、`recvfrom()` 等函数中需要传入套接字地址结构。其不仅包含了表示 IP 地址的结构体，还增加了地址族，或端口号等其他信息。
-  - `struct sockaddr`：通用结构。
-  - `struct sockaddr_in`：IPv4 地址族结构。
-  - `struct sockaddr_in6`：IPv6 地址族结构。
+`event_t` 为事件结构体，主要成员包括：
+
+- 事件所属 eventloop
+- 事件类型
+- 事件回调函数
+- 事件状态
 
 ## TODO
 

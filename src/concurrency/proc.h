@@ -3,6 +3,8 @@
 
 #include "platform.h"
 
+typedef void (*procedure_t)(void* userdata);
+
 typedef struct proc_ctx_s {
     pid_t pid;
     time_t start_time;

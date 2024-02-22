@@ -169,7 +169,7 @@ typedef float float32_t;
 typedef double float64_t;
 
 typedef int (*method_t)(void* userdata);
-typedef void (*procedure_t)(void* userdata);
+// typedef void (*procedure_t)(void* userdata);
 
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
