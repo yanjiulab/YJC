@@ -143,3 +143,18 @@ uint16_t fletcher_checksum(uint8_t *buffer, const size_t len, const uint16_t off
 
     return checksum;
 }
+
+uint16_t checksum(uint8_t* buf, int len) {
+    unsigned int sum = 0;
+    uint16_t* ptr = (uint16_t*)buf;
+    while (len > 1) {
+        sum += *ptr++;
+        len -= 2;
+    }
+    if (len) {
+        sum += *(uint8_t*)ptr;
+    }
+    sum = (sum >> 16) + (sum & 0xffff);
+    sum += (sum >> 16);
+    return (uint16_t)(~sum);
+};

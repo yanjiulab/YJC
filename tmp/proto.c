@@ -2,7 +2,6 @@
 
 #include <stdio.h>
 
-#include "net_utils.h"
 #include "socket.h"
 
 long tot_recv_num;

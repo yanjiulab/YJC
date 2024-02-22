@@ -1,7 +1,6 @@
 #include "ethernet.h"
 #include "ipaddr.h"
 #include "log.h"
-#include "net_utils.h"
 #include "packet_parser.h"
 #include "packet_pcap.h"
 #include "packet_socket.h"

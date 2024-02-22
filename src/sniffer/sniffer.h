@@ -8,6 +8,7 @@
 #include "packet_socket.h"
 #include "packet_stringify.h"
 #include "socket.h"
+#include "sockopt.h"
 
 #define SNIFFER_RECORD_DEFAULT 65536
 #define SNIFFER_PCAP_PATH      "./capture"

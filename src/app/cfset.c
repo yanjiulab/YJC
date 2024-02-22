@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     FILE* ini_file;
     if ((ini_file = fopen(argv[1], "w")) == NULL) {
         fprintf(stderr, "iniparser: cannot create %s\n", argv[1]);
-        return;
+        return 0;
     }
     iniparser_dump_ini(ini, ini_file);
     fclose(ini_file);

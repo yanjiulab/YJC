@@ -38,6 +38,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <termios.h>
+#include <sys/ioctl.h>
 
 const char* STR_NOINIT = "STR_NOINIT";
 
@@ -1489,7 +1492,114 @@ char* str_hex(char* buff, size_t bufsiz, const uint8_t* str, size_t num) {
     return buff;
 }
 
+/*-------------------------- print ---------------------------------*/
+int get_ws_col() {
+    struct winsize ws;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
+    return (int)ws.ws_col;
+}
 
+int get_ws_row() {
+    struct winsize ws;
+    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws);
+    return (int)ws.ws_row;
+}
+
+void print_line(char c, int len) {
+
+    if (!len) {
+        len = get_ws_col();
+    }
+
+    if (!isprint(c)) {
+        c = '-';
+    }
+
+    for (int i = 0; i < len; i++) {
+        putchar(c);
+    }
+
+    putchar('\n');
+}
+
+void print_title(char* title, char c) {
+
+    int l = strlen(title);
+    int m = get_ws_col();
+    int cl = (m - l - 2) / 2;
+
+    if (!isprint(c)) {
+        c = '=';
+    }
+
+    if (l >= m || cl <= 0) {
+        putchar(c);
+        putchar(' ');
+        fputs(title, stdout);
+        putchar(' ');
+        putchar(c);
+        putchar('\n');
+        return;
+    }
+
+    for (int i = 0; i < cl; i++)
+        putchar(c);
+    putchar(' ');
+    fputs(title, stdout);
+    putchar(' ');
+    for (int i = 0; i < cl; i++)
+        putchar(c);
+    putchar('\n');
+}
+
+void print_data(unsigned char* data, int size) {
+#if HDRSTR_VERBOSE
+    int i, j;
+    for (i = 0; i < size; i++) {
+        if (i != 0 && i % 16 == 0) {
+            printf("         ");
+            for (j = i - 16; j < i; j++) {
+                if (data[j] >= 32 && data[j] <= 128) {
+                    printf("%c", (unsigned char)data[j]);
+                } else {
+                    printf("."); // otherwise print a dot
+                }
+            }
+            printf("\n");
+        }
+        if (i % 16 == 0) {
+            printf("   ");
+        }
+        printf(" %02X", (unsigned int)data[i]);
+        if (i == size - 1) // print the last spaces
+        {
+            for (j = 0; j < 15 - i % 16; j++) {
+                printf("   "); // extra spaces
+            }
+            printf("         ");
+            for (j = i - i % 16; j <= i; j++) {
+                if (data[j] >= 32 && data[j] <= 128) {
+                    printf("%c", (unsigned char)data[j]);
+                } else {
+                    printf(".");
+                }
+            }
+            printf("\n");
+        }
+    }
+#else
+    int i, j;
+    for (i = 0; i < size; i++) {
+        if (i != 0 && i % 20 == 0)
+            printf("\n");
+        if (i % 20 == 0)
+            printf("   ");
+        printf(" %02X", (unsigned int)data[i]);
+        if (i == size - 1)
+            printf("\n");
+    }
+#endif
+}
 
 #if defined(STR_TEST_MAIN)
 #include "limits.h"
@@ -1533,8 +1643,9 @@ int strTest(void) {
             str_free(x);
         x = str_catprintf(str_empty(), "a%cb", 0);
         test_cond("str_catprintf() seems working with \\0 inside of result",
-                  str_len(x) == 3 && memcmp(x, "a\0"
-                                               "b\0",
+                  str_len(x) == 3 && memcmp(x,
+                                            "a\0"
+                                            "b\0",
                                             4) == 0)
 
         {
@@ -1553,8 +1664,9 @@ int strTest(void) {
         x = str_catfmt(x, "Hello %s World %I,%I--", "Hi!", LLONG_MIN, LLONG_MAX);
         test_cond("str_catfmt() seems working in the base case",
                   str_len(x) == 60 &&
-                      memcmp(x, "--Hello Hi! World -9223372036854775808,"
-                                "9223372036854775807--",
+                      memcmp(x,
+                             "--Hello Hi! World -9223372036854775808,"
+                             "9223372036854775807--",
                              60) == 0)
             printf("[%s]\n", x);
 

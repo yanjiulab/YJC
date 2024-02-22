@@ -164,6 +164,25 @@ static int ipv4_packet_to_string(FILE* s, struct packet* packet,
             ip_to_string(&src_ip, src_string),
             ip_to_string(&dst_ip, dst_string));
 
+    // fprintf(s,
+    //         "> Internet Protocol Version 4\n"
+    //         "    |-Version          : %d\n"
+    //         "    |-Header Length    : %d Bytes\n"
+    //         "    |-Type Of Service  : %d\n"
+    //         "    |-Total Length     : %d Bytes\n"
+    //         "    |-Identification   : %d\n"
+    //         "    |-Fragment offset  : %d\n"
+    //         "    |-TTL              : %d\n"
+    //         "    |-Protocol         : %d\n"
+    //         "    |-Checksum         : %d\n"
+    //         "    |-Source IP        : %s\n"
+    //         "    |-Destination IP   : %s\n",
+    //         (unsigned int)ipv4->version, (unsigned int)((ipv4->ihl) * 4),
+    //         (unsigned int)ipv4->tos, ntohs(ipv4->tot_len), ntohs(ipv4->id),
+    //         ntohs(ipv4->frag_off), (unsigned int)ipv4->ttl,
+    //         (unsigned int)ipv4->protocol, ntohs(ipv4->check),
+    //         inet_itoa_n(ipv4->src_ip), inet_itoa_n(ipv4->dst_ip));
+
     return STATUS_OK;
 }
 

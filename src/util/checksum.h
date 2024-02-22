@@ -71,6 +71,8 @@ static inline uint16_t in_cksum_with_ph6(const struct ipv6_ph *ph, const void *d
 #define FLETCHER_CHECKSUM_VALIDATE 0xffff
 extern uint16_t fletcher_checksum(uint8_t *, const size_t len, const uint16_t offset);
 
+uint16_t checksum(uint8_t* buf, int len);
+
 #ifdef __cplusplus
 }
 #endif

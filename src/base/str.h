@@ -317,6 +317,28 @@ char* str_lower(char* str);
 char* str_reverse(char* str);
 char* str_hex(char* buff, size_t bufsiz, const uint8_t* str, size_t num);
 
+/*-------------------------- print ---------------------------------*/
+int get_ws_col(); // get window size column
+int get_ws_row(); // get window size row
+
+/**
+ * @brief Print a string of length LEN consisting of C characters.
+ *
+ * @param c separator
+ * @param len length is terminal window column size if LEN is 0, otherwise LEN.
+ */
+void print_line(char c, int len);
+
+/**
+ * @brief Print the TITLE in center alignment style.
+ *
+ * @param title print string
+ * @param c separator
+ */
+void print_title(char* title, char c);
+
+void print_data(unsigned char* data, int size);
+
 #ifdef REDIS_TEST
 int strTest(int argc, char* argv[]);
 #endif

@@ -94,7 +94,7 @@ THREAD_ROUTINE(frontend_cmdf) {
     log_info("thread %lu exit", thread_id());
 }
 
-static EV_RETURN on_accept(evio_t* io) {
+static int on_accept(evio_t* io) {
     struct sockaddr_in cliaddr;
     socklen_t clilen = sizeof(cliaddr);
     int conn;
@@ -107,7 +107,7 @@ static EV_RETURN on_accept(evio_t* io) {
     return EV_OK;
 }
 
-static EV_RETURN on_udp(evio_t* io) {
+static int on_udp(evio_t* io) {
     char recvline[1024] = {0};
     struct sockaddr_in cliaddr;
     socklen_t addrlen = sizeof(cliaddr);
@@ -122,7 +122,7 @@ static EV_RETURN on_udp(evio_t* io) {
     return EV_OK;
 }
 
-static void on_sniffer(evio_t* io) {
+static int on_sniffer(evio_t* io) {
     char* error = NULL;
     char* dump = NULL;
     enum packet_parse_result_t result;
@@ -141,6 +141,8 @@ static void on_sniffer(evio_t* io) {
 
     print_line('-', 0);
     printf("%s", dump);
+    
+    return 0;
 }
 
 int main(int argc, char* argv[]) {

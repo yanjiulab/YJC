@@ -2,7 +2,6 @@
 
 #include "defs.h"
 #include "log.h"
-#include "net_utils.h"
 #include "str.h"
 
 /* Number of bytes to buffer in the packet socket we use for sniffing. */

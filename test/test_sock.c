@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "crc.h"
-#include "net_utils.h"
 #include "log.h"
 #include "socket.h"
 #include "test.h"

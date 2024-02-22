@@ -1,7 +1,6 @@
 #include "ifi.h"
 
 #include "err.h"
-#include "net_utils.h"
 #include "socket.h"
 
 int ifi_fd = 0;

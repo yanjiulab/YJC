@@ -1,7 +1,8 @@
-#include "net_utils.h"
+
 #include "log.h"
 #include "test.h"
 #include "vector.h"
+
 void test_vector() {
     vector v;
     void *val;
