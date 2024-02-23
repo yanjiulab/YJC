@@ -12,10 +12,12 @@
 #include "str.h"
 #include "types.h"
 #include "version.h"
+#include "atomic.h"
+#include "proc.h"
+#include "thread.h"
 
 #include <fcntl.h>
 #include <signal.h>
-#include <stdatomic.h>
 #include <sys/resource.h>
 #include <syslog.h>
 //--------------------alloc/free---------------------------

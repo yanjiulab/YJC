@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <time.h>
 
+
 #define NHANDLERS          16
 #define TIMER_SECOND_MICRO 1000000L
 
@@ -24,14 +25,19 @@ typedef enum {
 } evloop_status_t;
 
 typedef int EV_RETURN;
-typedef EV_RETURN (*evtimer_cb)(struct evtimer*);
-typedef EV_RETURN (*evio_cb)(struct evio*);
+typedef struct evloop evloop_t;
+typedef struct evbase evbase_t;
+typedef struct evio evio_t;
+typedef struct evtimer evtimer_t;
+
+typedef EV_RETURN (*evtimer_cb)(evtimer_t*);
+typedef EV_RETURN (*evio_cb)(evio_t*);
 
 /* Error codes (for EV_RETURN) */
 #define EV_OK 1
 // #define EV_ERROR_* -1
 
-typedef struct evloop_s {
+struct evloop {
     evloop_status_t status;
     // ios
     int max_ios;      // max io number
@@ -43,8 +49,7 @@ typedef struct evloop_s {
 
     // timers
     struct evtimer* timers;
-
-} evloop_t;
+};
 
 #define EVENT_FIELDS \
     evloop_t* loop;
@@ -54,17 +59,17 @@ typedef struct evloop_s {
 // void* privdata;
 // int priority;
 
-typedef struct evbase {
+struct evbase {
     EVENT_FIELDS
-} evbase_t;
+};
 
-typedef struct evio {
+struct evio {
     EVENT_FIELDS
     int fd;       /* File descriptor				 */
     evio_cb func; /* Function to call with &fd_set */
-} evio_t;
+};
 
-typedef struct evtimer {
+struct evtimer {
     EVENT_FIELDS
     struct evtimer* next; /* next timer event */
     int id;
@@ -72,7 +77,7 @@ typedef struct evtimer {
     void* data;      /* func's data */
     int time;        /* time offset to next timer event*/
     int repeat;
-} evtimer_t;
+};
 
 // evloop
 evloop_t* evloop_new(int max);
@@ -81,7 +86,7 @@ int evloop_run(evloop_t* loop);
 void evloop_stop(evloop_t* loop);
 
 // evtimer
-void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms);
+int evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms);
 void evtimer_del(evloop_t* loop, int timer_id);
 void evtimer_clean(evloop_t* loop);
 // Return in how many ms evtimer_callout() would like to be called.

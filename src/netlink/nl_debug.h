@@ -26,8 +26,8 @@
 #define NIP6_FMT    "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x"
 #define NIP6_SEQFMT "%04x%04x%04x%04x%04x%04x%04x%04x"
 
-#define ETH_FMT
-#define ETH()
+// #define ETH_FMT
+// #define ETH()
 
 const char* nlmsg_type2str(uint16_t type);
 const char* af_type2str(int type);

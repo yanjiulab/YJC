@@ -262,7 +262,7 @@ char* cmdf__strdup(const char* src) {
 }
 
 void cmdf__trim(char* src) {
-    char *begin = src, *end, *newline;
+    char *begin = src, *end, *newln;
     size_t end_location;
 
     /* Check for empty string */
@@ -272,9 +272,9 @@ void cmdf__trim(char* src) {
     }
 
     /* Replace newline */
-    newline = strrchr(src, '\n');
-    if (newline)
-        *newline = '\0';
+    newln = strrchr(src, '\n');
+    if (newln)
+        *newln = '\0';
 
     /* Replace spaces and re-align the string */
     while (isspace((int)*begin))

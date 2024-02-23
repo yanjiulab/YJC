@@ -1,5 +1,10 @@
 # Thanks to Job Vranish (https://spin.atomicobject.com/2016/08/26/makefile-c-projects/)
 # Modified by Yanjiu Li
+
+###############################################################################
+#                                 Main section                                #
+###############################################################################
+
 INC_DIRS := ./include
 SRC_DIRS := ./src
 APP_DIR := ./src/app
@@ -29,7 +34,12 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
 
 # Compiler Flags
-CFLAGS = -g3 -DPRINT_DEBUG -DPRINT_ERROR #-std=c99 #-Wall -g3
+# -w			: colse all warnings
+# -Wall -Wextra	: open all warnings
+# -Wxxx			: open specific warning `xxx`
+# -Wno-xxx		: close specific warning `xxx`
+# -Werror		: treat warnings as errors (not recommanded)
+CFLAGS = -g3 -w -Wextra -DPRINT_DEBUG -DPRINT_ERROR #-std=c99
 
 # Used libraries
 LDFLAGS = -lm -lreadline -lpthread -lncurses -lpanel -lmenu -lform -lsqlite3 -ldl #-L lib
@@ -70,9 +80,10 @@ remove: clean cleanLogs
 # errors to show up.
 -include $(DEPS)
 
-###########################################################
-#                    CMoka test section                   #
-###########################################################
+###############################################################################
+#                              CMoka test section                             #
+###############################################################################
+
 TEST_DIR = ./test
 TEST_LIBS = -lcmocka
 TESTS = $(shell find $(TEST_DIR) -name '*.c')
@@ -89,9 +100,10 @@ test: test-build
 	./$(TEST_OUTPUT)
 	@echo Tests completed.
 
-###########################################################
-#                    Debug Check section                  #
-###########################################################
+###############################################################################
+#                           Valgrind check section                            #
+###############################################################################
+
 # Leaks log file
 LEAKS = log/leaks.log
 # Thread chek log file
@@ -110,9 +122,10 @@ threads:
 	@mkdir -p log
 	valgrind --tool=helgrind --log-file="$(HELGRIND)" $(BIN_DIR)/$(CHECK_BIN)
 
-###########################################################
-#             Project generation section                  #
-###########################################################
+###############################################################################
+#                          Project generation section                         #
+###############################################################################
+
 PROJECT_NAME := project
 PROJECT_PATH := ~/projects/$(PROJECT_NAME)
 BINARY := project

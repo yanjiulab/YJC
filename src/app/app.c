@@ -58,17 +58,6 @@ static CMDF_RETURN do_quit(cmdf_arglist* arglist) {
     return CMDF_OK;
 }
 
-static EV_RETURN on_period_hello(evtimer_t* timer) {
-    // Do task
-    log_info("Hello World %d", timer->id);
-
-    // Re-register timer
-    uint32_t to = (int)timer->data;
-    evtimer_add(evloop(timer), on_period_hello, timer->data, to);
-
-    return EV_OK;
-}
-
 THREAD_ROUTINE(backend_cmdf) {
     log_info("thread %lu start", thread_id());
     int fd = (int)userdata;
@@ -94,7 +83,18 @@ THREAD_ROUTINE(frontend_cmdf) {
     log_info("thread %lu exit", thread_id());
 }
 
-static int on_accept(evio_t* io) {
+static EV_RETURN on_period_hello(evtimer_t* timer) {
+    // Do task
+    log_info("Hello World %d", timer->id);
+
+    // Re-register timer
+    uint32_t to = (int)timer->data;
+    evtimer_add(evloop(timer), on_period_hello, timer->data, to);
+
+    return EV_OK;
+}
+
+static EV_RETURN on_accept(evio_t* io) {
     struct sockaddr_in cliaddr;
     socklen_t clilen = sizeof(cliaddr);
     int conn;
@@ -107,12 +107,12 @@ static int on_accept(evio_t* io) {
     return EV_OK;
 }
 
-static int on_udp(evio_t* io) {
+static EV_RETURN on_udp(evio_t* io) {
     char recvline[1024] = {0};
     struct sockaddr_in cliaddr;
     socklen_t addrlen = sizeof(cliaddr);
 
-    int n = recvfrom(io->fd, recvline, 1024, 0, &cliaddr, &addrlen);
+    int n = recvfrom(io->fd, recvline, 1024, 0, (struct sockaddr*)&cliaddr, &addrlen);
 
     printf("client [%s:%d] recv %d bytes:\n", inet_ntoa(cliaddr.sin_addr),
            ntohs(((struct sockaddr_in*)&cliaddr)->sin_port), n);
@@ -122,7 +122,7 @@ static int on_udp(evio_t* io) {
     return EV_OK;
 }
 
-static int on_sniffer(evio_t* io) {
+static EV_RETURN on_sniffer(evio_t* io) {
     char* error = NULL;
     char* dump = NULL;
     enum packet_parse_result_t result;
@@ -141,7 +141,7 @@ static int on_sniffer(evio_t* io) {
 
     print_line('-', 0);
     printf("%s", dump);
-    
+
     return 0;
 }
 

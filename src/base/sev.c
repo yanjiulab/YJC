@@ -1,5 +1,8 @@
 #include "sev.h"
 
+#include <stdio.h>
+#include <string.h>
+
 /* Definitions */
 static int id = 0;
 
@@ -25,7 +28,7 @@ static struct timeval timeval_subtract(struct timeval a, struct timeval b) {
 }
 
 // evtimer
-void evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms) {
+int evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms) {
     struct evtimer *ptr, *node, *prev;
 
     /* create a node */
@@ -178,7 +181,7 @@ int evtimer_reset(evloop_t* loop, int timer_id, int delay) {
     struct evtimer *ptr, *node, *prev;
     struct evtimer* Q = loop->timers;
     if (!timer_id)
-        return;
+        return -1;
 
     prev = ptr = Q;
     while (ptr) {
@@ -200,7 +203,7 @@ int evtimer_reset(evloop_t* loop, int timer_id, int delay) {
     }
 
     if (!node)
-        return;
+        return -1;
 
     // set
     prev = ptr = Q;
