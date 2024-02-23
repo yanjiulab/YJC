@@ -90,5 +90,11 @@ void test_nl();
 void test_nl_kernel();
 void test_rt_netlink();
 void test_nl_debug();
+void test_sqlite3();
+void test_util();
+void test_rbtree();
+void test_container();
+void test_json();
+void test_ncurses();
 
 #endif // !TEST_H

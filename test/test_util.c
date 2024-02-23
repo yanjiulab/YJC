@@ -8,7 +8,7 @@
 #include "test.h"
 #include "sha256.h"
 
-void test_base64_md5_sha1_sha256() {
+void test_util() {
     FILE *fp = fopen("/etc/passwd", "r");
     fseek(fp, 0, SEEK_END);
     int len = ftell(fp);

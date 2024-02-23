@@ -12,7 +12,7 @@ void task(void *arg) {
 void test_thpool() {
     puts("Making threadpool with 4 threads");
     puts("Adding 40 tasks to threadpool");
-    threadpool thpool = thpool_init(0);
+    threadpool thpool = thpool_init(4);
     unsigned long long start = gettimeofday_us();
 
     int i;
