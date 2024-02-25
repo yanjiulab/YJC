@@ -23,8 +23,8 @@
 #define LIBCMDF_IMPL
 #define CMDF_READLINE_SUPPORT
 #include "cmdf.h"
-#define PROG_INTRO                                \
-    "A simple program for network programming.\n" \
+#define PROG_INTRO                                                       \
+    "Welcome to YJC vtysh! YJC is a simple program for network programming.\n" \
     "You can use this as a reference on how to use the library!"
 #define CMDF_BE_PORT "6688"
 
@@ -60,6 +60,17 @@ static CMDF_RETURN do_quit(cmdf_arglist* arglist) {
     return CMDF_OK;
 }
 
+/**
+$ nc 127.0.0.1 PORT
+
+A simple program for network programming.
+You can use this as a reference on how to use the library!
+
+tcp> help
+
+...
+
+*/
 THREAD_ROUTINE(backend_cmdf) {
     log_info("thread %lu start", thread_id());
     int fd = (int)userdata;
