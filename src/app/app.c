@@ -18,6 +18,7 @@
 #include "sniffer.h"
 #include "thread.h"
 #include "term.h"
+#include "socket.h"
 
 #define LIBCMDF_IMPL
 #define CMDF_READLINE_SUPPORT
@@ -25,6 +26,7 @@
 #define PROG_INTRO                                \
     "A simple program for network programming.\n" \
     "You can use this as a reference on how to use the library!"
+#define CMDF_BE_PORT "6688"
 
 /* Global vars */
 evloop_t* loop = NULL;
@@ -223,16 +225,9 @@ int main(int argc, char* argv[]) {
     log_info("Add a timer event");
     evtimer_add(loop, on_period_hello, 5000, 5000);
 
-    // UDP
-    int udp_fd;
-    struct sockaddr_in addr;
-    udp_fd = socket(AF_INET, SOCK_DGRAM, 0);
-    bzero(&addr, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    addr.sin_port = htons(6688);
-    bind(udp_fd, (struct sockaddr*)&addr, sizeof(addr));
-    evio_add(loop, udp_fd, on_udp);
+    // UDP server
+    int udp_fd = udp_server(ANYADDR, CMDF_BE_PORT, NULL);
+    // evio_add(loop, udp_fd, on_udp);
 
     // Sniffer
     sniff = sniffer_new(NULL);
@@ -245,12 +240,7 @@ int main(int argc, char* argv[]) {
     /* Start commandline loop */
     if (isdaemon) {
         log_info("Start cmd framework backend mode");
-        int tcp_fd;
-        tcp_fd = socket(AF_INET, SOCK_STREAM, 0);
-        bind(tcp_fd, (struct sockaddr*)&addr, sizeof(addr));
-        listen(tcp_fd, 5);
-        int on = 1;
-        setsockopt(tcp_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(int));
+        int tcp_fd = tcp_listen(ANYADDR, CMDF_BE_PORT, NULL);
         evio_add(loop, tcp_fd, on_accept);
     } else {
         log_info("Start cmd framework frontend mode");
