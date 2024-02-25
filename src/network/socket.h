@@ -17,11 +17,16 @@
 
 #include "defs.h"
 #include "export.h"
+#include "errors.h"
 
 //-----------------------------socket----------------------------------------------
 #define LOCALHOST      "127.0.0.1"
 #define ANYADDR        "0.0.0.0"
 #define INVALID_SOCKET -1
+
+/* Following shortens all the typecasts of pointer arguments: */
+#define LISTENQ        1024
+#define SA             struct sockaddr
 
 static inline int socket_errno() {
     return errno;
@@ -122,8 +127,33 @@ static inline int closesocket(int sockfd) {
 
 // EXPORT int Socketpair(int family, int type, int protocol, int sv[2]);
 
-/************************** Socket Option API ***************************************/
+/************************** <unistd.h> ***************************************/
 
+ssize_t Readline(int, void*, size_t);
+/* Read "n" bytes from a descriptor. */
+ssize_t readn(int, void*, size_t);
+// ssize_t read_fd(int, void *, size_t, int *);
+/* Write "n" bytes to a descriptor. */
+ssize_t writen(int, const void*, size_t);
+// ssize_t write_fd(int, void *, size_t, int);
 
+/************************** High-level API ***************************************/
+// getsockname
+// getpeername
+// setsockname => bind
+// setpeername => connect
+
+// 服务端建立后，后续accept需要知道客户端addrlen长度，因此需要返回。
+int tcp_listen(const char*, const char*, socklen_t*);
+// 客户端建立连接后，客户端后续收发直接read/write就不需要地址了。
+int tcp_connect(const char*, const char*);  
+// 服务端建立后，后续收发recvfrom需要知道addrlen长度，因此需要返回。
+int udp_server(const char*, const char*, socklen_t*);
+// 客户端创建后，后续收发还需要客户端地址，因此需要返回地址结构。
+int udp_client(const char*, const char*, struct sockaddr**, socklen_t*);
+// 客户端创建后建立连接后，客户端后续收发直接read/write就不需要地址了。
+int udp_connect(const char*, const char*);
+
+int sockfd_to_family(int sockfd);
 
 #endif // !__SOCKET_H__

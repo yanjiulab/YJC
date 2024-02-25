@@ -110,4 +110,5 @@ extern timezone_t timezone_now();
 #define TZ_FMT_BUFLEN 20
 extern char* timezone_fmt(timezone_t* tz, char* buf);
 
+void tv_sub(struct timeval* out, struct timeval* in);
 #endif

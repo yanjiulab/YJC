@@ -87,7 +87,7 @@ remove: clean cleanLogs
 TEST_DIR = ./test
 TEST_LIBS = -lcmocka
 TESTS = $(shell find $(TEST_DIR) -name '*.c')
-TEST_OUTPUT = $(TEST_DIR)/a.out
+TEST_OUTPUT = $(BIN_DIR)/t.out
 # TCFLAGS = -Wextra -Wshadow -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-variable -Wno-pragmas -O3 -g3
 
 test-build: $(OBJS)

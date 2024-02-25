@@ -134,6 +134,10 @@ int ip_parse(const char* ip_string, struct ipaddr* ip) {
 }
 
 const char* ip_to_string(const struct ipaddr* ip, char* buffer) {
+    if (!buffer) {
+        buffer = malloc(ADDR_STR_LEN);
+    }
+
     if (!inet_ntop(ip->address_family, &ip->ip, buffer, ADDR_STR_LEN))
         log_error("inet_ntop");
 

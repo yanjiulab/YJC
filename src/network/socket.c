@@ -299,3 +299,254 @@ static inline int socket_errno_negative() {
 // int Socketpair(int family, int type, int protocol, int sv[2]) {
 //     return socketpair(AF_LOCAL, type, protocol, sv);
 // }
+
+/************************** <unistd.h> ***************************************/
+/* Read "n" bytes from a descriptor. */
+ssize_t readn(int fd, void* vptr, size_t n) {
+    size_t nleft;
+    ssize_t nread;
+    char* ptr;
+
+    ptr = vptr;
+    nleft = n;
+    while (nleft > 0) {
+        if ((nread = read(fd, ptr, nleft)) < 0) {
+            if (errno == EINTR)
+                nread = 0; /* and call read() again */
+            else
+                return (-1);
+        } else if (nread == 0)
+            break; /* EOF */
+
+        nleft -= nread;
+        ptr += nread;
+    }
+    return (n - nleft); /* return >= 0 */
+}
+
+/* Write "n" bytes to a descriptor. */
+ssize_t writen(int fd, const void* vptr, size_t n) {
+    size_t nleft;
+    ssize_t nwritten;
+    const char* ptr;
+
+    ptr = vptr;
+    nleft = n;
+    while (nleft > 0) {
+        if ((nwritten = write(fd, ptr, nleft)) <= 0) {
+            if (nwritten < 0 && errno == EINTR)
+                nwritten = 0; /* and call write() again */
+            else
+                return (-1); /* error */
+        }
+
+        nleft -= nwritten;
+        ptr += nwritten;
+    }
+    return (n);
+}
+
+ssize_t Readline(int fd, void* vptr, size_t maxlen) {
+    ssize_t n, rc;
+    char c, *ptr;
+
+    ptr = vptr;
+    for (n = 1; n < maxlen; n++) {
+    again:
+        if ((rc = read(fd, &c, 1)) == 1) {
+            *ptr++ = c;
+            if (c == '\n')
+                break; /* newline is stored, like fgets() */
+        } else if (rc == 0) {
+            *ptr = 0;
+            return (n - 1); /* EOF, n - 1 bytes were read */
+        } else {
+            if (errno == EINTR)
+                goto again;
+            return (-1); /* error, errno set by read() */
+        }
+    }
+
+    *ptr = 0; /* null terminate like fgets() */
+    return (n);
+}
+
+/************************** High-level API ***************************************/
+int tcp_listen(const char* host, const char* serv, socklen_t* addrlenp) {
+    int listenfd, n;
+    const int on = 1;
+    struct addrinfo hints, *res, *ressave;
+
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((n = getaddrinfo(host, serv, &hints, &res)) != 0)
+        err_quit("tcp_listen error for %s, %s: %s", host, serv, gai_strerror(n));
+    ressave = res;
+
+    do {
+        listenfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (listenfd < 0)
+            continue; /* error, try next one */
+
+        setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+        if (bind(listenfd, res->ai_addr, res->ai_addrlen) == 0)
+            break; /* success */
+
+        close(listenfd); /* bind error, close and try next one */
+    } while ((res = res->ai_next) != NULL);
+
+    if (res == NULL) /* errno from final socket() or bind() */
+        err_sys("tcp_listen error for %s, %s", host, serv);
+
+    listen(listenfd, LISTENQ);
+
+    if (addrlenp)
+        *addrlenp = res->ai_addrlen; /* return size of protocol address */
+
+    freeaddrinfo(ressave);
+
+    return (listenfd);
+}
+
+int tcp_connect(const char* host, const char* serv) {
+    int sockfd, n;
+    struct addrinfo hints, *res, *ressave;
+
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((n = getaddrinfo(host, serv, &hints, &res)) != 0)
+        err_quit("tcp_connect error for %s, %s: %s", host, serv, gai_strerror(n));
+    ressave = res;
+
+    do {
+        sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (sockfd < 0)
+            continue; /* ignore this one */
+
+        if (connect(sockfd, res->ai_addr, res->ai_addrlen) == 0)
+            break; /* success */
+
+        close(sockfd); /* ignore this one */
+    } while ((res = res->ai_next) != NULL);
+
+    if (res == NULL) /* errno set from final connect() */
+        err_sys("tcp_connect error for %s, %s", host, serv);
+
+    freeaddrinfo(ressave);
+
+    return (sockfd);
+}
+
+int udp_server(const char* host, const char* serv, socklen_t* addrlenp) {
+    int sockfd, n;
+    struct addrinfo hints, *res, *ressave;
+
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_flags = AI_PASSIVE;
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    if ((n = getaddrinfo(host, serv, &hints, &res)) != 0)
+        err_quit("udp_server error for %s, %s: %s",
+                 host, serv, gai_strerror(n));
+    ressave = res;
+
+    do {
+        sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (sockfd < 0)
+            continue; /* error - try next one */
+
+        if (bind(sockfd, res->ai_addr, res->ai_addrlen) == 0)
+            break; /* success */
+
+        close(sockfd); /* bind error - close and try next one */
+    } while ((res = res->ai_next) != NULL);
+
+    if (res == NULL) /* errno from final socket() or bind() */
+        err_sys("udp_server error for %s, %s", host, serv);
+
+    if (addrlenp)
+        *addrlenp = res->ai_addrlen; /* return size of protocol address */
+
+    freeaddrinfo(ressave);
+
+    return (sockfd);
+}
+
+int udp_client(const char* host, const char* serv, struct sockaddr** saptr, socklen_t* lenp) {
+    int sockfd, n;
+    struct addrinfo hints, *res, *ressave;
+
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    if ((n = getaddrinfo(host, serv, &hints, &res)) != 0)
+        err_quit("udp_client error for %s, %s: %s",
+                 host, serv, gai_strerror(n));
+    ressave = res;
+
+    do {
+        sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (sockfd >= 0)
+            break; /* success */
+    } while ((res = res->ai_next) != NULL);
+
+    if (res == NULL) /* errno set from final socket() */
+        err_sys("udp_client error for %s, %s", host, serv);
+
+    *saptr = malloc(res->ai_addrlen);
+    memcpy(*saptr, res->ai_addr, res->ai_addrlen);
+    *lenp = res->ai_addrlen;
+
+    freeaddrinfo(ressave);
+
+    return (sockfd);
+}
+
+int udp_connect(const char* host, const char* serv) {
+    int sockfd, n;
+    struct addrinfo hints, *res, *ressave;
+
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+
+    if ((n = getaddrinfo(host, serv, &hints, &res)) != 0)
+        err_quit("udp_connect error for %s, %s: %s",
+                 host, serv, gai_strerror(n));
+    ressave = res;
+
+    do {
+        sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+        if (sockfd < 0)
+            continue; /* ignore this one */
+
+        if (connect(sockfd, res->ai_addr, res->ai_addrlen) == 0)
+            break; /* success */
+
+        close(sockfd); /* ignore this one */
+    } while ((res = res->ai_next) != NULL);
+
+    if (res == NULL) /* errno set from final connect() */
+        err_sys("udp_connect error for %s, %s", host, serv);
+
+    freeaddrinfo(ressave);
+
+    return (sockfd);
+}
+
+int sockfd_to_family(int sockfd) {
+    struct sockaddr_storage ss;
+    socklen_t len;
+
+    len = sizeof(ss);
+    if (getsockname(sockfd, (SA*)&ss, &len) < 0)
+        return (-1);
+    return (ss.ss_family);
+}

@@ -96,5 +96,6 @@ void test_rbtree();
 void test_container();
 void test_json();
 void test_ncurses();
+void test_socket();
 
 #endif // !TEST_H

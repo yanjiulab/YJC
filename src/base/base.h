@@ -20,6 +20,10 @@
 #include <signal.h>
 #include <sys/resource.h>
 #include <syslog.h>
+
+#define MAXLINE  4096 /* max text line length */
+#define BUFFSIZE 8192 /* buffer size for reads and writes */
+
 //--------------------alloc/free---------------------------
 EXPORT void* ev_malloc(size_t size);
 EXPORT void* ev_calloc(size_t nmemb, size_t size);
@@ -70,6 +74,10 @@ static inline void ev_memcheck(void) {
 #define EV_STACK_ALLOC(ptr, size) STACK_OR_HEAP_ALLOC(ptr, size, EV_DEFAULT_STACKBUF_SIZE)
 #define EV_STACK_FREE(ptr)        STACK_OR_HEAP_FREE(ptr)
 
+//--------------------file-------------------------------
+#define FILE_MODE                 (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)   /* default file access permissions for new files */
+#define DIR_MODE                  (FILE_MODE | S_IXUSR | S_IXGRP | S_IXOTH) /* default permissions for new directories */
+
 //--------------------path-------------------------------
 EXPORT int mkdir_p(const char* dir); // mkdir -p
 EXPORT int rmdir_p(const char* dir); // rmdir -p
@@ -88,4 +96,9 @@ EXPORT char* rand_str(char* buf, int len);
 #define LOCKMODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 int already_running(const char* fname);
 void daemonize(const char* cmd);
+
+//--------------------signal-------------------------------
+typedef void Sigfunc(int); /* for signal handlers */
+Sigfunc* signal_intr(int signo, Sigfunc* func);
+
 #endif // EV_BASE_H_

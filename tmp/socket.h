@@ -13,14 +13,6 @@
 #include <unistd.h>
 // #include <sys/file.h>
 
-#define LISTENQ 1024
-#define MAXLINE 4096  /* max text line length */
-#define BUFFSIZE 8192 /* buffer size for reads and writes */
-
-typedef void Sigfunc(int);                                 /* for signal handlers */
-#define FILE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)  /* default file access permissions for new files */
-#define DIR_MODE (FILE_MODE | S_IXUSR | S_IXGRP | S_IXOTH) /* default permissions for new directories */
-
 /* Unix wrapper functions */
 void *Calloc(size_t, size_t);
 void Close(int);
@@ -94,7 +86,6 @@ void Shutdown(int, int);
 int Sockatmark(int);
 int Socket(int, int, int);
 // void Socketpair(int, int, int, int *);
-void Writen(int, void *, size_t);
 
 /* unp library functions */
 int connect_nonb(int, const struct sockaddr *, socklen_t, int);
@@ -115,10 +106,8 @@ void inet6_srcrt_print(void *);
 char **my_addrs(int *);
 int readable_timeo(int, int);
 ssize_t readline(int, void *, size_t);
-ssize_t readn(int, void *, size_t);
 ssize_t read_fd(int, void *, size_t, int *);
 // ssize_t recvfrom_flags(int, void *, size_t, int *, struct sockaddr *, socklen_t *, struct unp_in_pktinfo *);
-Sigfunc *signal_intr(int, Sigfunc *);
 int sock_bind_wild(int, int);
 int sock_cmp_addr(const struct sockaddr *, const struct sockaddr *, socklen_t);
 int sock_cmp_port(const struct sockaddr *, const struct sockaddr *, socklen_t);
@@ -128,17 +117,9 @@ void sock_set_port(struct sockaddr *, socklen_t, int);
 void sock_set_wild(struct sockaddr *, socklen_t);
 char *sock_ntop(const struct sockaddr *, socklen_t);
 char *sock_ntop_host(const struct sockaddr *, socklen_t);
-int sockfd_to_family(int);
 void str_echo(int);
 void str_cli(FILE *, int);
-int tcp_connect(const char *, const char *);
-int tcp_listen(const char *, const char *, socklen_t *);
-void tv_sub(struct timeval *, struct timeval *);
-int udp_client(const char *, const char *, struct sockaddr **, socklen_t *);
-int udp_connect(const char *, const char *);
-int udp_server(const char *, const char *, socklen_t *);
 int writable_timeo(int, int);
-ssize_t writen(int, const void *, size_t);
 ssize_t write_fd(int, void *, size_t, int);
 
 #ifdef MCAST
