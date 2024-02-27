@@ -19,11 +19,14 @@
 #include "thread.h"
 #include "term.h"
 #include "socket.h"
+#include "sockopt.h"
+
+// #include <net/if.h>
 
 #define LIBCMDF_IMPL
 #define CMDF_READLINE_SUPPORT
 #include "cmdf.h"
-#define PROG_INTRO                                                       \
+#define PROG_INTRO                                                             \
     "Welcome to YJC vtysh! YJC is a simple program for network programming.\n" \
     "You can use this as a reference on how to use the library!"
 #define CMDF_BE_PORT "6688"
@@ -60,17 +63,7 @@ static CMDF_RETURN do_quit(cmdf_arglist* arglist) {
     return CMDF_OK;
 }
 
-/**
-$ nc 127.0.0.1 PORT
-
-A simple program for network programming.
-You can use this as a reference on how to use the library!
-
-tcp> help
-
-...
-
-*/
+// $ nc 127.0.0.1 CMDF_BE_PORT
 THREAD_ROUTINE(backend_cmdf) {
     log_info("thread %lu start", thread_id());
     int fd = (int)userdata;
@@ -130,7 +123,7 @@ static EV_RETURN on_udp(evio_t* io) {
     printf("client [%s:%d] recv %d bytes:\n", inet_ntoa(cliaddr.sin_addr),
            ntohs(((struct sockaddr_in*)&cliaddr)->sin_port), n);
     print_data(recvline, n);
-    int s = sendto(io->fd, recvline, n, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+    // int s = sendto(io->fd, recvline, n, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
 
     return EV_OK;
 }
@@ -215,13 +208,13 @@ int main(int argc, char* argv[]) {
     }
 
     /* Check if program is already running. */
-    if (already_running(cmd)) {
-        // if (isdaemon)
-        syslog(LOG_ERR, "%s was already running!", cmd);
-        // else
-        log_error("%s was already running!", cmd);
-        exit(EXIT_FAILURE);
-    }
+    // if (already_running(cmd)) {
+    //     // if (isdaemon)
+    //     syslog(LOG_ERR, "%s was already running!", cmd);
+    //     // else
+    //     log_error("%s was already running!", cmd);
+    //     exit(EXIT_FAILURE);
+    // }
 
     /* Setting signals and clean */
     if (signal(SIGINT, sig_int) == SIG_ERR) {
@@ -237,8 +230,14 @@ int main(int argc, char* argv[]) {
     evtimer_add(loop, on_period_hello, 5000, 5000);
 
     // UDP server
-    int udp_fd = udp_server(ANYADDR, CMDF_BE_PORT, NULL);
-    // evio_add(loop, udp_fd, on_udp);
+    int udp_fd = udp_server(ANYADDR, "520", NULL);
+    struct in_addr group;
+    struct in_addr ifaddr;
+    group.s_addr = htonl(0xe0000009);
+    so_bindtodev(udp_fd, "ens33");
+    setsockopt_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 2);
+
+    evio_add(loop, udp_fd, on_udp);
 
     // Sniffer
     sniff = sniffer_new(NULL);
@@ -246,7 +245,7 @@ int main(int argc, char* argv[]) {
     sniffer_set_direction(sniff, DIRECTION_ALL);
     sniffer_set_filter_str(sniff, "arp");
     sniffer_start(sniff);
-    evio_add(loop, sniff->psock->packet_fd, on_sniffer);
+    // evio_add(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */
     if (isdaemon) {

@@ -8,6 +8,8 @@
 #include <linux/filter.h>
 #include <errno.h> // errno
 
+typedef signed int ifindex_t;
+
 #define SO_ATTACH_FILTER 26 // for remove warning
 #define blocking(s)      fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
 #define nonblocking(s)   fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
@@ -125,4 +127,11 @@ static inline int so_setfilter(int sockfd, struct sock_fprog fprog) {
     return setsockopt(sockfd, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof(fprog));
 }
 
+// send
+// if = auto choose
+// ttl = 1
+// loop = true
+int setsockopt_ipv4_multicast(int sock, int optname, struct in_addr if_addr, unsigned int mcast_addr, ifindex_t ifindex);
+int so_bindtodev(int sock, char* if_name);
 #endif
+

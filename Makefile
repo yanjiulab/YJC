@@ -39,7 +39,7 @@ CPPFLAGS := $(INC_FLAGS) -MMD -MP
 # -Wxxx			: open specific warning `xxx`
 # -Wno-xxx		: close specific warning `xxx`
 # -Werror		: treat warnings as errors (not recommanded)
-CFLAGS = -g3 -w -Wextra -DPRINT_DEBUG -DPRINT_ERROR #-std=c99
+CFLAGS = -g3 -w -Wextra -DPRINT_DEBUG #-std=c99
 
 # Used libraries
 LDFLAGS = -lm -lreadline -lpthread -lncurses -lpanel -lmenu -lform -lsqlite3 -ldl #-L lib

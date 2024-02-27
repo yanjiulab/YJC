@@ -146,7 +146,7 @@ ssize_t writen(int, const void*, size_t);
 // 服务端建立后，后续accept需要知道客户端addrlen长度，因此需要返回。
 int tcp_listen(const char*, const char*, socklen_t*);
 // 客户端建立连接后，客户端后续收发直接read/write就不需要地址了。
-int tcp_connect(const char*, const char*);  
+int tcp_connect(const char*, const char*);
 // 服务端建立后，后续收发recvfrom需要知道addrlen长度，因此需要返回。
 int udp_server(const char*, const char*, socklen_t*);
 // 客户端创建后，后续收发还需要客户端地址，因此需要返回地址结构。
@@ -155,5 +155,6 @@ int udp_client(const char*, const char*, struct sockaddr**, socklen_t*);
 int udp_connect(const char*, const char*);
 
 int sockfd_to_family(int sockfd);
+int family_to_level(int family);
 
 #endif // !__SOCKET_H__

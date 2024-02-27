@@ -78,17 +78,13 @@
         fprintf(stdout, L_DKGREY fmt NORMAL, ##__VA_ARGS__); \
         fflush(stdout);                                      \
     } while (0)
-#else
-#define printd(...)
-#endif
-
-#ifdef PRINT_ERROR
 #define printe(fmt, ...)                                \
     do {                                                \
         fprintf(stderr, RED fmt NORMAL, ##__VA_ARGS__); \
         fflush(stderr);                                 \
     } while (0)
 #else
+#define printd(...)
 #define printe(...)
 #endif
 

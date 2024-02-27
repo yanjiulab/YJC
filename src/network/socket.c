@@ -1,4 +1,5 @@
 #include "socket.h"
+#include "sockopt.h"
 
 const char* socket_strerror(int err) {
     return strerror(ABS(err));
@@ -461,6 +462,8 @@ int udp_server(const char* host, const char* serv, socklen_t* addrlenp) {
         if (sockfd < 0)
             continue; /* error - try next one */
 
+        so_reuseaddr(sockfd, 1);
+        so_reuseport(sockfd, 1);
         if (bind(sockfd, res->ai_addr, res->ai_addrlen) == 0)
             break; /* success */
 
@@ -549,4 +552,17 @@ int sockfd_to_family(int sockfd) {
     if (getsockname(sockfd, (SA*)&ss, &len) < 0)
         return (-1);
     return (ss.ss_family);
+}
+
+int family_to_level(int family) {
+    switch (family) {
+    case AF_INET:
+        return IPPROTO_IP;
+#ifdef IPV6
+    case AF_INET6:
+        return IPPROTO_IPV6;
+#endif
+    default:
+        return -1;
+    }
 }
