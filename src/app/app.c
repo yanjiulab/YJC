@@ -34,9 +34,12 @@
 /* Global vars */
 evloop_t* loop = NULL;
 sniffer_t* sniff = NULL;
+thread_t cmdf_tid;
 
 static void sig_int() {
     cmdf__default_do_exit(NULL);
+    rl_cleanup_after_signal();
+    rl_free_line_state();
     evloop_stop(loop);
 }
 
@@ -108,7 +111,7 @@ static EV_RETURN on_accept(evio_t* io) {
     log_info("client [%s:%d] connected console.", inet_ntoa(cliaddr.sin_addr),
              ntohs(((struct sockaddr_in*)&cliaddr)->sin_port));
 
-    thread_create(backend_cmdf, conn);
+    cmdf_tid = thread_create(backend_cmdf, conn);
 
     return EV_OK;
 }
@@ -233,9 +236,9 @@ int main(int argc, char* argv[]) {
     int udp_fd = udp_server(ANYADDR, "520", NULL);
     struct in_addr group;
     struct in_addr ifaddr;
-    group.s_addr = htonl(0xe0000009);
-    so_bindtodev(udp_fd, "ens33");
-    setsockopt_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 2);
+    group.s_addr = htonl(0xe1000009);
+    so_bindtodev(udp_fd, "ens38");
+    setsockopt_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
 
     evio_add(loop, udp_fd, on_udp);
 
@@ -254,7 +257,7 @@ int main(int argc, char* argv[]) {
         evio_add(loop, tcp_fd, on_accept);
     } else {
         log_info("Start cmd framework frontend mode");
-        thread_create(frontend_cmdf, cmd);
+        cmdf_tid = thread_create(frontend_cmdf, cmd);
     }
 
     /* Run event loop */
@@ -262,6 +265,7 @@ int main(int argc, char* argv[]) {
     evloop_run(loop);
 
     /* Clean and exit */
+    thread_join(cmdf_tid, NULL);
     log_fatal("Clean ...");
     log_info("...");
     log_fatal("Bye.");
