@@ -17,14 +17,12 @@
 #include "sev.h"
 #include "sniffer.h"
 #include "thread.h"
-#include "term.h"
 #include "socket.h"
 #include "sockopt.h"
 
 // #include <net/if.h>
 
 #define LIBCMDF_IMPL
-#define CMDF_READLINE_SUPPORT
 #include "cmdf.h"
 #define PROG_INTRO                                                             \
     "Welcome to YJC vtysh! YJC is a simple program for network programming.\n" \
@@ -71,8 +69,6 @@ THREAD_ROUTINE(backend_cmdf) {
     log_info("thread %lu start", thread_id());
     int fd = (int)userdata;
     FILE* f = fdopen(fd, "w+");
-    rl_instream = f;
-    rl_outstream = f;
     cmdf_init("tcp> ", PROG_INTRO, NULL, NULL, 0, 1, f, f);
     cmdf_register_command(do_quit, "quit", "Quit the application");
     cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");

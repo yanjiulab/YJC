@@ -10,6 +10,15 @@ SRC_DIRS := ./src
 APP_DIR := ./src/app
 BUILD_DIR := ./build
 BIN_DIR := ./bin
+3RD_DIR := ./3-rd
+LIB_DIR := ./lib
+
+# Cross compile (TODO)
+# ARCH = arm64
+# CROSS_COMPILE ?= aarch64-linux-gnu-
+# CROSS = aarch64-linux-gnu-
+# CC = $(CROSS_COMPILE)gcc
+# LD = $(CROSS_COMPILE)ld
 
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
@@ -121,6 +130,28 @@ tleaks: test-build
 threads:
 	@mkdir -p log
 	valgrind --tool=helgrind --log-file="$(HELGRIND)" $(BIN_DIR)/$(CHECK_BIN)
+
+
+###############################################################################
+#                          3-rd party library section                         #
+###############################################################################
+
+SQLITE_DIR = $(3RD_DIR)/sqlite3
+
+sqlite3:
+	$(CC) -Os -I$(SQLITE_DIR) -DSQLITE_THREADSAFE=0 -DSQLITE_ENABLE_FTS4 \
+	-DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_JSON1 \
+	-DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_EXPLAIN_COMMENTS \
+	-DHAVE_READLINE \
+	$(SQLITE_DIR)/shell.c $(SQLITE_DIR)/sqlite3.c -ldl -lm -lreadline -o $(BIN_DIR)/sqlite3
+
+sqlite3-lib:
+	$(CC) -Os -I$(SQLITE_DIR) -DSQLITE_THREADSAFE=2 -DSQLITE_ENABLE_FTS4 \
+	-DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_JSON1 \
+	-DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_EXPLAIN_COMMENTS \
+	-DHAVE_USLEEP \
+	$(SQLITE_DIR)/sqlite3.c -ldl -lm -fPIC -lpthread -shared -o $(LIB_DIR)/libsqlite3.so
+
 
 ###############################################################################
 #                          Project generation section                         #

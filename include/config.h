@@ -93,6 +93,10 @@
 #define HAVE_NETNS 1
 #endif
 
+#ifndef HAVE_READLINE
+#define HAVE_READLINE 1
+#endif
+
 /* #undef WITH_OPENSSL */
 /* #undef WITH_GNUTLS */
 /* #undef WITH_MBEDTLS */

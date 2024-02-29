@@ -54,7 +54,8 @@
 #undef CMDF_READLINE_SUPPORT
 #endif
 #else
-#ifdef CMDF_READLINE_SUPPORT
+#ifdef HAVE_READLINE
+#define CMDF_READLINE_SUPPORT
 #include <readline/history.h>
 #include <readline/readline.h>
 #endif
@@ -452,6 +453,9 @@ void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
     rl_attempted_completion_function = cmdf__command_name_completion;
     /* Set key bindings */
     rl_bind_key('?', cmdf__default_do_q);
+    /* Set readline stream */
+    rl_instream = settings.cmdf_stdin;
+    rl_outstream = settings.cmdf_stdout;
 #endif
 }
 

@@ -27,7 +27,7 @@ int main(void) {
         // cmocka_unit_test(test_rbtree),
         // cmocka_unit_test(test_container),
         // cmocka_unit_test(test_json),
-        // cmocka_unit_test(test_sqlite3),
+        cmocka_unit_test(test_sqlite3),
         // cmocka_unit_test(test_vector),
         // // base
         // cmocka_unit_test(test_datetime),
@@ -57,7 +57,7 @@ int main(void) {
         // cmocka_unit_test(test_sev),
         // cmocka_unit_test(test_csv),
         // cmocka_unit_test(test_color),
-        cmocka_unit_test(test_socket),
+        // cmocka_unit_test(test_socket),
     };
 
     /* Run the tests */

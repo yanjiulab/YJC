@@ -182,6 +182,7 @@ API|链表|哈希表
 
 ## TODO
 
+- 完善 cmdf 中关于 readline 的操作。
 - 完善 atomic
 - 完善 netllink 应用
 - 信号机制
