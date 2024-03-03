@@ -32,6 +32,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_SQLITE3
+
 #include "db.h"
 
 #include "defs.h"
@@ -366,3 +368,5 @@ int db_table_dump(const char *table_name) {
 
 //     return 0;
 // }
+
+#endif

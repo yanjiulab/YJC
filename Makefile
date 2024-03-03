@@ -14,11 +14,11 @@ BIN_DIR := ./bin
 LIB_DIR := ./lib
 
 # Cross compile (TODO)
-# ARCH = arm64
-# CROSS_COMPILE ?= aarch64-linux-gnu-
-# CROSS = aarch64-linux-gnu-
-# CC = $(CROSS_COMPILE)gcc
-# LD = $(CROSS_COMPILE)ld
+ARCH = arm64
+CROSS_COMPILE ?= aarch64-linux-gnu-
+CROSS = aarch64-linux-gnu-
+CC = $(CROSS_COMPILE)gcc
+LD = $(CROSS_COMPILE)ld
 
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
@@ -51,7 +51,7 @@ CPPFLAGS := $(INC_FLAGS) -MMD -MP
 CFLAGS = -g3 -w -Wextra -DPRINT_DEBUG #-std=c99
 
 # Used libraries
-LDFLAGS = -lm -lreadline -lpthread -lncurses -lpanel -lmenu -lform -lsqlite3 -ldl #-L lib
+LDFLAGS = -L $(LIB_DIR) -lm -ldl -lpthread -lsqlite3 #-lreadline -lncurses -lpanel -lmenu -lform
 
 # All files in the APP_DIR are considered compilation targets and each file should contain the main function.
 TARGETS = $(notdir $(patsubst %.c, %, $(APP_FILES)))
@@ -142,8 +142,7 @@ sqlite3:
 	$(CC) -Os -I$(SQLITE_DIR) -DSQLITE_THREADSAFE=0 -DSQLITE_ENABLE_FTS4 \
 	-DSQLITE_ENABLE_FTS5 -DSQLITE_ENABLE_JSON1 \
 	-DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_EXPLAIN_COMMENTS \
-	-DHAVE_READLINE \
-	$(SQLITE_DIR)/shell.c $(SQLITE_DIR)/sqlite3.c -ldl -lm -lreadline -o $(BIN_DIR)/sqlite3
+	$(SQLITE_DIR)/shell.c $(SQLITE_DIR)/sqlite3.c -ldl -lm -o $(BIN_DIR)/sqlite3
 
 sqlite3-lib:
 	$(CC) -Os -I$(SQLITE_DIR) -DSQLITE_THREADSAFE=2 -DSQLITE_ENABLE_FTS4 \

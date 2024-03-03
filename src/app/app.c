@@ -36,8 +36,10 @@ thread_t cmdf_tid;
 
 static void sig_int() {
     cmdf__default_do_exit(NULL);
+#ifdef CMDF_READLINE_SUPPORT
     rl_cleanup_after_signal();
     rl_free_line_state();
+#endif
     evloop_stop(loop);
 }
 
@@ -235,6 +237,18 @@ int main(int argc, char* argv[]) {
     group.s_addr = htonl(0xe1000009);
     so_bindtodev(udp_fd, "ens38");
     setsockopt_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
+
+    // struct sockaddr_in servaddr;
+    // servaddr.sin_family = AF_INET;
+    // servaddr.sin_addr.s_addr = inet_addr("192.168.0.114");
+    // // servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    // servaddr.sin_port = htons(8866);
+
+    // int totlen = msglen + scrp_hdr_len;
+
+    // if (sendto(udp_fd, sendbuf, totlen, 0, (struct sockaddr*)&servaddr, sizeof(servaddr)) != (ssize_t)totlen) {
+    //     log_warn("SEND %s message error (%s)", scrp_kind(type, subtype), strerror(errno));
+    //     return -1;
 
     evio_add(loop, udp_fd, on_udp);
 

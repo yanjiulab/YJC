@@ -93,9 +93,13 @@
 #define HAVE_NETNS 1
 #endif
 
-#ifndef HAVE_READLINE
-#define HAVE_READLINE 1
+#ifndef HAVE_SQLITE3
+#define HAVE_SQLITE3 1
 #endif
+
+// #ifndef HAVE_READLINE
+// #define HAVE_READLINE 1
+// #endif
 
 /* #undef WITH_OPENSSL */
 /* #undef WITH_GNUTLS */

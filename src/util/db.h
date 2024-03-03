@@ -34,8 +34,7 @@
 
 #ifndef DB_H
 #define DB_H
-// #ifdef HAVE_SQLITE3
-
+#ifdef HAVE_SQLITE3
 #include <sqlite3.h>
 #include <string.h>
 #include <stdint.h>
@@ -43,24 +42,24 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern struct sqlite3 *db();
-extern int db_init(const char *path_fmt, ...);
+extern struct sqlite3* db();
+extern int db_init(const char* path_fmt, ...);
 extern int db_close(void);
-extern struct sqlite3_stmt *db_prepare_len(const char *stmt, int stmtlen);
-extern struct sqlite3_stmt *db_prepare(const char *stmt);
-extern void db_finalize(struct sqlite3_stmt *ss);
-extern int db_bindf(struct sqlite3_stmt *ss, const char *fmt, ...);
-extern int db_run(struct sqlite3_stmt *ss);
-extern int db_reset(struct sqlite3_stmt *ss);
-extern int db_loadf(struct sqlite3_stmt *ss, const char *fmt, ...);
-extern int db_exec(const char *stmt_fmt, ...);
+extern struct sqlite3_stmt* db_prepare_len(const char* stmt, int stmtlen);
+extern struct sqlite3_stmt* db_prepare(const char* stmt);
+extern void db_finalize(struct sqlite3_stmt* ss);
+extern int db_bindf(struct sqlite3_stmt* ss, const char* fmt, ...);
+extern int db_run(struct sqlite3_stmt* ss);
+extern int db_reset(struct sqlite3_stmt* ss);
+extern int db_loadf(struct sqlite3_stmt* ss, const char* fmt, ...);
+extern int db_exec(const char* stmt_fmt, ...);
 
 // Convenience
-extern int db_table_dump(const char *table_name);   // need db_init()
+extern int db_table_dump(const char* table_name); // need db_init()
 
 #ifdef __cplusplus
 }
 #endif
 
-// #endif /* HAVE_SQLITE3 */
+#endif /* HAVE_SQLITE3 */
 #endif /* _FRR_DB_H_ */

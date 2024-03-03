@@ -441,8 +441,9 @@ void cmdf_init(const char* prompt, const char* intro, const char* doc_header,
     }
 
     /* Register help callback */
-    cmdf_register_command(cmdf__default_do_help, "help", "Get information on a command"
-                                                         " or list commands.");
+    cmdf_register_command(cmdf__default_do_help, "help",
+                          "Get information on a command"
+                          " or list commands.");
 
     /* Register exit callback, if required */
     if (use_default_exit)
@@ -736,7 +737,9 @@ CMDF_RETURN cmdf__default_do_noop(cmdf_arglist* arglist /* Unused */) {
 
 CMDF_RETURN cmdf__default_do_q(int count, int key) {
     cmdf__default_do_help(NULL);
+#ifdef CMDF_READLINE_SUPPORT
     rl_on_new_line();
+#endif
     return 0;
 }
 
