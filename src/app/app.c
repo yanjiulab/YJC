@@ -12,6 +12,7 @@
  */
 
 #include "base.h"
+#include "args.h"
 #include "iniparser.h"
 #include "log.h"
 #include "sev.h"
@@ -155,7 +156,8 @@ static EV_RETURN on_sniffer(evio_t* io) {
 int main(int argc, char* argv[]) {
 
     /* Parse command line args */
-    int opt, isdaemon = 0;
+    int isdaemon = 0;
+    int opt = 0;
     const char* usage = "Usage: %s [-h] [-d]\n";
     while ((opt = getopt(argc, argv, "hd")) != -1) {
         switch (opt) {
@@ -170,6 +172,15 @@ int main(int argc, char* argv[]) {
             exit(1);
         }
     }
+    // ArgParser* parser = ap_new_parser();
+    // ap_add_flag(parser, "daemon d");
+    // ap_parse(parser, argc, argv);
+    // if(ap_found(parser, "daemon")) {
+    //     isdaemon = 1;
+    //     log_info("run daemon");
+    // }
+    // ap_print(parser);
+    // ap_free(parser);
 
     /* Parse ini config file */
     dictionary* ini = iniparser_load("config.ini");

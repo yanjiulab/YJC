@@ -45,18 +45,19 @@
 #define NABS(n)        ((n) < 0 ? (n) : -(n))
 
 /* ASCII charaters related macros.
-[0, 0x20)    control-charaters
-[0x20, 0x7F) printable-charaters
 
-0x0A => LF
-0x0D => CR
-0x20 => SPACE
-0x7F => DEL
+    [0, 0x20)    control-charaters
+    [0x20, 0x7F) printable-charaters
 
-[0x09, 0x0D] => \t\n\v\f\r
-[0x30, 0x39] => 0~9
-[0x41, 0x5A] => A~Z
-[0x61, 0x7A] => a~z
+    0x0A => LF
+    0x0D => CR
+    0x20 => SPACE
+    0x7F => DEL
+
+    [0x09, 0x0D] => \t\n\v\f\r
+    [0x30, 0x39] => 0~9
+    [0x41, 0x5A] => A~Z
+    [0x61, 0x7A] => a~z
 */
 #define IS_ALPHA(c)    (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 #define IS_DIGIT(c)    ((c) >= '0' && (c) <= '9')
@@ -87,6 +88,117 @@
 #define printd(...)
 #define printe(...)
 #endif
+
+/* Stream macros
+ * PUT_NET puts "network ordered" data to the datastream.
+ * PUT_HOST puts "host ordered" data to the datastream.
+ * GET_NET gets the data and keeps it in "network order" in the memory
+ * GET_HOST gets the data, but in the memory it is in "host order"
+ * The same for all {PUT,GET}_{NET,HOST}{16,32,64}
+ */
+
+#define GET_BYTE(val, cp) ((val) = *(cp)++)
+#define PUT_BYTE(val, cp) (*(cp)++ = (uint8_t)(val))
+
+#define GET_HOST16(val, cp)   \
+    do {                      \
+        register uint16_t Xv; \
+        Xv = (*(cp)++) << 8;  \
+        Xv |= *(cp)++;        \
+        (val) = Xv;           \
+    } while (0)
+
+#define PUT_HOST16(val, cp)           \
+    do {                              \
+        register uint16_t Xv;         \
+        Xv = (uint16_t)(val);         \
+        *(cp)++ = (uint8_t)(Xv >> 8); \
+        *(cp)++ = (uint8_t)Xv;        \
+    } while (0)
+
+#define GET_NET16(val, cp)    \
+    do {                      \
+        register uint16_t Xv; \
+        Xv = *(cp)++;         \
+        Xv |= (*(cp)++) << 8; \
+        (val) = Xv;           \
+    } while (0)
+
+#define PUT_NET16(val, cp)            \
+    do {                              \
+        register uint16_t Xv;         \
+        Xv = (uint16_t)(val);         \
+        *(cp)++ = (uint8_t)Xv;        \
+        *(cp)++ = (uint8_t)(Xv >> 8); \
+    } while (0)
+
+#define GET_HOST32(val, cp)    \
+    do {                       \
+        register uint32_t Xv;  \
+        Xv = (*(cp)++) << 24;  \
+        Xv |= (*(cp)++) << 16; \
+        Xv |= (*(cp)++) << 8;  \
+        Xv |= *(cp)++;         \
+        (val) = Xv;            \
+    } while (0)
+
+#define PUT_HOST32(val, cp)            \
+    do {                               \
+        register uint32_t Xv;          \
+        Xv = (uint32_t)(val);          \
+        *(cp)++ = (uint8_t)(Xv >> 24); \
+        *(cp)++ = (uint8_t)(Xv >> 16); \
+        *(cp)++ = (uint8_t)(Xv >> 8);  \
+        *(cp)++ = (uint8_t)Xv;         \
+    } while (0)
+
+#define GET_NET32(val, cp)     \
+    do {                       \
+        register uint32_t Xv;  \
+        Xv = *(cp)++;          \
+        Xv |= (*(cp)++) << 8;  \
+        Xv |= (*(cp)++) << 16; \
+        Xv |= (*(cp)++) << 24; \
+        (val) = Xv;            \
+    } while (0)
+
+#define PUT_NET32(val, cp)             \
+    do {                               \
+        register uint32_t Xv;          \
+        Xv = (uint32_t)(val);          \
+        *(cp)++ = (uint8_t)Xv;         \
+        *(cp)++ = (uint8_t)(Xv >> 8);  \
+        *(cp)++ = (uint8_t)(Xv >> 16); \
+        *(cp)++ = (uint8_t)(Xv >> 24); \
+    } while (0)
+
+#define GET_HOST64(val, cp)    \
+    do {                       \
+        register uint64_t Xv;  \
+        Xv = (*(cp)++) << 56;  \
+        Xv |= (*(cp)++) << 48; \
+        Xv |= (*(cp)++) << 40; \
+        Xv |= (*(cp)++) << 32; \
+        Xv |= (*(cp)++) << 24; \
+        Xv |= (*(cp)++) << 16; \
+        Xv |= (*(cp)++) << 8;  \
+        Xv |= *(cp)++;         \
+        (val) = Xv;            \
+    } while (0)
+
+#define PUT_HOST64(val, cp)            \
+    do {                               \
+        register uint64_t Xv;          \
+        Xv = (uint64_t)(val);          \
+        *(cp)++ = (uint8_t)(Xv >> 56); \
+        *(cp)++ = (uint8_t)(Xv >> 48); \
+        *(cp)++ = (uint8_t)(Xv >> 40); \
+        *(cp)++ = (uint8_t)(Xv >> 32); \
+        *(cp)++ = (uint8_t)(Xv >> 24); \
+        *(cp)++ = (uint8_t)(Xv >> 16); \
+        *(cp)++ = (uint8_t)(Xv >> 8);  \
+        *(cp)++ = (uint8_t)Xv;         \
+    } while (0)
 
 /* CPP features related macros */
 /* */

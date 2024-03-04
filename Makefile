@@ -14,11 +14,11 @@ BIN_DIR := ./bin
 LIB_DIR := ./lib
 
 # Cross compile (TODO)
-ARCH = arm64
-CROSS_COMPILE ?= aarch64-linux-gnu-
-CROSS = aarch64-linux-gnu-
-CC = $(CROSS_COMPILE)gcc
-LD = $(CROSS_COMPILE)ld
+# ARCH = arm64
+# CROSS_COMPILE ?= aarch64-linux-gnu-
+# CROSS = aarch64-linux-gnu-
+# CC = $(CROSS_COMPILE)gcc
+# LD = $(CROSS_COMPILE)ld
 
 # Find all the C and C++ files we want to compile
 # Note the single quotes around the * expressions. The shell will incorrectly expand these otherwise, but we want to send the * directly to the find command.
