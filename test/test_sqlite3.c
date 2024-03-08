@@ -13,12 +13,12 @@
 // sqlite3_exec() → A wrapper function that does sqlite3_prepare(), sqlite3_step(), sqlite3_column(), and
 // sqlite3_finalize() for a string of one or more SQL statements.
 
-#include "db.h"
 #include "log.h"
 #include "test.h"
+#include "db.h"
 
 // 定义回调函数以处理查询结果
-static int callback(void *data, int argc, char **argv, char **colnames) {
+static int callback(void* data, int argc, char** argv, char** colnames) {
     // 处理每一行的数据
     for (int i = 0; i < argc; i++) {
         printf("%s = %s\n", colnames[i], argv[i] ? argv[i] : "NULL");
@@ -49,8 +49,8 @@ void test_sqlite3() {
     // db_exec("DELETE FROM member;");
 
     /* Insert */
-    struct sqlite3_stmt *ss;
-    char *names[5] = {"Alice", "Bob", "Corol", "David", "Ella"};
+    struct sqlite3_stmt* ss;
+    char* names[5] = {"Alice", "Bob", "Corol", "David", "Ella"};
     int age = 18;
     double weight = 73.52;
 
@@ -74,7 +74,7 @@ void test_sqlite3() {
 
     int col_count = sqlite3_column_count(ss);
     for (int i = 0; i < col_count; i++) {
-        const char *col_name = sqlite3_column_name(ss, i);
+        const char* col_name = sqlite3_column_name(ss, i);
         log_info("Column %d name: %s", i, col_name);
     }
 

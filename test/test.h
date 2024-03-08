@@ -1,7 +1,7 @@
 #ifndef TEST_H
 #define TEST_H
 #include <assert.h>
-
+#include "config.h"
 void test_iowatcher();
 void test_buf();
 void test_eventloop();

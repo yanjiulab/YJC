@@ -12,7 +12,7 @@
 
 #define _CRT_SECURE_NO_WARNINGS
 #define LIBCMDF_IMPL
-#define CMDF_READLINE_SUPPORT
+// #define CMDF_READLINE_SUPPORT
 
 #include "cmdf.h"
 #include "test.h"

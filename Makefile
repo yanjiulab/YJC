@@ -51,7 +51,7 @@ CPPFLAGS := $(INC_FLAGS) -MMD -MP
 CFLAGS = -g3 -w -Wextra -DPRINT_DEBUG #-std=c99
 
 # Used libraries
-LDFLAGS = -L $(LIB_DIR) -lm -ldl -lpthread -lsqlite3 #-lreadline -lncurses -lpanel -lmenu -lform
+LDFLAGS = -L $(LIB_DIR) -lm -ldl -lpthread -lsqlite3 -lreadline -lncurses -lpanel -lmenu -lform#
 
 # All files in the APP_DIR are considered compilation targets and each file should contain the main function.
 TARGETS = $(notdir $(patsubst %.c, %, $(APP_FILES)))

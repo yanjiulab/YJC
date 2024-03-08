@@ -34,7 +34,7 @@
 
 #ifndef DB_H
 #define DB_H
-#ifdef HAVE_SQLITE3
+// #ifdef HAVE_SQLITE3
 #include <sqlite3.h>
 #include <string.h>
 #include <stdint.h>
@@ -61,5 +61,5 @@ extern int db_table_dump(const char* table_name); // need db_init()
 }
 #endif
 
-#endif /* HAVE_SQLITE3 */
+// #endif /* HAVE_SQLITE3 */
 #endif /* _FRR_DB_H_ */
