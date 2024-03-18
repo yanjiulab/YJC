@@ -4,43 +4,36 @@
 #include <stdio.h>
 #include <string.h>
 
-#define KEY(val) (&(struct user){.name = val})
-
 struct user {
     char* name;
     int age;
+    double weight;
 };
+
+#define USER_ENTRY(n, a, w) (&(struct user){.name = n, .age = a, .weight = w})
+#define USER_KEY(n, a)      (&(struct user){.name = n, .age = a})
 
 int user_compare(const void* a, const void* b, void* udata) {
     const struct user* ua = a;
     const struct user* ub = b;
-    return strcmp(ua->name, ub->name);
+    int ret;
+    if (ret = (strcmp(ua->name, ub->name)))
+        return ret;
+    return ua->age - ub->age;
 }
 
 bool user_iter(const void* item, void* udata) {
     const struct user* user = item;
-    printf("%s (age=%d)\n", user->name, user->age);
+    printf("%s (age=%d, weight=%f)\n", user->name, user->age, user->weight);
     return true;
 }
 
-// const struct bgp_pbr_match* pbm = arg;
-// uint32_t key;
-
-// key = jhash_1word(pbm->vrf_id, 0x4312abde);
-// key = jhash_1word(pbm->flags, key);
-// key = jhash_1word(pbm->family, key);
-// key = jhash(&pbm->pkt_len_min, 2, key);
-// key = jhash(&pbm->pkt_len_max, 2, key);
-// key = jhash(&pbm->tcp_flags, 2, key);
-// key = jhash(&pbm->tcp_mask_flags, 2, key);
-// key = jhash(&pbm->dscp_value, 1, key);
-// key = jhash(&pbm->flow_label, 2, key);
-// key = jhash(&pbm->fragment, 1, key);
-// key = jhash(&pbm->protocol, 1, key);
-// return jhash_1word(pbm->type, key);
 uint64_t user_hash(const void* item, uint64_t seed0, uint64_t seed1) {
     const struct user* user = item;
-    return hashmap_sip(user->name, strlen(user->name), seed0, seed1);
+    uint64_t key;
+
+    key = hashmap_sip(user->name, strlen(user->name), seed0, seed1);
+    return hashmap_xxhash3(&user->age, sizeof(int), key, key);
 }
 
 void test_hashmap() {
@@ -52,25 +45,23 @@ void test_hashmap() {
 
     // Here we'll load some users into the hash map. Each set operation
     // performs a copy of the data that is pointed to in the second argument.
-    hashmap_set(map, &(struct user){.name = "Dale", .age = 44});
-    hashmap_set(map, &(struct user){.name = "Roger", .age = 68});
-    hashmap_set(map, &(struct user){.name = "Jane", .age = 47});
+    hashmap_set(map, &(struct user){.name = "Jane", .age = 47, .weight = 50.31});
+    hashmap_set(map, USER_ENTRY("Dale", 44, 65.39));
+    hashmap_set(map, USER_ENTRY("Roger", 68, 78.55));
 
     struct user* user;
-
     printf("\n-- get some users --\n");
-    // user = hashmap_get(map, &(struct user){.name = "Jane"});
-    user = hashmap_get(map, KEY("Jane"));
 
-    printf("%s age=%d\n", user->name, user->age);
+    user = hashmap_get(map, USER_KEY("Jane", 47));
+    printf("%s (age=%d, weight=%f)\n", user->name, user->age, user->weight);
 
-    user = hashmap_get(map, &(struct user){.name = "Roger"});
-    printf("%s age=%d\n", user->name, user->age);
+    user = hashmap_get(map, USER_KEY("Roger", 68));
+    printf("%s (age=%d, weight=%f)\n", user->name, user->age, user->weight);
 
-    user = hashmap_get(map, &(struct user){.name = "Dale"});
-    printf("%s age=%d\n", user->name, user->age);
+    user = hashmap_get(map, USER_KEY("Dale", 44));
+    printf("%s (age=%d, weight=%f)\n", user->name, user->age, user->weight);
 
-    user = hashmap_get(map, &(struct user){.name = "Tom"});
+    user = hashmap_get(map, &(struct user){.name = "Jane", .age = 18});
     printf("%s\n", user ? "exists" : "not exists");
 
     printf("\n-- iterate over all users (hashmap_scan) --\n");
@@ -81,25 +72,22 @@ void test_hashmap() {
     void* item;
     while (hashmap_iter(map, &iter, &item)) {
         const struct user* user = item;
-        printf("%s (age=%d)\n", user->name, user->age);
+        printf("%s (age=%d, weight=%f)\n", user->name, user->age, user->weight);
     }
+
+    printf("\n-- delete --\n");
+    user = hashmap_del(map, USER_KEY("Dale", 44));
+    printf("%s (age=%d, weight=%f) delete\n", user->name, user->age, user->weight);
+
+    printf("\n-- delete --\n");
+    user = hashmap_set(map, USER_ENTRY("Roger", 68, 69.23));
+    if (user)
+        printf("%s (age=%d, weight=%f) update\n", user->name, user->age, user->weight);
+
+    user = hashmap_set(map, USER_ENTRY("Roger", 55, 72));
+
+    printf("\n-- iterate over all users (hashmap_scan) --\n");
+    hashmap_scan(map, user_iter, NULL);
 
     hashmap_free(map);
 }
-
-// output:
-// -- get some users --
-// Jane age=47
-// Roger age=68
-// Dale age=44
-// not exists
-//
-// -- iterate over all users (hashmap_scan) --
-// Dale (age=44)
-// Roger (age=68)
-// Jane (age=47)
-//
-// -- iterate over all users (hashmap_iter) --
-// Dale (age=44)
-// Roger (age=68)
-// Jane (age=47)

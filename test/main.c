@@ -27,7 +27,7 @@ int main(void) {
         // cmocka_unit_test(test_rbtree),
         // cmocka_unit_test(test_container),
         // cmocka_unit_test(test_json),
-        cmocka_unit_test(test_sqlite3),
+        // cmocka_unit_test(test_sqlite3),
         // cmocka_unit_test(test_vector),
         // // base
         // cmocka_unit_test(test_datetime),
@@ -48,7 +48,7 @@ int main(void) {
         // cmocka_unit_test(test_thpool),
         // cmocka_unit_test(test_packet_socket),
         // cmocka_unit_test(test_hash),
-        // cmocka_unit_test(test_hashmap),
+        cmocka_unit_test(test_hashmap),
         // cmocka_unit_test(test_vrf),
         // cmocka_unit_test(test_cmdf),
         // // cmocka_unit_test(test_sds),

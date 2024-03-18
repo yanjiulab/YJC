@@ -9,9 +9,11 @@ ColumnLimit: 0
 AlignConsecutiveMacros: AcrossEmptyLinesAndComments
 PointerAlignment: Left
 AlwaysBreakBeforeMultilineStrings: true
-AllowShortIfStatementsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true
+AllowShortCaseLabelsOnASingleLine: true
 AllowShortLoopsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: false
+AllowShortArrayInitialization: Inline
 IndentCaseLabels: false
 AlignEscapedNewlinesLeft: false
 AlignTrailingComments: true
