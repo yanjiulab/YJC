@@ -11,8 +11,61 @@
 typedef signed int ifindex_t;
 
 #define SO_ATTACH_FILTER 26 // for remove warning
+
+// set socket to blocking
 #define blocking(s)      fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
+
+// set socket to non-blocking
 #define nonblocking(s)   fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
+
+/* SOL_SOCKET */
+
+/* IPPROTO_IP */
+
+// Set or receive the Type-Of-Service (TOS) field that is
+// sent with every IP packet originating from this socket.
+int setsockopt_tos(int sockfd, int tos);
+int getsockopt_tos(int sockfd);
+
+// Set or retrieve the current time-to-live field that is
+// used in every packet sent from this socket.
+int setsockopt_ttl(int sockfd, int ttl);
+int getsockopt_ttl(int sockfd);
+
+/**
+ * When this flag is set, pass a IP_TTL control message with
+ * the time-to-live field of the received packet as a 32 bit integer.
+ * Not supported for SOCK_STREAM sockets.
+ *
+ * Usage:
+ *
+ * // create a udp server
+ * int sockfd = udp_socket();
+ *
+ * // set recvttl option
+ * setsockopt_recvttl(sockfd, 1);
+ *
+ * // receive data with control message
+ * num_bytes = recvmsg(sockfd, &msg, 0);
+ *
+ * // extract ttl in control message
+ * for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+ *   if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_TTL)
+ *     ttl = (int)*CMSG_DATA(cmsg);
+ *   if (cmsg->cmsg_level == IPPROTO_IP && cmsg->cmsg_type == IP_TTL)
+ *     tos = (int)*CMSG_DATA(cmsg);
+ * }
+ *
+ */
+int setsockopt_recvttl(int sockfd, int on);
+
+// If enabled, the IP_TOS ancillary message is passed with
+// incoming packets.  It contains a byte which specifies the
+// Type of Service/Precedence field of the packet header.
+// Expects a boolean integer flag.
+int setsockopt_recvtos(int sockfd, int on);
+
+#define TODO_BELOW
 
 static inline int tcp_nodelay(int sockfd, int on) {
     return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on,
@@ -31,6 +84,7 @@ static inline int tcp_nopush(int sockfd, int on) {
 #endif
 }
 
+/* IPPROTO_TCP */
 static inline int tcp_keepalive(int sockfd, int on, int delay) {
     if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on, sizeof(int)) != 0) {
         return errno;
@@ -134,4 +188,3 @@ static inline int so_setfilter(int sockfd, struct sock_fprog fprog) {
 int setsockopt_ipv4_multicast(int sock, int optname, struct in_addr if_addr, unsigned int mcast_addr, ifindex_t ifindex);
 int so_bindtodev(int sock, char* if_name);
 #endif
-

@@ -2,6 +2,59 @@
 #include "socket.h"
 #include <net/if.h>
 #include <sys/ioctl.h>
+
+int setsockopt_tos(int sockfd, int tos) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0) {
+        printe("can't setsockopt IP_TOS on fd %d for tos 0x%.2x\n", sockfd, tos);
+        return -1;
+    }
+    return 0;
+}
+
+int getsockopt_tos(int sockfd) {
+    int tos;
+    socklen_t len;
+    if (getsockopt(sockfd, IPPROTO_IP, IP_TOS, &tos, &len) < 0) {
+        printe("can't getsockopt IP_TOS on fd %d\n", sockfd);
+        return -1;
+    }
+    return tos;
+}
+
+int setsockopt_ttl(int sockfd, int ttl) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
+        printe("can't setsockopt IP_TOS on fd %d for ttl %d\n", sockfd, ttl);
+        return -1;
+    }
+    return 0;
+}
+
+int getsockopt_ttl(int sockfd) {
+    int ttl;
+    socklen_t len;
+    if (getsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, &len) < 0) {
+        printe("can't getsockopt IP_TOS on fd %d\n", sockfd);
+        return -1;
+    }
+    return ttl;
+}
+
+int setsockopt_recvttl(int sockfd, int on) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_RECVTTL, &on, sizeof(on)) < 0) {
+        printe("can't setsockopt IP_RECVTTL on fd TTL reception%d\n", sockfd);
+        return -1;
+    }
+    return 0;
+}
+
+int setsockopt_recvtos(int sockfd, int on) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_RECVTOS, &on, sizeof(on)) < 0) {
+        printe("can't setsockopt IP_RECVTOS on fd TOS reception%d\n", sockfd);
+        return -1;
+    }
+    return 0;
+}
+
 /*
  * Process multicast socket options for IPv4 in an OS-dependent manner.
  * Supported options are IP_{ADD,DROP}_MEMBERSHIP.
@@ -129,6 +182,7 @@ int so_bindtodev(int sock, char* if_name) {
     if (ret < 0) {
         printe("can't setsockopt SO_BINDTODEVICE on fd %d for interface %s\n", sock, if_name);
     }
+    return 0;
 }
 
 #define TODO_BELOW

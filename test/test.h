@@ -97,5 +97,6 @@ void test_container();
 void test_json();
 void test_ncurses();
 void test_socket();
+void test_sockopt();
 
 #endif // !TEST_H
