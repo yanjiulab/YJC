@@ -3,7 +3,101 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 
-int setsockopt_tos(int sockfd, int tos) {
+int so_linger(int sockfd, int timeout) {
+#ifdef SO_LINGER
+    struct linger linger;
+    if (timeout >= 0) {
+        linger.l_onoff = 1;
+        linger.l_linger = timeout;
+    } else {
+        linger.l_onoff = 0;
+        linger.l_linger = 0;
+    }
+    // NOTE: SO_LINGER change the default behavior of close, send RST, avoid
+    // TIME_WAIT
+    return setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const char*)&linger,
+                      sizeof(linger));
+#else
+    return 0;
+#endif
+}
+
+int so_noroute(int sockfd, int on) {
+    return setsockopt(sockfd, SOL_SOCKET, SO_DONTROUTE, (const char*)&on, sizeof(int));
+}
+
+int so_sndbuf(int sockfd, int len) {
+    return setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (const char*)&len, sizeof(int));
+}
+
+int so_rcvbuf(int sockfd, int len) {
+    // int delta = bufsize / 2;
+    //     int iter = 0;
+
+    //     /*
+    //      * Set the socket buffer.  If we can't set it as large as we
+    //      * want, search around to try to find the highest acceptable
+    //      * value.  The highest acceptable value being smaller than
+    //      * minsize is a fatal error.
+    //      */
+    //     if (setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)&bufsize, sizeof(bufsize)) < 0) {
+    //         bufsize -= delta;
+
+    //         while (1) {
+    //             iter++;
+
+    //             if (delta > 1) {
+    //                 delta /= 2;
+    //             }
+
+    //             if (setsockopt(socket, SOL_SOCKET, SO_RCVBUF, (char*)&bufsize, sizeof(bufsize)) < 0) {
+    //                 bufsize -= delta;
+    //             } else {
+    //                 if (delta < 1024) {
+    //                     break;
+    //                 }
+    //                 bufsize += delta;
+    //             }
+    //         }
+
+    //         if (bufsize < minsize) {
+    //             log_error("OS-allowed recv buffer size %u < app min %u", bufsize, minsize);
+
+    //             /*NOTREACHED*/
+    //         }
+    //     }
+
+    //     log_debug("Got %d byte recv buffer size in %d iterations", bufsize, iter);
+    return setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&len, sizeof(int));
+}
+
+int so_sndtimeo(int sockfd, int ms) {
+    struct timeval tv = {ms / 1000, (ms % 1000) * 1000};
+    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+}
+
+int so_rcvtimeo(int sockfd, int ms) {
+    struct timeval tv = {ms / 1000, (ms % 1000) * 1000};
+    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+}
+
+int so_reuseaddr(int sockfd, int on) {
+    // NOTE: SO_REUSEADDR allow to reuse sockaddr of TIME_WAIT status
+    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on,
+                      sizeof(int));
+}
+
+int so_reuseport(int sockfd, int on) {
+    // NOTE: SO_REUSEPORT allow multiple sockets to bind same port
+    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&on,
+                      sizeof(int));
+}
+
+int so_setfilter(int sockfd, struct sock_fprog fprog) {
+    return setsockopt(sockfd, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof(fprog));
+}
+
+int so_sendtos(int sockfd, int tos) {
     if (setsockopt(sockfd, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0) {
         printe("can't setsockopt IP_TOS on fd %d for tos 0x%.2x\n", sockfd, tos);
         return -1;
@@ -11,7 +105,7 @@ int setsockopt_tos(int sockfd, int tos) {
     return 0;
 }
 
-int getsockopt_tos(int sockfd) {
+int go_sendtos(int sockfd) {
     int tos;
     socklen_t len;
     if (getsockopt(sockfd, IPPROTO_IP, IP_TOS, &tos, &len) < 0) {
@@ -21,36 +115,73 @@ int getsockopt_tos(int sockfd) {
     return tos;
 }
 
-int setsockopt_ttl(int sockfd, int ttl) {
+int so_sendttl(int sockfd, int ttl) {
     if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0) {
-        printe("can't setsockopt IP_TOS on fd %d for ttl %d\n", sockfd, ttl);
+        printe("can't setsockopt IP_TTL on fd %d for ttl %d\n", sockfd, ttl);
         return -1;
     }
     return 0;
 }
 
-int getsockopt_ttl(int sockfd) {
+int go_sendttl(int sockfd) {
     int ttl;
     socklen_t len;
     if (getsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, &len) < 0) {
-        printe("can't getsockopt IP_TOS on fd %d\n", sockfd);
+        printe("can't getsockopt IP_TTL on fd %d\n", sockfd);
         return -1;
     }
     return ttl;
 }
 
-int setsockopt_recvttl(int sockfd, int on) {
+int so_recvttl(int sockfd, int on) {
     if (setsockopt(sockfd, IPPROTO_IP, IP_RECVTTL, &on, sizeof(on)) < 0) {
-        printe("can't setsockopt IP_RECVTTL on fd TTL reception%d\n", sockfd);
+        printe("can't setsockopt IP_RECVTTL on fd %d for TTL reception\n", sockfd);
         return -1;
     }
     return 0;
 }
 
-int setsockopt_recvtos(int sockfd, int on) {
+int so_recvtos(int sockfd, int on) {
     if (setsockopt(sockfd, IPPROTO_IP, IP_RECVTOS, &on, sizeof(on)) < 0) {
-        printe("can't setsockopt IP_RECVTOS on fd TOS reception%d\n", sockfd);
+        printe("can't setsockopt IP_RECVTOS on fd %d for TOS reception\n", sockfd);
         return -1;
+    }
+    return 0;
+}
+
+int so_pktinfo(int sockfd, int on) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_PKTINFO, &on, sizeof(on)) < 0) {
+        printe("can't setsockopt IP_PKTINFO on fd %d PKTINFO reception\n", sockfd);
+        return -1;
+    }
+    return 0;
+}
+
+int so_options(int sockfd, void* opt, int optlen) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_OPTIONS, opt, optlen) < 0) {
+        printe("can't setsockopt IP_OPTIONS on fd %d: %s\n", sockfd, strerror(errno));
+        return -1;
+    }
+    return 0;
+}
+
+int so_recvopts(int sockfd, int on) {
+    if (setsockopt(sockfd, IPPROTO_IP, IP_RECVOPTS, &on, sizeof(on)) < 0) {
+        printe("can't setsockopt IP_RECVOPTS on fd %d for IP_RECVOPTS reception\n", sockfd);
+        return -1;
+    }
+    return 0;
+}
+
+int so_bindtodev(int sock, char* if_name) {
+    int ret;
+    struct ifreq ifr;
+    memset(&ifr, 0, sizeof(ifr));
+    strncpy(ifr.ifr_name, if_name, IF_NAMESIZE);
+    ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (char*)&ifr, sizeof(ifr));
+
+    if (ret < 0) {
+        printe("can't setsockopt SO_BINDTODEVICE on fd %d for interface %s\n", sock, if_name);
     }
     return 0;
 }
@@ -76,8 +207,8 @@ int setsockopt_recvtos(int sockfd, int on) {
  * but this behavior should not be harmful if they behave the same way,
  * allow leaves, or implicitly leave all groups joined to down interfaces.
  */
-int setsockopt_ipv4_multicast(int sock, int optname, struct in_addr if_addr,
-                              unsigned int mcast_addr, ifindex_t ifindex) {
+int so_ipv4_multicast(int sock, int optname, struct in_addr if_addr,
+                      unsigned int mcast_addr, ifindex_t ifindex) {
     // #ifdef HAVE_RFC3678
     struct group_req gr;
     struct sockaddr_in* si;
@@ -121,7 +252,7 @@ int setsockopt_ipv4_multicast(int sock, int optname, struct in_addr if_addr,
     // 		/* see above: handle possible problem when interface comes back
     // 		 * up */
     // 		zlog_info(
-    // 			"setsockopt_ipv4_multicast attempting to drop and re-add (fd %d, mcast %pI4, ifindex %u)",
+    // 			"so_ipv4_multicast attempting to drop and re-add (fd %d, mcast %pI4, ifindex %u)",
     // 			sock, &mreqn.imr_multiaddr, ifindex);
     // 		setsockopt(sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, (void *)&mreqn,
     // 			   sizeof(mreqn));
@@ -158,7 +289,7 @@ int setsockopt_ipv4_multicast(int sock, int optname, struct in_addr if_addr,
     // 		/* see above: handle possible problem when interface comes back
     // 		 * up */
     // 		zlog_info(
-    // 			"setsockopt_ipv4_multicast attempting to drop and re-add (fd %d, mcast %pI4, ifindex %u)",
+    // 			"so_ipv4_multicast attempting to drop and re-add (fd %d, mcast %pI4, ifindex %u)",
     // 			sock, &mreq.imr_multiaddr, ifindex);
     // 		setsockopt(sock, IPPROTO_IP, IP_DROP_MEMBERSHIP, (void *)&mreq,
     // 			   sizeof(mreq));
@@ -172,17 +303,44 @@ int setsockopt_ipv4_multicast(int sock, int optname, struct in_addr if_addr,
     // #endif /* #if OS_TYPE */
 }
 
-int so_bindtodev(int sock, char* if_name) {
-    int ret;
-    struct ifreq ifr;
-    memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, if_name, IF_NAMESIZE);
-    ret = setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE, (char*)&ifr, sizeof(ifr));
+int udp_broadcast(int sockfd, int on) {
+    return setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char*)&on,
+                      sizeof(int));
+}
 
-    if (ret < 0) {
-        printe("can't setsockopt SO_BINDTODEVICE on fd %d for interface %s\n", sock, if_name);
-    }
+int tcp_nodelay(int sockfd, int on) {
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on,
+                      sizeof(int));
+}
+
+int tcp_nopush(int sockfd, int on) {
+#ifdef TCP_NOPUSH
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_NOPUSH, (const char*)&on,
+                      sizeof(int));
+#elif defined(TCP_CORK)
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, (const char*)&on,
+                      sizeof(int));
+#else
     return 0;
+#endif
+}
+
+int tcp_keepalive(int sockfd, int on, int delay) {
+    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on, sizeof(int)) != 0) {
+        return errno;
+    }
+
+#ifdef TCP_KEEPALIVE
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPALIVE, (const char*)&delay, sizeof(int));
+#elif defined(TCP_KEEPIDLE)
+    // TCP_KEEPIDLE     => tcp_keepalive_time
+    // TCP_KEEPCNT      => tcp_keepalive_probes
+    // TCP_KEEPINTVL    => tcp_keepalive_intvl
+    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (const char*)&delay,
+                      sizeof(int));
+#else
+    return 0;
+#endif
 }
 
 #define TODO_BELOW

@@ -247,7 +247,7 @@ int main(int argc, char* argv[]) {
     struct in_addr ifaddr;
     group.s_addr = htonl(0xe1000009);
     so_bindtodev(udp_fd, "ens38");
-    setsockopt_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
+    so_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
 
     // struct sockaddr_in servaddr;
     // servaddr.sin_family = AF_INET;

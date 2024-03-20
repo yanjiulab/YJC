@@ -12,25 +12,45 @@ typedef signed int ifindex_t;
 
 #define SO_ATTACH_FILTER 26 // for remove warning
 
-// set socket to blocking
 #define blocking(s)      fcntl(s, F_SETFL, fcntl(s, F_GETFL) & ~O_NONBLOCK)
-
-// set socket to non-blocking
 #define nonblocking(s)   fcntl(s, F_SETFL, fcntl(s, F_GETFL) | O_NONBLOCK)
 
-/* SOL_SOCKET */
+// When enabled, a close(2) or shutdown(2) will not return
+// until all queued messages for the socket have been
+// successfully sent or the linger timeout has been reached.
+// Otherwise, the call returns immediately and the closing is
+// done in the background.
+int so_linger(int sockfd, int timeout);
 
-/* IPPROTO_IP */
+// Don't send via a gateway, send only to directly connected hosts.
+// The same effect can be achieved by setting the MSG_DONTROUTE flag
+// on a socket send(2) operation. Expects an integer boolean flag.
+int so_noroute(int sockfd, int on);
+
+// recv buffer size
+int so_rcvbuf(int sockfd, int bufsize);
+// send buffer size
+int so_sndbuf(int sockfd, int bufsize);
+// send timeout
+int so_sndtimeo(int sockfd, int ms);
+// recv timeout
+int so_rcvtimeo(int sockfd, int ms);
+
+int so_reuseaddr(int sockfd, int on);
+
+int so_reuseport(int sockfd, int on);
+
+int so_setfilter(int sockfd, struct sock_fprog fprog);
 
 // Set or receive the Type-Of-Service (TOS) field that is
 // sent with every IP packet originating from this socket.
-int setsockopt_tos(int sockfd, int tos);
-int getsockopt_tos(int sockfd);
+int so_sendtos(int sockfd, int tos);
+int go_sendtos(int sockfd);
 
 // Set or retrieve the current time-to-live field that is
 // used in every packet sent from this socket.
-int setsockopt_ttl(int sockfd, int ttl);
-int getsockopt_ttl(int sockfd);
+int so_sendttl(int sockfd, int ttl);
+int go_sendttl(int sockfd);
 
 /**
  * When this flag is set, pass a IP_TTL control message with
@@ -43,7 +63,7 @@ int getsockopt_ttl(int sockfd);
  * int sockfd = udp_socket();
  *
  * // set recvttl option
- * setsockopt_recvttl(sockfd, 1);
+ * so_recvttl(sockfd, 1);
  *
  * // receive data with control message
  * num_bytes = recvmsg(sockfd, &msg, 0);
@@ -57,134 +77,36 @@ int getsockopt_ttl(int sockfd);
  * }
  *
  */
-int setsockopt_recvttl(int sockfd, int on);
+int so_recvttl(int sockfd, int on);
 
 // If enabled, the IP_TOS ancillary message is passed with
 // incoming packets.  It contains a byte which specifies the
 // Type of Service/Precedence field of the packet header.
 // Expects a boolean integer flag.
-int setsockopt_recvtos(int sockfd, int on);
+int so_recvtos(int sockfd, int on);
 
-#define TODO_BELOW
+int so_pktinfo(int sockfd, int on);
 
-static inline int tcp_nodelay(int sockfd, int on) {
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (const char*)&on,
-                      sizeof(int));
-}
+int so_recvopts(int sockfd, int on);
+int so_options(int sockfd, void* opt, int optlen);
+int so_bindtodev(int sock, char* if_name);
 
-static inline int tcp_nopush(int sockfd, int on) {
-#ifdef TCP_NOPUSH
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_NOPUSH, (const char*)&on,
-                      sizeof(int));
-#elif defined(TCP_CORK)
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_CORK, (const char*)&on,
-                      sizeof(int));
-#else
-    return 0;
-#endif
-}
+// Set the broadcast flag.  When enabled, datagram sockets
+// are allowed to send packets to a broadcast address.
+// This option has no effect on stream-oriented sockets.
+int udp_broadcast(int sockfd, int on);
 
-/* IPPROTO_TCP */
-static inline int tcp_keepalive(int sockfd, int on, int delay) {
-    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&on, sizeof(int)) != 0) {
-        return errno;
-    }
+int tcp_nodelay(int sockfd, int on);
 
-#ifdef TCP_KEEPALIVE
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPALIVE, (const char*)&delay, sizeof(int));
-#elif defined(TCP_KEEPIDLE)
-    // TCP_KEEPIDLE     => tcp_keepalive_time
-    // TCP_KEEPCNT      => tcp_keepalive_probes
-    // TCP_KEEPINTVL    => tcp_keepalive_intvl
-    return setsockopt(sockfd, IPPROTO_TCP, TCP_KEEPIDLE, (const char*)&delay,
-                      sizeof(int));
-#else
-    return 0;
-#endif
-}
+int tcp_nopush(int sockfd, int on);
 
-static inline int udp_broadcast(int sockfd, int on) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (const char*)&on,
-                      sizeof(int));
-}
-
-// send timeout
-static inline int so_sndtimeo(int sockfd, int timeout) {
-#ifdef OS_WIN
-    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(int));
-#else
-    struct timeval tv = {timeout / 1000, (timeout % 1000) * 1000};
-    return setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
-#endif
-}
-
-// recv timeout
-static inline int so_rcvtimeo(int sockfd, int timeout) {
-#ifdef OS_WIN
-    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(int));
-#else
-    struct timeval tv = {timeout / 1000, (timeout % 1000) * 1000};
-    return setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-#endif
-}
-
-// send buffer size
-static inline int so_sndbuf(int sockfd, int len) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (const char*)&len, sizeof(int));
-}
-
-// recv buffer size
-static inline int so_rcvbuf(int sockfd, int len) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (const char*)&len, sizeof(int));
-}
-
-static inline int so_reuseaddr(int sockfd, int on) {
-#ifdef SO_REUSEADDR
-    // NOTE: SO_REUSEADDR allow to reuse sockaddr of TIME_WAIT status
-    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on,
-                      sizeof(int));
-#else
-    return 0;
-#endif
-}
-
-static inline int so_reuseport(int sockfd, int on) {
-#ifdef SO_REUSEPORT
-    // NOTE: SO_REUSEPORT allow multiple sockets to bind same port
-    return setsockopt(sockfd, SOL_SOCKET, SO_REUSEPORT, (const char*)&on,
-                      sizeof(int));
-#else
-    return 0;
-#endif
-}
-
-static inline int so_linger(int sockfd, int timeout) {
-#ifdef SO_LINGER
-    struct linger linger;
-    if (timeout >= 0) {
-        linger.l_onoff = 1;
-        linger.l_linger = timeout;
-    } else {
-        linger.l_onoff = 0;
-        linger.l_linger = 0;
-    }
-    // NOTE: SO_LINGER change the default behavior of close, send RST, avoid
-    // TIME_WAIT
-    return setsockopt(sockfd, SOL_SOCKET, SO_LINGER, (const char*)&linger,
-                      sizeof(linger));
-#else
-    return 0;
-#endif
-}
-
-static inline int so_setfilter(int sockfd, struct sock_fprog fprog) {
-    return setsockopt(sockfd, SOL_SOCKET, SO_ATTACH_FILTER, &fprog, sizeof(fprog));
-}
+// Enable sending of keep-alive messages on connection- oriented sockets.
+// Expects an integer boolean flag.
+int tcp_keepalive(int sockfd, int on, int delay);
 
 // send
 // if = auto choose
 // ttl = 1
 // loop = true
-int setsockopt_ipv4_multicast(int sock, int optname, struct in_addr if_addr, unsigned int mcast_addr, ifindex_t ifindex);
-int so_bindtodev(int sock, char* if_name);
+int so_ipv4_multicast(int sock, int optname, struct in_addr if_addr, unsigned int mcast_addr, ifindex_t ifindex);
 #endif
