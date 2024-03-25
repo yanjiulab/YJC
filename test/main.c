@@ -58,7 +58,8 @@ int main(void) {
         // cmocka_unit_test(test_csv),
         // cmocka_unit_test(test_color),
         // cmocka_unit_test(test_socket),
-        cmocka_unit_test(test_sockopt),
+        // cmocka_unit_test(test_sockopt),
+        cmocka_unit_test(test_linenoise),
     };
 
     /* Run the tests */

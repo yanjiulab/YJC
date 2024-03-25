@@ -98,5 +98,6 @@ void test_json();
 void test_ncurses();
 void test_socket();
 void test_sockopt();
+void test_linenoise();
 
 #endif // !TEST_H

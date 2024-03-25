@@ -23,16 +23,16 @@ void test_sockopt_send() {
 
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    printf("tos: %d\n", get_so_sendtos(sockfd));
-    printf("ttl: %d\n", get_so_sendttl(sockfd));
+    printf("tos: %d\n", go_sendtos(sockfd));
+    printf("ttl: %d\n", go_sendttl(sockfd));
 
     so_sendtos(sockfd, 33);
     so_sendttl(sockfd, 28);
     uint8_t ip_options[] = {0, 0, 0, 0}; // 示例数据
     so_options(sockfd, ip_options, sizeof(ip_options));
 
-    printf("tos: %d\n", get_so_sendtos(sockfd));
-    printf("ttl: %d\n", get_so_sendttl(sockfd));
+    printf("tos: %d\n", go_sendtos(sockfd));
+    printf("ttl: %d\n", go_sendttl(sockfd));
 
     struct sockaddr_in dest_addr;
     memset(&dest_addr, 0, sizeof(dest_addr));

@@ -106,7 +106,7 @@ test-build: $(OBJS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) $(TESTS) $(OBJS) -o $(TEST_OUTPUT) $(LDFLAGS) $(TEST_LIBS)
 
 test: test-build
-	./$(TEST_OUTPUT)
+	$(TEST_OUTPUT)
 	@echo Tests completed.
 
 ###############################################################################

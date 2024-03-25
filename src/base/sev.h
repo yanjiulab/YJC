@@ -9,7 +9,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-
 #define NHANDLERS          16
 #define TIMER_SECOND_MICRO 1000000L
 
