@@ -180,7 +180,7 @@ eidle_t* eidle_add(eloop_t* loop, eidle_cb cb, uint32_t repeat DEFAULT(INFINITE)
 void eidle_del(eidle_t* idle);
 
 // timer
-etimer_t* etimer_add(eloop_t* loop, etimer_cb cb, uint32_t etimeout_ms, uint32_t repeat DEFAULT(INFINITE));
+etimer_t* etimer_add(eloop_t* loop, etimer_cb cb, uint32_t timeout_ms, uint32_t repeat DEFAULT(INFINITE));
 /*
  * minute   hour    day     week    month       cb
  * 0~59     0~23    1~31    0~6     1~12

@@ -20,6 +20,7 @@
 #include "thread.h"
 #include "socket.h"
 #include "sockopt.h"
+#include "linenoise.h"
 
 // #include <net/if.h>
 
@@ -36,11 +37,11 @@ sniffer_t* sniff = NULL;
 thread_t cmdf_tid;
 
 static void sig_int() {
-    cmdf__default_do_exit(NULL);
-#ifdef CMDF_READLINE_SUPPORT
-    rl_cleanup_after_signal();
-    rl_free_line_state();
-#endif
+//     cmdf__default_do_exit(NULL);
+// #ifdef CMDF_READLINE_SUPPORT
+//     rl_cleanup_after_signal();
+//     rl_free_line_state();
+// #endif
     evloop_stop(loop);
 }
 
@@ -91,18 +92,25 @@ THREAD_ROUTINE(frontend_cmdf) {
     log_info("thread %lu exit", thread_id());
 }
 
-static EV_RETURN on_period_hello(evtimer_t* timer) {
+static void on_period_hello(evtimer_t* timer) {
     // Do task
     log_info("Hello World %d", timer->id);
 
-    // Re-register timer
-    uint32_t to = (int)timer->data;
-    evtimer_add(evloop(timer), on_period_hello, timer->data, to);
-
-    return EV_OK;
+    // // Re-register timer
+    // uint32_t to = (int)timer->data;
+    // evtimer_add(event_loop(timer), on_period_hello, timer->data, to);
 }
 
-static EV_RETURN on_accept(evio_t* io) {
+static void on_hello(evtimern_t* timer) {
+    // Do task
+    log_info("Hello World %d", timer->event_id);
+
+    // // Re-register timer
+    // uint32_t to = (int)timer->data;
+    // evtimer_add(event_loop(timer), on_period_hello, timer->data, to);
+}
+
+static void on_accept(evio_t* io) {
     struct sockaddr_in cliaddr;
     socklen_t clilen = sizeof(cliaddr);
     int conn;
@@ -111,11 +119,9 @@ static EV_RETURN on_accept(evio_t* io) {
              ntohs(((struct sockaddr_in*)&cliaddr)->sin_port));
 
     cmdf_tid = thread_create(backend_cmdf, conn);
-
-    return EV_OK;
 }
 
-static EV_RETURN on_udp(evio_t* io) {
+static void on_udp(evio_t* io) {
     char recvline[1024] = {0};
     struct sockaddr_in cliaddr;
     socklen_t addrlen = sizeof(cliaddr);
@@ -126,11 +132,9 @@ static EV_RETURN on_udp(evio_t* io) {
            ntohs(((struct sockaddr_in*)&cliaddr)->sin_port), n);
     print_data(recvline, n);
     // int s = sendto(io->fd, recvline, n, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
-
-    return EV_OK;
 }
 
-static EV_RETURN on_sniffer(evio_t* io) {
+static void on_sniffer(evio_t* io) {
     char* error = NULL;
     char* dump = NULL;
     enum packet_parse_result_t result;
@@ -239,7 +243,11 @@ int main(int argc, char* argv[]) {
 
     /* Add timer event */
     log_info("Add a timer event");
-    evtimer_add(loop, on_period_hello, 5000, 5000);
+    // evtimer_add(loop, on_period_hello, 5000, 5000);
+
+    /* Add timern event */
+    log_info("Add a timern event");
+    evtimern_add(loop, on_hello, 1000, 3);
 
     // UDP server
     int udp_fd = udp_server(ANYADDR, "520", NULL);
@@ -261,7 +269,7 @@ int main(int argc, char* argv[]) {
     //     log_warn("SEND %s message error (%s)", scrp_kind(type, subtype), strerror(errno));
     //     return -1;
 
-    evio_add(loop, udp_fd, on_udp);
+    // evio_add(loop, udp_fd, on_udp);
 
     // Sniffer
     sniff = sniffer_new(NULL);
@@ -272,14 +280,14 @@ int main(int argc, char* argv[]) {
     // evio_add(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */
-    if (isdaemon) {
-        log_info("Start cmd framework backend mode");
-        int tcp_fd = tcp_listen(ANYADDR, CMDF_BE_PORT, NULL);
-        evio_add(loop, tcp_fd, on_accept);
-    } else {
-        log_info("Start cmd framework frontend mode");
-        cmdf_tid = thread_create(frontend_cmdf, cmd);
-    }
+    // if (isdaemon) {
+    //     log_info("Start cmd framework backend mode");
+    //     int tcp_fd = tcp_listen(ANYADDR, CMDF_BE_PORT, NULL);
+    //     evio_add(loop, tcp_fd, on_accept);
+    // } else {
+    //     log_info("Start cmd framework frontend mode");
+    //     cmdf_tid = thread_create(frontend_cmdf, cmd);
+    // }
 
     /* Run event loop */
     log_info("Run event loop");

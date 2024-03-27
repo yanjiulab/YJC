@@ -92,11 +92,11 @@ int main(int argc, char* argv[]) {
     // }
 
     // test timer timeout
-    // printf("now: %llu\n", LLU(eloop_now(loop)));
-    // for (int i = 1; i <= 3; ++i) {
-    //     etimer_t* timer = etimer_add(loop, on_timer, i * 1000, 2);
-    //     event_set_userdata(timer, (void*)(intptr_t)i);
-    // }
+    printf("now: %llu\n", LLU(eloop_now(loop)));
+    for (int i = 1; i <= 3; ++i) {
+        etimer_t* timer = etimer_add(loop, on_timer, i * 1000, 2);
+        event_set_userdata(timer, (void*)(intptr_t)i);
+    }
 
     // test nonblock stdin
     printf("input 'quit' to quit loop\n");

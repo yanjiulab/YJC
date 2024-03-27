@@ -32,11 +32,9 @@ static CMDF_RETURN do_noisy(cmdf_arglist* arglist) {
     return CMDF_OK;
 }
 
-static EV_RETURN period_hello(evtimer_t* timer, void* arg) {
+static void period_hello(evtimer_t* timer, void* arg) {
     log_info("Hello %s", (char*)arg);
-    evtimer_add(evloop(timer), period_hello, "World", 1000);
-
-    return EV_OK;
+    evtimer_add(event_loop(timer), period_hello, "World", 1000);
 }
 
 void test_sev() {
