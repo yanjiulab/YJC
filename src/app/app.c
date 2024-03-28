@@ -37,11 +37,11 @@ sniffer_t* sniff = NULL;
 thread_t cmdf_tid;
 
 static void sig_int() {
-//     cmdf__default_do_exit(NULL);
-// #ifdef CMDF_READLINE_SUPPORT
-//     rl_cleanup_after_signal();
-//     rl_free_line_state();
-// #endif
+    //     cmdf__default_do_exit(NULL);
+    // #ifdef CMDF_READLINE_SUPPORT
+    //     rl_cleanup_after_signal();
+    //     rl_free_line_state();
+    // #endif
     evloop_stop(loop);
 }
 
@@ -92,16 +92,12 @@ THREAD_ROUTINE(frontend_cmdf) {
     log_info("thread %lu exit", thread_id());
 }
 
-static void on_period_hello(evtimer_t* timer) {
-    // Do task
-    log_info("Hello World %d", timer->id);
-
-    // // Re-register timer
-    // uint32_t to = (int)timer->data;
-    // evtimer_add(event_loop(timer), on_period_hello, timer->data, to);
+static void on_idle(evidle_t* idle) {
+    printf("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld\n", LLU(event_id(idle)), event_priority(idle),
+           (long)(intptr_t)(event_userdata(idle)));
 }
 
-static void on_hello(evtimern_t* timer) {
+static void on_hello(evtimer_t* timer) {
     // Do task
     log_info("Hello World %d", timer->event_id);
 
@@ -241,13 +237,16 @@ int main(int argc, char* argv[]) {
     log_info("Create an event loop");
     loop = evloop_new(10);
 
+    /* Add idle event */
+    for (int i = -2; i <= 2; ++i) {
+        evidle_t* idle = evidle_add(loop, on_idle, 2); // repeate times: 1
+        event_set_priority(idle, i);
+        event_set_userdata(idle, (int)(i * i));
+    }
+
     /* Add timer event */
     log_info("Add a timer event");
-    // evtimer_add(loop, on_period_hello, 5000, 5000);
-
-    /* Add timern event */
-    log_info("Add a timern event");
-    evtimern_add(loop, on_hello, 1000, 3);
+    evtimer_add(loop, on_hello, 1000, 3);
 
     // UDP server
     int udp_fd = udp_server(ANYADDR, "520", NULL);

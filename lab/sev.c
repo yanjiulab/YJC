@@ -35,13 +35,222 @@ static int timers_compare(const struct heap_node* lhs, const struct heap_node* r
 }
 
 // evtimer
-evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint32_t repeat) {
+int evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms) {
+    struct evtimer *ptr, *node, *prev;
+
+    /* create a node */
+    node = (struct evtimer*)calloc(1, sizeof(struct evtimer));
+    if (!node) {
+        printf("Failed calloc() in timer_settimer\n");
+        return -1;
+    }
+    node->loop = loop;
+    node->func = cb;
+    node->data = data;
+    node->time = etimeout_ms;
+    node->next = 0;
+    node->id = ++id;
+
+    prev = ptr = loop->timers;
+
+    if (node->id == 0)
+        node->id = ++id;
+    /* insert node in the queue */
+    /* if the queue is empty, insert the node and return */
+    if (!loop->timers)
+        loop->timers = node;
+    else {
+        /* chase the pointer looking for the right place */
+        while (ptr) {
+            if (etimeout_ms < ptr->time) {
+                /* right place */
+                node->next = ptr;
+                if (ptr == loop->timers)
+                    loop->timers = node;
+                else
+                    prev->next = node;
+                ptr->time -= node->time;
+                return node->id;
+            } else {
+                /* keep moving */
+                etimeout_ms -= ptr->time;
+                node->time = etimeout_ms;
+                prev = ptr;
+                ptr = ptr->next;
+            }
+        }
+        prev->next = node;
+    }
+    return node->id;
+}
+
+void evtimer_del(evloop_t* loop, int timer_id) {
+    struct evtimer *ptr, *prev;
+
+    if (!timer_id)
+        return;
+
+    prev = ptr = loop->timers;
+
+    while (ptr) {
+        if (ptr->id == timer_id) {
+            /* got the right node */
+
+            /* unlink it from the queue */
+            if (ptr == loop->timers)
+                loop->timers = loop->timers->next;
+            else
+                prev->next = ptr->next;
+
+            /* increment next node if any */
+            if (ptr->next != 0)
+                (ptr->next)->time += ptr->time;
+
+            free(ptr);
+            return;
+        }
+        prev = ptr;
+        ptr = ptr->next;
+    }
+}
+
+void evtimer_clean(evloop_t* loop) {
+    struct evtimer* p;
+    while (loop->timers) {
+        p = loop->timers;
+        loop->timers = loop->timers->next;
+        free(p);
+    }
+}
+
+// Return in how many ms evtimer_callout() would like to be called.
+// Return -1 if there are no events pending.
+int evtimer_next(evloop_t* loop) {
+    if (loop->timers) {
+        if (loop->timers->time < 0) {
+            return 0;
+        }
+        return loop->timers->time;
+    }
+    return -1;
+}
+
+/* elapsed_time seconds have passed; perform all the events that should happen. */
+void evtimer_callout(evloop_t* loop, int elapsed_time) {
+    struct evtimer *ptr, *expQ;
+
+    expQ = loop->timers;
+    ptr = NULL;
+
+    while (loop->timers) {
+        if (loop->timers->time > elapsed_time) {
+            loop->timers->time -= elapsed_time;
+            if (ptr) {
+                ptr->next = NULL;
+                break;
+            }
+            return;
+        } else {
+            elapsed_time -= loop->timers->time;
+            ptr = loop->timers;
+            loop->timers = loop->timers->next;
+        }
+    }
+
+    /* handle queue of expired timers */
+    while (expQ) {
+        ptr = expQ;
+        if (ptr->func) {
+            ptr->func(ptr);
+        }
+        expQ = expQ->next;
+        free(ptr);
+    }
+}
+
+/* returns the time until the timer is scheduled */
+int evtimer_left(evloop_t* loop, int timer_id) {
+    struct evtimer* ptr;
+    int left = 0;
+
+    if (!timer_id)
+        return -1;
+
+    for (ptr = loop->timers; ptr; ptr = ptr->next) {
+        left += ptr->time;
+        if (ptr->id == timer_id)
+            return left;
+    }
+    return -1;
+}
+
+int evtimer_reset(evloop_t* loop, int timer_id, int delay) {
+    struct evtimer *ptr, *node, *prev;
+    struct evtimer* Q = loop->timers;
+    if (!timer_id)
+        return -1;
+
+    prev = ptr = Q;
+    while (ptr) {
+        if (ptr->id == timer_id) {
+            /* got the right node */
+            ptr->time = delay;
+            node = ptr;
+
+            /* unlink it from the queue */
+            if (ptr == Q)
+                Q = Q->next;
+            else
+                prev->next = ptr->next;
+            if (ptr->next != 0)
+                (ptr->next)->time += ptr->time;
+        }
+        prev = ptr;
+        ptr = ptr->next;
+    }
+
+    if (!node)
+        return -1;
+
+    // set
+    prev = ptr = Q;
+    /* insert node in the queue */
+
+    /* if the queue is empty, insert the node and return */
+    if (!Q)
+        Q = node;
+    else {
+        /* chase the pointer looking for the right place */
+        while (ptr) {
+            if (delay < ptr->time) {
+                /* right place */
+                node->next = ptr;
+                if (ptr == Q)
+                    Q = node;
+                else
+                    prev->next = node;
+                ptr->time -= node->time;
+                return node->id;
+            } else {
+                /* keep moving */
+                delay -= ptr->time;
+                node->time = delay;
+                prev = ptr;
+                ptr = ptr->next;
+            }
+        }
+        prev->next = node;
+    }
+    return node->id;
+}
+// evtimer_n
+evtimern_t* evtimern_add(evloop_t* loop, evtimern_cb cb, uint32_t timeout_ms, uint32_t repeat) {
 
     if (timeout_ms == 0)
         return NULL;
-    evtimer_t* timer;
+    evtimern_t* timer;
     EV_ALLOC_SIZEOF(timer);
-    timer->event_type = EVENT_TYPE_TIMEOUT;
+    // timer->event_type = EVENT_TYPE_TIMEOUT;
     timer->priority = EVENT_HIGHEST_PRIORITY;
     timer->repeat = repeat;
     timer->timeout = timeout_ms;
@@ -52,13 +261,13 @@ evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint3
         timer->next_timeout = timer->next_timeout / 100000 * 100000;
     }
 
-    heap_insert(&loop->timers, &timer->node);
+    heap_insert(&loop->timerns, &timer->node);
     event_add(loop, timer, cb);
     loop->ntimers++;
-    return (evtimer_t*)timer;
+    return (evtimern_t*)timer;
 }
 
-void evtimer_reset(evtimer_t* timer, uint32_t etimeout_ms) {
+void evtimern_reset(evtimern_t* timer, uint32_t etimeout_ms) {
     // if (timer->event_type != EVENT_TYPE_TIMEOUT) {
     //     return;
     // }
@@ -83,53 +292,23 @@ void evtimer_reset(evtimer_t* timer, uint32_t etimeout_ms) {
     // heap_insert(&loop->timers, &timer->node);
     // EVENT_RESET(timer);
 }
-
-static void __evtimer_del(evtimer_t* timer) {
+static void __evtimer_del(evtimern_t* timer) {
     if (timer->destroy)
         return;
     // if (timer->event_type == EVENT_TYPE_TIMEOUT) {
-    heap_remove(&timer->loop->timers, &timer->node);
+    heap_remove(&timer->loop->timerns, &timer->node);
     // } else if (timer->event_type == EVENT_TYPE_PERIOD) {
     //     heap_remove(&timer->loop->realtimers, &timer->node);
     // }
     timer->loop->ntimers--;
     timer->destroy = 1;
 }
-
-void evtimer_del(evtimer_t* timer) {
+void evtimern_del(evtimern_t* timer) {
 
     if (!timer->active)
         return;
     __evtimer_del(timer);
     event_del(timer);
-}
-
-// evidle
-evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat) {
-    evidle_t* idle;
-    EV_ALLOC_SIZEOF(idle);
-    idle->event_type = EVENT_TYPE_IDLE;
-    idle->priority = EVENT_LOWEST_PRIORITY;
-    idle->repeat = repeat;
-    list_add(&idle->node, &loop->idles);
-    event_add(loop, idle, cb);
-    loop->nidles++;
-    return idle;
-}
-
-static void __evidle_del(evidle_t* idle) {
-    if (idle->destroy)
-        return;
-    idle->destroy = 1;
-    list_del(&idle->node);
-    idle->loop->nidles--;
-}
-
-void evidle_del(evidle_t* idle) {
-    if (!idle->active)
-        return;
-    __evidle_del(idle);
-    event_del(idle);
 }
 
 // evio
@@ -153,30 +332,45 @@ int evio_add(evloop_t* loop, int fd, evio_cb cb) {
 }
 
 // evloop
-static int evloop_process_idles(evloop_t* loop) {
-    int nidles = 0;
-    struct list_node* node = loop->idles.next;
-    evidle_t* idle = NULL;
-    while (node != &loop->idles) {
-        idle = IDLE_ENTRY(node);
-        node = node->next;
-        if (idle->repeat != INFINITE) {
-            --idle->repeat;
-        }
-        if (idle->repeat == 0) {
-            // NOTE: Just mark it as destroy and remove from list.
-            // Real deletion occurs after evloop_process_pendings.
-            __evidle_del(idle);
-        }
-        EVENT_PENDING(idle);
-        ++nidles;
+evloop_t* evloop_new(int max) {
+    evloop_t* loop;
+    EV_ALLOC_SIZEOF(loop);
+
+    loop->status = EVLOOP_STATUS_STOP;
+    loop->max_ios = max;
+    loop->ios = calloc(max, sizeof(struct evio));
+    loop->nios = 0;
+    FD_ZERO(&loop->allset);
+    FD_ZERO(&loop->rfds);
+
+    // timers
+    loop->timers = NULL;
+    heap_init(&loop->timerns, timers_compare);
+    // heap_init(&loop->realtimers, timers_compare);
+
+    // idels
+
+    // NOTE: init start_time here, because etimer_add use it.
+    loop->start_ms = gettimeofday_ms();
+    loop->start_hrtime = loop->cur_hrtime = gethrtime_us();
+
+    return loop;
+}
+
+void evloop_free(evloop_t** pp) {
+    if (pp && *pp) {
+        // clear timers
+        evtimer_clean(*pp);
+        // clear ios
+        // evio_clean(*pp);
+        free(*pp);
+        *pp = NULL;
     }
-    return nidles;
 }
 
 static int __evloop_process_timers(struct heap* timers, uint64_t timeout) {
     int ntimers = 0;
-    evtimer_t* timer = NULL;
+    evtimern_t* timer = NULL;
     while (timers->root) {
         // NOTE: root of minheap has min timeout.
         timer = TIMER_ENTRY(timers->root);
@@ -188,7 +382,7 @@ static int __evloop_process_timers(struct heap* timers, uint64_t timeout) {
         }
         if (timer->repeat == 0) {
             // NOTE: Just mark it as destroy and remove from heap.
-            // Real deletion occurs after evloop_process_pendings.
+            // Real deletion occurs after eloop_process_pendings.
             __evtimer_del(timer);
         } else {
             // NOTE: calc next timeout, then re-insert heap.
@@ -214,8 +408,8 @@ static int __evloop_process_timers(struct heap* timers, uint64_t timeout) {
 
 static int evloop_process_timers(evloop_t* loop) {
     uint64_t now = evloop_now_us(loop);
-    int ntimers = __evloop_process_timers(&loop->timers, loop->cur_hrtime);
-    // ntimers += __evloop_process_timers(&loop->realtimers, now);
+    int ntimers = __evloop_process_timers(&loop->timerns, loop->cur_hrtime);
+    // ntimers += __eloop_process_timers(&loop->realtimers, now);
     return ntimers;
 }
 
@@ -250,7 +444,7 @@ static int evloop_process_pendings(evloop_t* loop) {
     return ncbs;
 }
 
-// evloop_process_ios -> evloop_process_timers -> evloop_process_idles -> evloop_process_pendings
+// eloop_process_ios -> eloop_process_timers -> eloop_process_idles -> eloop_process_pendings
 static int evloop_process_events(evloop_t* loop) {
     // ios -> timers -> idles
     int nios, ntimers, nidles;
@@ -261,12 +455,12 @@ static int evloop_process_events(evloop_t* loop) {
     if (loop->ntimers) {
         evloop_update_time(loop);
         int64_t blocktime_us = blocktime_ms * 1000;
-        if (loop->timers.root) {
-            int64_t min_timeout = TIMER_ENTRY(loop->timers.root)->next_timeout - loop->cur_hrtime;
+        if (loop->timerns.root) {
+            int64_t min_timeout = TIMER_ENTRY(loop->timerns.root)->next_timeout - loop->cur_hrtime;
             blocktime_us = MIN(blocktime_us, min_timeout);
         }
         // if (loop->realtimers.root) {
-        //     int64_t min_timeout = TIMER_ENTRY(loop->realtimers.root)->next_timeout - evloop_now_us(loop);
+        //     int64_t min_timeout = TIMER_ENTRY(loop->realtimers.root)->next_timeout - eloop_now_us(loop);
         //     blocktime_us = MIN(blocktime_us, min_timeout);
         // }
         if (blocktime_us <= 0)
@@ -276,7 +470,7 @@ static int evloop_process_events(evloop_t* loop) {
     }
 
     if (loop->nios) {
-        // nios = evloop_process_ios(loop, blocktime_ms);
+        // nios = eloop_process_ios(loop, blocktime_ms);
     } else {
         ev_msleep(blocktime_ms);
     }
@@ -293,47 +487,16 @@ process_timers:
 
     int npendings = loop->npendings;
     if (npendings == 0) {
-        if (loop->nidles) {
-            nidles = evloop_process_idles(loop);
-        }
+        // if (loop->nidles) {
+        //     nidles = eloop_process_idles(loop);
+        // }
     }
     int ncbs = evloop_process_pendings(loop);
-    // printd("blocktime=%d nios=%d/%u ntimers=%d/%u nidles=%d/%u nactives=%d npendings=%d ncbs=%d\n",
-    //        blocktime_ms, nios, loop->nios, ntimers, loop->ntimers, nidles, loop->nidles,
-    //        loop->nactives, npendings, ncbs);
+    printd("blocktime=%d nios=%d/%u ntimers=%d/%u nidles=%d/%u nactives=%d npendings=%d ncbs=%d\n",
+            blocktime_ms, nios, loop->nios, ntimers, loop->ntimers, nidles, loop->nidles,
+            loop->nactives, npendings, ncbs);
     return ncbs;
     return 0;
-}
-
-evloop_t* evloop_new(int max) {
-    evloop_t* loop;
-    EV_ALLOC_SIZEOF(loop);
-
-    loop->status = EVLOOP_STATUS_STOP;
-    // loop->pid = getpid();
-    // loop->tid = gettid();
-
-    // idels
-    list_init(&loop->idles);
-
-    // timers
-    heap_init(&loop->timers, timers_compare);
-    // heap_init(&loop->realtimers, timers_compare);
-
-    // ios
-    loop->max_ios = max;
-    loop->ios = calloc(max, sizeof(struct evio));
-    loop->nios = 0;
-    FD_ZERO(&loop->allset);
-    FD_ZERO(&loop->rfds);
-
-    // NOTE: init start_time here, because etimer_add use it.
-    loop->start_ms = gettimeofday_ms();
-    loop->start_hrtime = loop->cur_hrtime = gethrtime_us();
-
-    // loop->flags |= flags;
-    loop->flags |= EVLOOP_FLAG_AUTO_FREE;
-    return loop;
 }
 
 static void evloop_cleanup(evloop_t* loop) {
@@ -356,7 +519,7 @@ static void evloop_cleanup(evloop_t* loop) {
     // idles
     // printd("cleanup idles...\n");
     // struct list_node* node = loop->idles.next;
-    // evidle_t* idle;
+    // eidle_t* idle;
     // while (node != &loop->idles) {
     //     idle = IDLE_ENTRY(node);
     //     node = node->next;
@@ -366,10 +529,10 @@ static void evloop_cleanup(evloop_t* loop) {
 
     // timers
     printd("cleanup timers...\n");
-    evtimer_t* timer;
-    while (loop->timers.root) {
-        timer = TIMER_ENTRY(loop->timers.root);
-        heap_dequeue(&loop->timers);
+    evtimern_t* timer;
+    while (loop->timerns.root) {
+        timer = TIMER_ENTRY(loop->timerns.root);
+        heap_dequeue(&loop->timerns);
         EV_FREE(timer);
     }
     heap_init(&loop->timers, NULL);
@@ -392,18 +555,10 @@ static void evloop_cleanup(evloop_t* loop) {
 
     // custom_events
     // mutex_lock(&loop->custom_events_mutex);
-    // evloop_destroy_eventfds(loop);
+    // eloop_destroy_eventfds(loop);
     // event_queue_cleanup(&loop->custom_events);
     // mutex_unlock(&loop->custom_events_mutex);
     // mutex_destroy(&loop->custom_events_mutex);
-}
-
-void evloop_free(evloop_t** pp) {
-    if (pp && *pp) {
-        evloop_cleanup(*pp);
-        EV_FREE(*pp);
-        *pp = NULL;
-    }
 }
 
 int evloop_run(evloop_t* loop) {
@@ -425,15 +580,14 @@ int evloop_run(evloop_t* loop) {
     while (loop->status != EVLOOP_STATUS_STOP) {
         // new section
         ++loop->loop_cnt;
-        if ((loop->flags & EVLOOP_FLAG_QUIT_WHEN_NO_ACTIVE_EVENTS) && loop->nactives == 0) {
-            break;
-        }
         evloop_process_events(loop);
-        if (loop->flags & EVLOOP_FLAG_RUN_ONCE) {
-            break;
-        }
-        // end new section
+        // log_debug("%lld", time(NULL));
+        // log_debug("%lld", evloop_now(loop));
+        // log_debug("%lld", evloop_now_ms(loop));
+        // log_debug("%lld", evloop_now_us(loop));
+        // log_debug("%lld", evloop_now_hrtime(loop));
 
+        // end new section
         // memcpy(&loop->rfds, &loop->allset, sizeof(loop->rfds));
         // ms = evtimer_next(loop);
 
@@ -493,16 +647,19 @@ int evloop_run(evloop_t* loop) {
     loop->status = EVLOOP_STATUS_STOP;
     loop->end_hrtime = gethrtime_us();
 
-    if (loop->flags & EVLOOP_FLAG_AUTO_FREE) {
-        evloop_cleanup(loop);
-        EV_FREE(loop);
-    }
+    // if (loop->flags & EVLOOP_FLAG_AUTO_FREE) {
+    evloop_cleanup(loop);
+    EV_FREE(loop);
+    // }
+
+    // evloop_free(&loop);
+
     return 0;
 }
 
-int evloop_stop(evloop_t* loop) {
-    loop->status = EVLOOP_STATUS_STOP;
-    return 0;
+void evloop_stop(evloop_t* loop) {
+    if (loop)
+        loop->status = EVLOOP_STATUS_STOP;
 }
 
 uint64_t evloop_next_event_id() {

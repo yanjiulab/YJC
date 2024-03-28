@@ -8,9 +8,8 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include <time.h>
-#include "heap.h" // for heap
-#include "base.h" // for container of
-#include "list.h"
+#include "heap.h"
+#include "base.h"
 
 #define NHANDLERS          16
 #define TIMER_SECOND_MICRO 1000000L
@@ -27,23 +26,13 @@ typedef struct evbase evbase_t;
 // NOTE: The following structures are subclasses of evbase_t,
 // inheriting evbase_t data members and function members.
 typedef struct evtimer evtimer_t;
+typedef struct evtimer_n evtimern_t;
 typedef struct evio evio_t;
-typedef struct evidle evidle_t;
 
 typedef void (*evbase_cb)(evbase_t*);
 typedef void (*evtimer_cb)(evtimer_t*);
-typedef void (*evidle_cb)(evidle_t*);
+typedef void (*evtimern_cb)(evtimern_t*);
 typedef void (*evio_cb)(evio_t*);
-
-typedef enum {
-    EVENT_TYPE_NONE = 0,
-    EVENT_TYPE_IO = 0x00000001,
-    EVENT_TYPE_TIMEOUT = 0x00000010,
-    EVENT_TYPE_PERIOD = 0x00000020,
-    EVENT_TYPE_TIMER = EVENT_TYPE_TIMEOUT | EVENT_TYPE_PERIOD,
-    EVENT_TYPE_IDLE = 0x00000100,
-    EVENT_TYPE_CUSTOM = 0x00000400, // 1024
-} event_type_t;
 
 typedef enum {
     EVLOOP_STATUS_STOP,
@@ -77,12 +66,8 @@ struct evloop {
     // pendings: with priority as array.index
     evbase_t* pendings[EVENT_PRIORITY_SIZE];
     // idles
-    struct list_head idles;
+    // struct list_head idles;
     uint32_t nidles;
-    // timers
-    struct heap timers; // monotonic time
-    // struct heap realtimers; // realtime
-    uint32_t ntimers;
 
     // ios
     int max_ios;      // max io number
@@ -91,6 +76,14 @@ struct evloop {
     fd_set rfds;      // select read fds
     fd_set allset;    // select all fds
     int nfds;         // the max number of fd
+
+    // timers
+    struct evtimer* timers;
+
+    // timers
+    struct heap timerns; // monotonic time
+    // struct heap realtimers; // realtime
+    uint32_t ntimers;
 };
 
 #define EVENT_FLAGS       \
@@ -100,7 +93,6 @@ struct evloop {
 
 #define EVENT_FIELDS             \
     evloop_t* loop;              \
-    event_type_t event_type;     \
     uint64_t event_id;           \
     evbase_cb cb;                \
     void* userdata;              \
@@ -119,14 +111,17 @@ struct evio {
     evio_cb func; /* Function to call with &fd_set */
 };
 
-struct evidle {
+struct evtimer {
     EVENT_FIELDS
-    uint32_t repeat;
-    // private:
-    struct list_node node;
+    struct evtimer* next; /* next timer event */
+    int id;
+    evtimer_cb func; /* function to call */
+    void* data;      /* func's data */
+    int time;        /* time offset to next timer event*/
+    int repeat;
 };
 
-struct evtimer {
+struct evtimer_n {
     EVENT_FIELDS
     uint32_t repeat;
     uint64_t next_timeout;
@@ -144,7 +139,8 @@ struct evtimer {
 evloop_t* evloop_new(int max);
 void evloop_free(evloop_t** pp);
 int evloop_run(evloop_t* loop);
-int evloop_stop(evloop_t* loop);
+void evloop_stop(evloop_t* loop);
+
 void evloop_update_time(evloop_t* loop);
 uint64_t evloop_now(evloop_t* loop);        // s
 uint64_t evloop_now_ms(evloop_t* loop);     // ms
@@ -165,9 +161,7 @@ uint64_t evloop_now_hrtime(evloop_t* loop); // us
 #define event_userdata(ev)            (((evbase_t*)(ev))->userdata)
 uint64_t evloop_next_event_id();
 
-#define TIMER_ENTRY(p) container_of(p, evtimer_t, node)
-#define EVENT_ENTRY(p) container_of(p, evbase_t, pending_node)
-#define IDLE_ENTRY(p)  container_of(p, evidle_t, node)
+#define TIMER_ENTRY(p) container_of(p, evtimern_t, node)
 
 #define event_active(ev)      \
     if (!ev->active) {        \
@@ -209,14 +203,24 @@ uint64_t evloop_next_event_id();
     } while (0)
 
 // evtimer
-evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint32_t repeat);
-void evtimer_del(evtimer_t* timer);
-void evtimer_reset(evtimer_t* timer, uint32_t etimeout_ms);
+int evtimer_add(evloop_t* loop, evtimer_cb cb, void* data, uint32_t etimeout_ms);
+void evtimer_del(evloop_t* loop, int timer_id);
+void evtimer_clean(evloop_t* loop);
+// Return in how many ms evtimer_callout() would like to be called.
+// Return -1 if there are no events pending.
+int evtimer_next(evloop_t* loop);
+/* elapsed_time seconds have passed; perform all the events that should happen. */
+void evtimer_callout(evloop_t* loop, int elapsed_time);
+/* returns the time until the timer is scheduled */
+int evtimer_left(evloop_t* loop, int timer_id);
+int evtimer_reset(evloop_t* loop, int timer_id, int delay);
+
+// evtimer_n
+evtimern_t* evtimern_add(evloop_t* loop, evtimern_cb cb, uint32_t timeout_ms, uint32_t repeat);
+void evtimern_del(evtimern_t* timer);
+void evtimern_reset(evtimern_t* timer, uint32_t etimeout_ms);
 
 // evio
 int evio_add(evloop_t* loop, int fd, evio_cb cb);
-
-// evidle
-evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat);
 
 #endif
