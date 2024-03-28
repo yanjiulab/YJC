@@ -97,13 +97,19 @@ static void on_idle(evidle_t* idle) {
            (long)(intptr_t)(event_userdata(idle)));
 }
 
-static void on_hello(evtimer_t* timer) {
-    // Do task
-    log_info("Hello World %d", timer->event_id);
+static void on_timer(evtimer_t* timer) {
+    evloop_t* loop = event_loop(timer);
+    printf("on_timer: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
+           event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
+           LLU(evloop_now_hrtime(loop)));
+    printf("Hello World %d\n", event_userdata(timer));
+}
 
-    // // Re-register timer
-    // uint32_t to = (int)timer->data;
-    // evtimer_add(event_loop(timer), on_period_hello, timer->data, to);
+static void on_period(evtimer_t* timer) {
+    evloop_t* loop = event_loop(timer);
+    printf("on_period: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
+           event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
+           LLU(evloop_now_hrtime(loop)));
 }
 
 static void on_accept(evio_t* io) {
@@ -245,8 +251,14 @@ int main(int argc, char* argv[]) {
     }
 
     /* Add timer event */
-    log_info("Add a timer event");
-    evtimer_add(loop, on_hello, 1000, 3);
+    evtimer_t* timer;
+    // Add timer timeout
+    for (int i = 1; i <= 3; ++i) {
+        timer = evtimer_add(loop, on_timer, 1000, 3);
+        event_set_userdata(timer, (void*)(intptr_t)i);
+    }
+    // Add timer period (every minute)
+    timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 3);
 
     // UDP server
     int udp_fd = udp_server(ANYADDR, "520", NULL);

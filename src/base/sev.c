@@ -30,81 +30,8 @@ static struct timeval timeval_subtract(struct timeval a, struct timeval b) {
     return timeval_adjust(ret);
 }
 
-static int timers_compare(const struct heap_node* lhs, const struct heap_node* rhs) {
-    return TIMER_ENTRY(lhs)->next_timeout < TIMER_ENTRY(rhs)->next_timeout;
-}
-
-// evtimer
-evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint32_t repeat) {
-
-    if (timeout_ms == 0)
-        return NULL;
-    evtimer_t* timer;
-    EV_ALLOC_SIZEOF(timer);
-    timer->event_type = EVENT_TYPE_TIMEOUT;
-    timer->priority = EVENT_HIGHEST_PRIORITY;
-    timer->repeat = repeat;
-    timer->timeout = timeout_ms;
-    evloop_update_time(loop);
-    timer->next_timeout = loop->cur_hrtime + (uint64_t)timeout_ms * 1000;
-    // NOTE: Limit granularity to 100ms
-    if (timeout_ms >= 1000 && timeout_ms % 100 == 0) {
-        timer->next_timeout = timer->next_timeout / 100000 * 100000;
-    }
-
-    heap_insert(&loop->timers, &timer->node);
-    event_add(loop, timer, cb);
-    loop->ntimers++;
-    return (evtimer_t*)timer;
-}
-
-void evtimer_reset(evtimer_t* timer, uint32_t etimeout_ms) {
-    // if (timer->event_type != EVENT_TYPE_TIMEOUT) {
-    //     return;
-    // }
-    // evloop_t* loop = timer->loop;
-    // etimeout_t* timeout = (etimeout_t*)timer;
-    // if (timer->destroy) {
-    //     loop->ntimers++;
-    // } else {
-    //     heap_remove(&loop->timers, &timer->node);
-    // }
-    // if (timer->repeat == 0) {
-    //     timer->repeat = 1;
-    // }
-    // if (timeout_ms > 0) {
-    //     timeout->timeout = timeout_ms;
-    // }
-    // timer->next_timeout = loop->cur_hrtime + (uint64_t)timeout->timeout * 1000;
-    // // NOTE: Limit granularity to 100ms
-    // if (timeout->timeout >= 1000 && timeout->timeout % 100 == 0) {
-    //     timer->next_timeout = timer->next_timeout / 100000 * 100000;
-    // }
-    // heap_insert(&loop->timers, &timer->node);
-    // EVENT_RESET(timer);
-}
-
-static void __evtimer_del(evtimer_t* timer) {
-    if (timer->destroy)
-        return;
-    // if (timer->event_type == EVENT_TYPE_TIMEOUT) {
-    heap_remove(&timer->loop->timers, &timer->node);
-    // } else if (timer->event_type == EVENT_TYPE_PERIOD) {
-    //     heap_remove(&timer->loop->realtimers, &timer->node);
-    // }
-    timer->loop->ntimers--;
-    timer->destroy = 1;
-}
-
-void evtimer_del(evtimer_t* timer) {
-
-    if (!timer->active)
-        return;
-    __evtimer_del(timer);
-    event_del(timer);
-}
-
 // evidle
+#define EVIDLE
 evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat) {
     evidle_t* idle;
     EV_ALLOC_SIZEOF(idle);
@@ -132,7 +59,105 @@ void evidle_del(evidle_t* idle) {
     event_del(idle);
 }
 
+// evtimer
+#define EVTIMER
+static int timers_compare(const struct heap_node* lhs, const struct heap_node* rhs) {
+    return TIMER_ENTRY(lhs)->next_timeout < TIMER_ENTRY(rhs)->next_timeout;
+}
+
+evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint32_t repeat) {
+
+    if (timeout_ms == 0)
+        return NULL;
+    evtimeout_t* timer;
+    EV_ALLOC_SIZEOF(timer);
+    timer->event_type = EVENT_TYPE_TIMEOUT;
+    timer->priority = EVENT_HIGHEST_PRIORITY;
+    timer->repeat = repeat;
+    timer->timeout = timeout_ms;
+    evloop_update_time(loop);
+    timer->next_timeout = loop->cur_hrtime + (uint64_t)timeout_ms * 1000;
+    // NOTE: Limit granularity to 100ms
+    if (timeout_ms >= 1000 && timeout_ms % 100 == 0) {
+        timer->next_timeout = timer->next_timeout / 100000 * 100000;
+    }
+
+    heap_insert(&loop->timers, &timer->node);
+    event_add(loop, timer, cb);
+    loop->ntimers++;
+    return (evtimer_t*)timer;
+}
+
+evtimer_t* evtimer_add_period(evloop_t* loop, evtimer_cb cb, int8_t minute, int8_t hour, int8_t day, int8_t week,
+                             int8_t month, uint32_t repeat) {
+    if (minute > 59 || hour > 23 || day > 31 || week > 6 || month > 12) {
+        return NULL;
+    }
+    evperiod_t* timer;
+    EV_ALLOC_SIZEOF(timer);
+    timer->event_type = EVENT_TYPE_PERIOD;
+    timer->priority = EVENT_HIGH_PRIORITY;
+    timer->repeat = repeat;
+    timer->minute = minute;
+    timer->hour = hour;
+    timer->day = day;
+    timer->month = month;
+    timer->week = week;
+    timer->next_timeout = (uint64_t)cron_next_timeout(minute, hour, day, week, month) * 1000000;
+    heap_insert(&loop->realtimers, &timer->node);
+    event_add(loop, timer, cb);
+    loop->ntimers++;
+    return (evtimer_t*)timer;
+}
+
+void evtimer_reset(evtimer_t* timer, uint32_t timeout_ms) {
+    if (timer->event_type != EVENT_TYPE_TIMEOUT) {
+        return;
+    }
+    evloop_t* loop = timer->loop;
+    evtimeout_t* timeout = (evtimeout_t*)timer;
+    if (timer->destroy) {
+        loop->ntimers++;
+    } else {
+        heap_remove(&loop->timers, &timer->node);
+    }
+    if (timer->repeat == 0) {
+        timer->repeat = 1;
+    }
+    if (timeout_ms > 0) {
+        timeout->timeout = timeout_ms;
+    }
+    timer->next_timeout = loop->cur_hrtime + (uint64_t)timeout->timeout * 1000;
+    // NOTE: Limit granularity to 100ms
+    if (timeout->timeout >= 1000 && timeout->timeout % 100 == 0) {
+        timer->next_timeout = timer->next_timeout / 100000 * 100000;
+    }
+    heap_insert(&loop->timers, &timer->node);
+    event_reset(timer);
+}
+
+static void __evtimer_del(evtimer_t* timer) {
+    if (timer->destroy)
+        return;
+    // if (timer->event_type == EVENT_TYPE_TIMEOUT) {
+    heap_remove(&timer->loop->timers, &timer->node);
+    // } else if (timer->event_type == EVENT_TYPE_PERIOD) {
+    //     heap_remove(&timer->loop->realtimers, &timer->node);
+    // }
+    timer->loop->ntimers--;
+    timer->destroy = 1;
+}
+
+void evtimer_del(evtimer_t* timer) {
+
+    if (!timer->active)
+        return;
+    __evtimer_del(timer);
+    event_del(timer);
+}
+
 // evio
+#define EVIO
 int evio_add(evloop_t* loop, int fd, evio_cb cb) {
     if (loop->nios >= loop->max_ios) {
         return -1;
@@ -153,6 +178,7 @@ int evio_add(evloop_t* loop, int fd, evio_cb cb) {
 }
 
 // evloop
+#define EVLOOP
 static int evloop_process_idles(evloop_t* loop) {
     int nidles = 0;
     struct list_node* node = loop->idles.next;
@@ -168,7 +194,7 @@ static int evloop_process_idles(evloop_t* loop) {
             // Real deletion occurs after evloop_process_pendings.
             __evidle_del(idle);
         }
-        EVENT_PENDING(idle);
+        event_pending(idle);
         ++nidles;
     }
     return nidles;
@@ -193,20 +219,19 @@ static int __evloop_process_timers(struct heap* timers, uint64_t timeout) {
         } else {
             // NOTE: calc next timeout, then re-insert heap.
             heap_dequeue(timers);
-            // if (timer->event_type == EVENT_TYPE_TIMEOUT) {
-            while (timer->next_timeout <= timeout) {
-                // timer->next_timeout += (uint64_t)((etimeout_t*)timer)->timeout * 1000;
-                timer->next_timeout += timer->timeout * 1000;
+            if (timer->event_type == EVENT_TYPE_TIMEOUT) {
+                while (timer->next_timeout <= timeout) {
+                    timer->next_timeout += (uint64_t)((evtimeout_t*)timer)->timeout * 1000;
+                }
+            } else if (timer->event_type == EVENT_TYPE_PERIOD) {
+                evperiod_t* period = (evperiod_t*)timer;
+                timer->next_timeout = (uint64_t)cron_next_timeout(period->minute, period->hour, period->day,
+                                                                  period->week, period->month) *
+                                      1000000;
             }
-            // } else if (timer->event_type == EVENT_TYPE_PERIOD) {
-            //     eperiod_t* period = (eperiod_t*)timer;
-            //     timer->next_timeout = (uint64_t)cron_next_timeout(period->minute, period->hour, period->day,
-            //                                                       period->week, period->month) *
-            //                           1000000;
-            // }
             heap_insert(timers, &timer->node);
         }
-        EVENT_PENDING(timer);
+        event_pending(timer);
         ++ntimers;
     }
     return ntimers;
@@ -215,7 +240,7 @@ static int __evloop_process_timers(struct heap* timers, uint64_t timeout) {
 static int evloop_process_timers(evloop_t* loop) {
     uint64_t now = evloop_now_us(loop);
     int ntimers = __evloop_process_timers(&loop->timers, loop->cur_hrtime);
-    // ntimers += __evloop_process_timers(&loop->realtimers, now);
+    ntimers += __evloop_process_timers(&loop->realtimers, now);
     return ntimers;
 }
 
@@ -265,10 +290,10 @@ static int evloop_process_events(evloop_t* loop) {
             int64_t min_timeout = TIMER_ENTRY(loop->timers.root)->next_timeout - loop->cur_hrtime;
             blocktime_us = MIN(blocktime_us, min_timeout);
         }
-        // if (loop->realtimers.root) {
-        //     int64_t min_timeout = TIMER_ENTRY(loop->realtimers.root)->next_timeout - evloop_now_us(loop);
-        //     blocktime_us = MIN(blocktime_us, min_timeout);
-        // }
+        if (loop->realtimers.root) {
+            int64_t min_timeout = TIMER_ENTRY(loop->realtimers.root)->next_timeout - evloop_now_us(loop);
+            blocktime_us = MIN(blocktime_us, min_timeout);
+        }
         if (blocktime_us <= 0)
             goto process_timers;
         blocktime_ms = blocktime_us / 1000 + 1;
@@ -318,7 +343,7 @@ evloop_t* evloop_new(int max) {
 
     // timers
     heap_init(&loop->timers, timers_compare);
-    // heap_init(&loop->realtimers, timers_compare);
+    heap_init(&loop->realtimers, timers_compare);
 
     // ios
     loop->max_ios = max;
@@ -327,7 +352,7 @@ evloop_t* evloop_new(int max) {
     FD_ZERO(&loop->allset);
     FD_ZERO(&loop->rfds);
 
-    // NOTE: init start_time here, because etimer_add use it.
+    // NOTE: init start_time here, because evtimer_add use it.
     loop->start_ms = gettimeofday_ms();
     loop->start_hrtime = loop->cur_hrtime = gethrtime_us();
 

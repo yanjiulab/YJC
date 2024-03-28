@@ -26,9 +26,11 @@ typedef struct evloop evloop_t;
 typedef struct evbase evbase_t;
 // NOTE: The following structures are subclasses of evbase_t,
 // inheriting evbase_t data members and function members.
-typedef struct evtimer evtimer_t;
-typedef struct evio evio_t;
 typedef struct evidle evidle_t;
+typedef struct evtimer evtimer_t;
+typedef struct evtimeout evtimeout_t;
+typedef struct evperiod evperiod_t;
+typedef struct evio evio_t;
 
 typedef void (*evbase_cb)(evbase_t*);
 typedef void (*evtimer_cb)(evtimer_t*);
@@ -80,8 +82,8 @@ struct evloop {
     struct list_head idles;
     uint32_t nidles;
     // timers
-    struct heap timers; // monotonic time
-    // struct heap realtimers; // realtime
+    struct heap timers;     // monotonic time
+    struct heap realtimers; // realtime
     uint32_t ntimers;
 
     // ios
@@ -113,12 +115,6 @@ struct evbase {
     EVENT_FIELDS
 };
 
-struct evio {
-    EVENT_FIELDS
-    int fd;       /* File descriptor				 */
-    evio_cb func; /* Function to call with &fd_set */
-};
-
 struct evidle {
     EVENT_FIELDS
     uint32_t repeat;
@@ -126,15 +122,34 @@ struct evidle {
     struct list_node node;
 };
 
-struct evtimer {
-    EVENT_FIELDS
-    uint32_t repeat;
-    uint64_t next_timeout;
+#define TIMER_FIELDS       \
+    EVENT_FIELDS           \
+    uint32_t repeat;       \
+    uint64_t next_timeout; \
     struct heap_node node;
-    // for timeout
+
+struct evtimer {
+    TIMER_FIELDS
+};
+
+struct evtimeout {
+    TIMER_FIELDS
     uint32_t timeout;
-    // for period
-    // ...
+};
+
+struct evperiod {
+    TIMER_FIELDS
+    int8_t minute;
+    int8_t hour;
+    int8_t day;
+    int8_t week;
+    int8_t month;
+};
+
+struct evio {
+    EVENT_FIELDS
+    int fd;       /* File descriptor				 */
+    evio_cb func; /* Function to call with &fd_set */
 };
 
 // evloop
@@ -181,7 +196,7 @@ uint64_t evloop_next_event_id();
         ev->loop->nactives--; \
     }
 
-#define EVENT_PENDING(ev)                                                               \
+#define event_pending(ev)                                                               \
     do {                                                                                \
         if (!ev->pending) {                                                             \
             ev->pending = 1;                                                            \
@@ -208,15 +223,36 @@ uint64_t evloop_next_event_id();
         }                   \
     } while (0)
 
+#define event_reset(ev)   \
+    do {                  \
+        ev->destroy = 0;  \
+        event_active(ev); \
+        ev->pending = 0;  \
+    } while (0)
+
+// evidle
+evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat);
+void evidle_del(evidle_t* idle);
+
 // evtimer
 evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint32_t repeat);
+/*
+ * minute   hour    day     week    month       cb
+ * 0~59     0~23    1~31    0~6     1~12
+ *  -1      -1      -1      -1      -1          cron.minutely
+ *  30      -1      -1      -1      -1          cron.hourly
+ *  30      1       -1      -1      -1          cron.daily
+ *  30      1       15      -1      -1          cron.monthly
+ *  30      1       -1       5      -1          cron.weekly
+ *  30      1        1      -1      10          cron.yearly
+ */
+evtimer_t* evtimer_add_period(evloop_t* loop, evtimer_cb cb, int8_t minute, int8_t hour,
+                            int8_t day, int8_t week, int8_t month,
+                            uint32_t repeat);
 void evtimer_del(evtimer_t* timer);
 void evtimer_reset(evtimer_t* timer, uint32_t etimeout_ms);
 
 // evio
 int evio_add(evloop_t* loop, int fd, evio_cb cb);
-
-// evidle
-evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat);
 
 #endif
