@@ -226,13 +226,13 @@ int main(int argc, char* argv[]) {
     }
 
     /* Check if program is already running. */
-    // if (already_running(cmd)) {
-    //     // if (isdaemon)
-    //     syslog(LOG_ERR, "%s was already running!", cmd);
-    //     // else
-    //     log_error("%s was already running!", cmd);
-    //     exit(EXIT_FAILURE);
-    // }
+    if (already_running(cmd)) {
+        // if (isdaemon)
+        syslog(LOG_ERR, "%s was already running!", cmd);
+        // else
+        log_error("%s was already running!", cmd);
+        exit(EXIT_FAILURE);
+    }
 
     /* Setting signals and clean */
     if (signal(SIGINT, sig_int) == SIG_ERR) {
@@ -241,24 +241,24 @@ int main(int argc, char* argv[]) {
 
     /* Create an event loop */
     log_info("Create an event loop");
-    loop = evloop_new(10);
+    loop = evloop_new(EVLOOP_FLAG_AUTO_FREE);
 
     /* Add idle event */
-    for (int i = -2; i <= 2; ++i) {
-        evidle_t* idle = evidle_add(loop, on_idle, 2); // repeate times: 1
-        event_set_priority(idle, i);
-        event_set_userdata(idle, (int)(i * i));
-    }
+    // for (int i = -2; i <= 2; ++i) {
+    //     evidle_t* idle = evidle_add(loop, on_idle, 1); // repeate times: 1
+    //     event_set_priority(idle, i);
+    //     event_set_userdata(idle, (int)(i * i));
+    // }
 
     /* Add timer event */
-    evtimer_t* timer;
-    // Add timer timeout
-    for (int i = 1; i <= 3; ++i) {
-        timer = evtimer_add(loop, on_timer, 1000, 3);
-        event_set_userdata(timer, (void*)(intptr_t)i);
-    }
-    // Add timer period (every minute)
-    timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 3);
+    // evtimer_t* timer;
+    // // Add timer timeout
+    // for (int i = 1; i <= 3; ++i) {
+    //     timer = evtimer_add(loop, on_timer, 1000, 1);
+    //     event_set_userdata(timer, (void*)(intptr_t)i);
+    // }
+    // // Add timer period (every minute)
+    // timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
 
     // UDP server
     int udp_fd = udp_server(ANYADDR, "520", NULL);
@@ -283,11 +283,14 @@ int main(int argc, char* argv[]) {
     // evio_add(loop, udp_fd, on_udp);
 
     // Sniffer
-    sniff = sniffer_new(NULL);
+    sniff = sniffer_new("ens33");
     sniffer_set_record(sniff, SNIFFER_RECORD_PCAP, 100, NULL);
     sniffer_set_direction(sniff, DIRECTION_ALL);
     sniffer_set_filter_str(sniff, "arp");
     sniffer_start(sniff);
+
+    ev_read(loop, sniff->psock->packet_fd, on_sniffer);
+
     // evio_add(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */

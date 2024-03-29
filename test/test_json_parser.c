@@ -155,7 +155,7 @@ json_value_t *json_value_copy(const json_value_t *val) {
     }
 }
 
-void test_json() {
+void test_json_parser() {
     static char buf[BUFSIZE];
     size_t n = fread(buf, 1, BUFSIZE, stdin);
 

@@ -6,30 +6,6 @@
 
 #define EVLOOP_MAX_BLOCK_TIME 100 // ms
 
-/* Definitions */
-static int id = 0;
-
-static struct timeval timeval_adjust(struct timeval a) {
-    while (a.tv_usec >= TIMER_SECOND_MICRO) {
-        a.tv_usec -= TIMER_SECOND_MICRO;
-        a.tv_sec++;
-    }
-    while (a.tv_usec < 0) {
-        a.tv_usec += TIMER_SECOND_MICRO;
-        a.tv_sec--;
-    }
-    if (a.tv_sec < 0) /* Change negative timeouts to 0. */
-        a.tv_sec = a.tv_usec = 0;
-    return a;
-}
-
-static struct timeval timeval_subtract(struct timeval a, struct timeval b) {
-    struct timeval ret;
-    ret.tv_usec = a.tv_usec - b.tv_usec;
-    ret.tv_sec = a.tv_sec - b.tv_sec;
-    return timeval_adjust(ret);
-}
-
 // evidle
 #define EVIDLE
 evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat) {
@@ -89,7 +65,7 @@ evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint3
 }
 
 evtimer_t* evtimer_add_period(evloop_t* loop, evtimer_cb cb, int8_t minute, int8_t hour, int8_t day, int8_t week,
-                             int8_t month, uint32_t repeat) {
+                              int8_t month, uint32_t repeat) {
     if (minute > 59 || hour > 23 || day > 31 || week > 6 || month > 12) {
         return NULL;
     }
@@ -157,24 +133,354 @@ void evtimer_del(evtimer_t* timer) {
 }
 
 // evio
+// iowatcher
 #define EVIO
-int evio_add(evloop_t* loop, int fd, evio_cb cb) {
-    if (loop->nios >= loop->max_ios) {
-        return -1;
-    }
-    loop->ios[loop->nios].loop = loop;
-    loop->ios[loop->nios].fd = fd;
-    loop->ios[loop->nios].func = cb;
+typedef struct select_ctx_s {
+    int max_fd;
+    fd_set readfds;
+    fd_set writefds;
+    int nread;
+    int nwrite;
+} select_ctx_t;
 
-    FD_SET(fd, &loop->allset);
-
-    if (loop->ios[loop->nios].fd >= loop->nfds) {
-        loop->nfds = loop->ios[loop->nios].fd + 1;
-    }
-
-    loop->nios++;
-
+int iowatcher_init(evloop_t* loop) {
+    if (loop->iowatcher)
+        return 0;
+    select_ctx_t* select_ctx;
+    EV_ALLOC_SIZEOF(select_ctx);
+    select_ctx->max_fd = -1;
+    FD_ZERO(&select_ctx->readfds);
+    FD_ZERO(&select_ctx->writefds);
+    select_ctx->nread = 0;
+    select_ctx->nwrite = 0;
+    loop->iowatcher = select_ctx;
     return 0;
+}
+
+int iowatcher_cleanup(evloop_t* loop) {
+    EV_FREE(loop->iowatcher);
+    return 0;
+}
+
+int iowatcher_add_event(evloop_t* loop, int fd, int events) {
+    if (loop->iowatcher == NULL) {
+        iowatcher_init(loop);
+    }
+    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
+    if (fd > select_ctx->max_fd) {
+        select_ctx->max_fd = fd;
+    }
+    if (events & EV_READ) {
+        if (!FD_ISSET(fd, &select_ctx->readfds)) {
+            FD_SET(fd, &select_ctx->readfds);
+            select_ctx->nread++;
+        }
+    }
+    if (events & EV_WRITE) {
+        if (!FD_ISSET(fd, &select_ctx->writefds)) {
+            FD_SET(fd, &select_ctx->writefds);
+            select_ctx->nwrite++;
+        }
+    }
+    return 0;
+}
+
+int iowatcher_del_event(evloop_t* loop, int fd, int events) {
+    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
+    if (select_ctx == NULL)
+        return 0;
+    if (fd == select_ctx->max_fd) {
+        select_ctx->max_fd = -1;
+    }
+    if (events & EV_READ) {
+        if (FD_ISSET(fd, &select_ctx->readfds)) {
+            FD_CLR(fd, &select_ctx->readfds);
+            select_ctx->nread--;
+        }
+    }
+    if (events & EV_WRITE) {
+        if (FD_ISSET(fd, &select_ctx->writefds)) {
+            FD_CLR(fd, &select_ctx->writefds);
+            select_ctx->nwrite--;
+        }
+    }
+    return 0;
+}
+
+static int find_max_active_fd(evloop_t* loop) {
+    evio_t* io = NULL;
+    for (int i = loop->ios.maxsize - 1; i >= 0; --i) {
+        io = loop->ios.ptr[i];
+        if (io && io->active && io->events)
+            return i;
+    }
+    return -1;
+}
+
+static int remove_bad_fds(evloop_t* loop) {
+    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
+    if (select_ctx == NULL)
+        return 0;
+    int badfds = 0;
+    int error = 0;
+    socklen_t optlen = sizeof(error);
+    for (int fd = 0; fd <= select_ctx->max_fd; ++fd) {
+        if (FD_ISSET(fd, &select_ctx->readfds) || FD_ISSET(fd, &select_ctx->writefds)) {
+            error = 0;
+            optlen = sizeof(int);
+            if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&error, &optlen) < 0 || error != 0) {
+                ++badfds;
+                evio_t* io = loop->ios.ptr[fd];
+                if (io) {
+                    evio_del(io, EV_RDWR);
+                }
+            }
+        }
+    }
+    return badfds;
+}
+
+int iowatcher_poll_events(evloop_t* loop, int timeout) {
+    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
+    if (select_ctx == NULL)
+        return 0;
+    if (select_ctx->nread == 0 && select_ctx->nwrite == 0) {
+        return 0;
+    }
+    int max_fd = select_ctx->max_fd;
+    fd_set readfds = select_ctx->readfds;
+    fd_set writefds = select_ctx->writefds;
+    if (max_fd == -1) {
+        select_ctx->max_fd = max_fd = find_max_active_fd(loop);
+    }
+    struct timeval tv, *tp;
+    if (timeout == INFINITE) {
+        tp = NULL;
+    } else {
+        tv.tv_sec = timeout / 1000;
+        tv.tv_usec = (timeout % 1000) * 1000;
+        tp = &tv;
+    }
+    int nselect = select(max_fd + 1, &readfds, &writefds, NULL, tp);
+    if (nselect < 0) {
+        if (errno == EBADF) {
+            perror("select");
+            remove_bad_fds(loop);
+            return -EBADF;
+        }
+        return nselect;
+    }
+    if (nselect == 0)
+        return 0;
+    int nevents = 0;
+    int revents = 0;
+    for (int fd = 0; fd <= max_fd; ++fd) {
+        revents = 0;
+        if (FD_ISSET(fd, &readfds)) {
+            ++nevents;
+            revents |= EV_READ;
+        }
+        if (FD_ISSET(fd, &writefds)) {
+            ++nevents;
+            revents |= EV_WRITE;
+        }
+        if (revents) {
+            evio_t* io = loop->ios.ptr[fd];
+            if (io) {
+                io->revents = revents;
+                event_pending(io);
+            }
+        }
+        if (nevents == nselect)
+            break;
+    }
+    return nevents;
+}
+
+evio_t* evio_get(evloop_t* loop, int fd) {
+    if (fd >= loop->ios.maxsize) {
+        int newsize = ceil2e(fd);
+        io_array_resize(&loop->ios, newsize > fd ? newsize : 2 * fd);
+    }
+
+    evio_t* io = loop->ios.ptr[fd];
+    if (io == NULL) {
+        EV_ALLOC_SIZEOF(io);
+        // evio_init(io);
+        io->event_type = EVENT_TYPE_IO;
+        io->loop = loop;
+        io->fd = fd;
+        loop->ios.ptr[fd] = io;
+    }
+
+    if (!io->ready) {
+        evio_ready(io);
+    }
+
+    return io;
+}
+
+int evio_add(evio_t* io, evio_cb cb, int events) {
+    printd("evio_add fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
+
+    evloop_t* loop = io->loop;
+    if (!io->active) {
+        event_add(loop, io, cb);
+        loop->nios++;
+    }
+
+    if (!io->ready) {
+        evio_ready(io);
+    }
+
+    if (cb) {
+        io->cb = (event_cb)cb;
+    }
+
+    if (!(io->events & events)) {
+        iowatcher_add_event(loop, io->fd, events);
+        io->events |= events;
+    }
+    return 0;
+}
+
+int evio_del(evio_t* io, int events) {
+    printd("evio_del fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
+
+    if (!io->active)
+        return -1;
+
+    if (io->events & events) {
+        iowatcher_del_event(io->loop, io->fd, events);
+        io->events &= ~events;
+    }
+    if (io->events == 0) {
+        io->loop->nios--;
+        // NOTE: not EVENT_DEL, avoid free
+        event_inactive(io);
+    }
+    return 0;
+}
+
+void evio_free(evio_t* io) {
+    if (io == NULL)
+        return;
+    // evio_close(io);
+    // recursive_mutex_destroy(&io->write_mutex);
+    EV_FREE(io->localaddr);
+    EV_FREE(io->peeraddr);
+    EV_FREE(io);
+}
+
+bool evio_exists(evloop_t* loop, int fd) {
+    if (fd >= loop->ios.maxsize) {
+        return false;
+    }
+    return loop->ios.ptr[fd] != NULL;
+}
+
+void evio_ready(evio_t* io) {
+    if (io->ready)
+        return;
+    // flags
+    io->ready = 1;
+    //     io->connected = 0;
+    //     io->closed = 0;
+    //     io->accept = io->connect = io->connectex = 0;
+    //     io->recv = io->send = 0;
+    //     io->recvfrom = io->sendto = 0;
+    //     io->close = 0;
+    //     // public:
+    //     io->id = evio_next_id();
+    //     io->io_type = EIO_TYPE_UNKNOWN;
+    //     io->error = 0;
+    //     io->events = io->revents = 0;
+    //     io->last_read_hrtime = io->last_write_hrtime = io->loop->cur_hrtime;
+    //     // readbuf
+    //     io->alloced_readbuf = 0;
+    //     io->readbuf.base = io->loop->readbuf.base;
+    //     io->readbuf.len = io->loop->readbuf.len;
+    //     io->readbuf.head = io->readbuf.tail = 0;
+    //     io->read_flags = 0;
+    //     io->read_until_length = 0;
+    //     io->max_read_bufsize = MAX_READ_BUFSIZE;
+    //     io->small_readbytes_cnt = 0;
+    //     // write_queue
+    //     io->write_bufsize = 0;
+    //     io->max_write_bufsize = MAX_WRITE_BUFSIZE;
+    //     // callbacks
+    //     io->read_cb = NULL;
+    //     io->write_cb = NULL;
+    //     io->close_cb = NULL;
+    //     io->accept_cb = NULL;
+    //     io->connect_cb = NULL;
+    //     // timers
+    //     io->connect_timeout = 0;
+    //     io->connect_timer = NULL;
+    //     io->close_timeout = 0;
+    //     io->close_timer = NULL;
+    //     io->read_timeout = 0;
+    //     io->read_timer = NULL;
+    //     io->write_timeout = 0;
+    //     io->write_timer = NULL;
+    //     io->keepalive_timeout = 0;
+    //     io->keepalive_timer = NULL;
+    //     io->heartbeat_interval = 0;
+    //     io->heartbeat_fn = NULL;
+    //     io->heartbeat_timer = NULL;
+    //     // upstream
+    //     io->upstream_io = NULL;
+    //     // unpack
+    //     io->unpack_setting = NULL;
+    //     // ssl
+    //     io->ssl = NULL;
+    //     io->ssl_ctx = NULL;
+    //     io->alloced_ssl_ctx = 0;
+    //     io->hostname = NULL;
+    //     // context
+    //     io->ctx = NULL;
+    //     // private:
+    // #if defined(EVENT_POLL) || defined(EVENT_KQUEUE)
+    //     io->event_index[0] = io->event_index[1] = -1;
+    // #endif
+    // #ifdef EVENT_IOCP
+    //     io->hovlp = NULL;
+    // #endif
+
+    //     // io_type
+    //     fill_io_type(io);
+    //     if (io->io_type & EIO_TYPE_SOCKET) {
+    //         evio_socket_init(io);
+    //     }
+}
+
+// int evio_read(evio_t* io) {
+//     if (io->closed) {
+//         log_error("evio_read called but fd[%d] already closed!", io->fd);
+//         return -1;
+//     }
+//     evio_add(io, io->read_cb, EV_READ);
+//     // if (io->readbuf.tail > io->readbuf.head &&
+//     //     io->unpack_setting == NULL &&
+//     //     io->read_flags == 0) {
+//     //     evio_read_remain(io);
+//     // }
+//     return 0;
+// }
+
+//------------------high-level apis-------------------------------------------
+evio_t* ev_read(evloop_t* loop, int fd, /*void* buf, size_t len,*/ evio_cb read_cb) {
+    evio_t* io = evio_get(loop, fd);
+    assert(io != NULL);
+    // if (buf && len) {
+    //     io->readbuf.base = (char*)buf;
+    //     io->readbuf.len = len;
+    // }
+    // if (read_cb) {
+    //     io->read_cb = read_cb;
+    // }
+    evio_add(io, read_cb, EV_READ);
+    return io;
 }
 
 // evloop
@@ -244,12 +550,21 @@ static int evloop_process_timers(evloop_t* loop) {
     return ntimers;
 }
 
+static int evloop_process_ios(evloop_t* loop, int timeout) {
+    // That is to call IO multiplexing function such as select, poll, epoll, etc.
+    int nevents = iowatcher_poll_events(loop, timeout);
+    if (nevents < 0) {
+        log_debug("poll_events error=%d", -nevents);
+    }
+    return nevents < 0 ? 0 : nevents;
+}
+
 static int evloop_process_pendings(evloop_t* loop) {
     if (loop->npendings == 0)
         return 0;
 
-    evbase_t* cur = NULL;
-    evbase_t* next = NULL;
+    event_t* cur = NULL;
+    event_t* next = NULL;
     int ncbs = 0;
     // NOTE: invoke event callback from high to low sorted by priority.
     for (int i = EVENT_PRIORITY_SIZE - 1; i >= 0; --i) {
@@ -301,7 +616,7 @@ static int evloop_process_events(evloop_t* loop) {
     }
 
     if (loop->nios) {
-        // nios = evloop_process_ios(loop, blocktime_ms);
+        nios = evloop_process_ios(loop, blocktime_ms);
     } else {
         ev_msleep(blocktime_ms);
     }
@@ -330,7 +645,7 @@ process_timers:
     return 0;
 }
 
-evloop_t* evloop_new(int max) {
+evloop_t* evloop_new(int flags) {
     evloop_t* loop;
     EV_ALLOC_SIZEOF(loop);
 
@@ -346,18 +661,15 @@ evloop_t* evloop_new(int max) {
     heap_init(&loop->realtimers, timers_compare);
 
     // ios
-    loop->max_ios = max;
-    loop->ios = calloc(max, sizeof(struct evio));
-    loop->nios = 0;
-    FD_ZERO(&loop->allset);
-    FD_ZERO(&loop->rfds);
+    io_array_init(&loop->ios, IO_ARRAY_INIT_SIZE);
+    // iowatcher
+    iowatcher_init(loop);
 
     // NOTE: init start_time here, because evtimer_add use it.
     loop->start_ms = gettimeofday_ms();
     loop->start_hrtime = loop->cur_hrtime = gethrtime_us();
 
-    // loop->flags |= flags;
-    loop->flags |= EVLOOP_FLAG_AUTO_FREE;
+    loop->flags |= flags;
     return loop;
 }
 
@@ -369,25 +681,25 @@ static void evloop_cleanup(evloop_t* loop) {
     }
 
     // ios
-    // printd("cleanup ios...\n");
-    // for (int i = 0; i < loop->ios.maxsize; ++i) {
-    //     eio_t* io = loop->ios.ptr[i];
-    //     if (io) {
-    //         eio_free(io);
-    //     }
-    // }
-    // io_array_cleanup(&loop->ios);
+    printd("cleanup ios...\n");
+    for (int i = 0; i < loop->ios.maxsize; ++i) {
+        evio_t* io = loop->ios.ptr[i];
+        if (io) {
+            evio_free(io);
+        }
+    }
+    io_array_cleanup(&loop->ios);
 
     // idles
-    // printd("cleanup idles...\n");
-    // struct list_node* node = loop->idles.next;
-    // evidle_t* idle;
-    // while (node != &loop->idles) {
-    //     idle = IDLE_ENTRY(node);
-    //     node = node->next;
-    //     EV_FREE(idle);
-    // }
-    // list_init(&loop->idles);
+    printd("cleanup idles...\n");
+    struct list_node* node = loop->idles.next;
+    evidle_t* idle;
+    while (node != &loop->idles) {
+        idle = IDLE_ENTRY(node);
+        node = node->next;
+        EV_FREE(idle);
+    }
+    list_init(&loop->idles);
 
     // timers
     printd("cleanup timers...\n");
@@ -398,12 +710,12 @@ static void evloop_cleanup(evloop_t* loop) {
         EV_FREE(timer);
     }
     heap_init(&loop->timers, NULL);
-    // while (loop->realtimers.root) {
-    //     timer = TIMER_ENTRY(loop->realtimers.root);
-    //     heap_dequeue(&loop->realtimers);
-    //     EV_FREE(timer);
-    // }
-    // heap_init(&loop->realtimers, NULL);
+    while (loop->realtimers.root) {
+        timer = TIMER_ENTRY(loop->realtimers.root);
+        heap_dequeue(&loop->realtimers);
+        EV_FREE(timer);
+    }
+    heap_init(&loop->realtimers, NULL);
 
     // readbuf
     // if (loop->readbuf.base && loop->readbuf.len) {
@@ -413,7 +725,7 @@ static void evloop_cleanup(evloop_t* loop) {
     // }
 
     // iowatcher
-    // iowatcher_cleanup(loop);
+    iowatcher_cleanup(loop);
 
     // custom_events
     // mutex_lock(&loop->custom_events_mutex);
@@ -439,16 +751,8 @@ int evloop_run(evloop_t* loop) {
 
     loop->status = EVLOOP_STATUS_RUNNING;
 
-    struct timeval tv, difftime, curtime, lasttime, *timeout;
-    int n, i, ms, diffms;
-    difftime.tv_usec = 0;
-    difftime.tv_sec = 0;
-    gettimeofday(&curtime, NULL);
-    lasttime = curtime;
-
     /* Main loop */
     while (loop->status != EVLOOP_STATUS_STOP) {
-        // new section
         ++loop->loop_cnt;
         if ((loop->flags & EVLOOP_FLAG_QUIT_WHEN_NO_ACTIVE_EVENTS) && loop->nactives == 0) {
             break;
@@ -457,62 +761,6 @@ int evloop_run(evloop_t* loop) {
         if (loop->flags & EVLOOP_FLAG_RUN_ONCE) {
             break;
         }
-        // end new section
-
-        // memcpy(&loop->rfds, &loop->allset, sizeof(loop->rfds));
-        // ms = evtimer_next(loop);
-
-        // if (ms == -1)
-        //     timeout = NULL;
-        // else {
-        //     timeout = &tv;
-        //     timeout->tv_sec = ms / 1000;
-        //     timeout->tv_usec = (ms % 1000) * 1000;
-        // }
-
-        // gettimeofday(&curtime, NULL);
-
-        // if ((n = select(loop->nfds, &loop->rfds, NULL, NULL, timeout)) < 0) {
-        //     if (errno != EINTR) /* SIGALRM is expected */
-        //         printf("select failed\n");
-        //     continue;
-        // }
-
-        // do {
-        //     /*
-        //      * If the select timed out, then there's no other
-        //      * activity to account for and we don't need to
-        //      * call gettimeofday.
-        //      */
-        //     if (n == 0) {
-        //         curtime.tv_sec = lasttime.tv_sec + (ms / 1000);
-        //         curtime.tv_usec = lasttime.tv_usec + ((ms % 1000) * 1000);
-        //         n = -1; /* don't do this next time through the loop */
-        //     } else {
-        //         gettimeofday(&curtime, NULL);
-        //     }
-
-        //     difftime = timeval_subtract(curtime, lasttime);
-        //     diffms = difftime.tv_sec * 1000 + difftime.tv_usec / 1000;
-        //     lasttime = curtime;
-
-        //     if (ms == 0 || (diffms) > 0) {
-        //         evtimer_callout(loop, diffms);
-        //     }
-
-        //     ms = -1;
-        // } while (diffms > 0);
-
-        // /* Handle sockets */
-        // if (n > 0) {
-        //     for (i = 0; i < loop->nios; i++) {
-        //         if (FD_ISSET(loop->ios[i].fd, &loop->rfds)) {
-        //             // (*loop->ios[i].func)(&(loop->ios[i]));
-        //             (*loop->ios[i].func)(loop->ios + i);
-        //         }
-        //     }
-        // }
-
     } /* Main loop */
 
     loop->status = EVLOOP_STATUS_STOP;
