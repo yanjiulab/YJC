@@ -21,6 +21,7 @@
 #include "socket.h"
 #include "sockopt.h"
 #include "linenoise.h"
+#include "cmd.h"
 
 // #include <net/if.h>
 
@@ -112,6 +113,11 @@ static void on_period(evtimer_t* timer) {
            LLU(evloop_now_hrtime(loop)));
 }
 
+static void on_cmd(evio_t* io) {
+    cmd_ctx_t* ctx = event_userdata(io);
+    cmd_async_commandloop(ctx);
+}
+
 static void on_accept(evio_t* io) {
     struct sockaddr_in cliaddr;
     socklen_t clilen = sizeof(cliaddr);
@@ -160,6 +166,8 @@ static void on_sniffer(evio_t* io) {
 }
 
 int main(int argc, char* argv[]) {
+    /* Setting memory check */
+    MEMCHECK
 
     /* Parse command line args */
     int isdaemon = 0;
@@ -243,6 +251,13 @@ int main(int argc, char* argv[]) {
     log_info("Create an event loop");
     loop = evloop_new(EVLOOP_FLAG_AUTO_FREE);
 
+    /* async cmd */
+    evio_t* cmdio;
+    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC);
+
+    cmdio = ev_read(loop, ctx->ls.ifd, on_cmd);
+    event_set_userdata(cmdio, ctx);
+
     /* Add idle event */
     // for (int i = -2; i <= 2; ++i) {
     //     evidle_t* idle = evidle_add(loop, on_idle, 1); // repeate times: 1
@@ -289,9 +304,7 @@ int main(int argc, char* argv[]) {
     sniffer_set_filter_str(sniff, "arp");
     sniffer_start(sniff);
 
-    ev_read(loop, sniff->psock->packet_fd, on_sniffer);
-
-    // evio_add(loop, sniff->psock->packet_fd, on_sniffer);
+    // ev_read(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */
     // if (isdaemon) {
@@ -308,7 +321,7 @@ int main(int argc, char* argv[]) {
     evloop_run(loop);
 
     /* Clean and exit */
-    thread_join(cmdf_tid, NULL);
+    // thread_join(cmdf_tid, NULL);
     log_fatal("Clean ...");
     log_info("...");
     log_fatal("Bye.");

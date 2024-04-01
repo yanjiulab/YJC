@@ -1,8 +1,2 @@
-j
-sdf
-sdfsdf
-asdf
-hello
-hello there
-hello there 
-quit
+asd
+help
