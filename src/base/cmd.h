@@ -65,6 +65,8 @@ struct cmd_ctx_s {
     // Async
     struct linenoiseState ls;
     char* async_buff;
+    bool async_ready;
+
     // uint32_t async_bufflen;
 };
 

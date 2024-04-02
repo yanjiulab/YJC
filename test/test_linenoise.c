@@ -27,7 +27,7 @@ int test_linenoise() {
 
     char* line;
     char* prgname = argv[0];
-    int async = 0;
+    int async = 1;
 
     /* Parse options, with --multiline we enable multi line editing. */
     while (argc > 1) {
@@ -63,7 +63,8 @@ int test_linenoise() {
      *
      * The typed string is returned as a malloc() allocated string by
      * linenoise, so the user needs to free() it. */
-
+    struct linenoiseState ls;
+    char buf[1024];
     while (1) {
         if (!async) {
             line = linenoise("hello> ");
@@ -72,8 +73,7 @@ int test_linenoise() {
             /* Asynchronous mode using the multiplexing API: wait for
              * data on stdin, and simulate async data coming from some source
              * using the select(2) timeout. */
-            struct linenoiseState ls;
-            char buf[1024];
+            printf("mode async\n");
             linenoiseEditStart(&ls, -1, -1, buf, sizeof(buf), "hello> ");
             while (1) {
                 fd_set readfds;
@@ -98,9 +98,9 @@ int test_linenoise() {
                 } else {
                     // Timeout occurred
                     static int counter = 0;
-                    linenoiseHide(&ls);
-                    printf("Async output %d.\n", counter++);
-                    linenoiseShow(&ls);
+                    // linenoiseHide(&ls);
+                    // printf("Async output %d.\n", counter++);
+                    // linenoiseShow(&ls);
                 }
             }
             linenoiseEditStop(&ls);

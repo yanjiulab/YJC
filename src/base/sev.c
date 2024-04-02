@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdatomic.h>
 
+#include "cmd.h"
+
 #define EVLOOP_MAX_BLOCK_TIME 100 // ms
 
 // evidle
@@ -270,8 +272,13 @@ int iowatcher_poll_events(evloop_t* loop, int timeout) {
         }
         return nselect;
     }
-    if (nselect == 0)
+    if (nselect == 0) {
+        // linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
+        // printf("Fuck World\n");
+        // linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
         return 0;
+    }
+
     int nevents = 0;
     int revents = 0;
     for (int fd = 0; fd <= max_fd; ++fd) {
@@ -642,7 +649,6 @@ process_timers:
     //        blocktime_ms, nios, loop->nios, ntimers, loop->ntimers, nidles, loop->nidles,
     //        loop->nactives, npendings, ncbs);
     return ncbs;
-    return 0;
 }
 
 evloop_t* evloop_new(int flags) {
@@ -805,4 +811,16 @@ uint64_t evloop_now_us(evloop_t* loop) {
 
 uint64_t evloop_now_hrtime(evloop_t* loop) {
     return loop->cur_hrtime;
+}
+
+void evloop_set_userdata(evloop_t* loop, void* userdata) {
+    loop->userdata = userdata;
+}
+
+void* evloop_userdata(evloop_t* loop) {
+    return loop->userdata;
+}
+
+void evloop_register_cb(evloop_t* loop, idle_cb cb) {
+    loop->cb = cb;
 }

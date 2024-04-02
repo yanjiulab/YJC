@@ -34,6 +34,7 @@ typedef struct evtimeout evtimeout_t;
 typedef struct evperiod evperiod_t;
 typedef struct evio evio_t;
 
+typedef void (*idle_cb)(event_t*);
 typedef void (*event_cb)(event_t*);
 typedef void (*evtimer_cb)(evtimer_t*);
 typedef void (*evidle_cb)(evidle_t*);
@@ -101,6 +102,7 @@ struct evloop {
     // one loop per thread, so one readbuf per loop is OK.
     // buf_t readbuf;
     void* iowatcher;
+    idle_cb cb;
 };
 
 #define EVENT_FLAGS       \
@@ -245,6 +247,11 @@ uint64_t evloop_now(evloop_t* loop);        // s
 uint64_t evloop_now_ms(evloop_t* loop);     // ms
 uint64_t evloop_now_us(evloop_t* loop);     // us
 uint64_t evloop_now_hrtime(evloop_t* loop); // us
+// userdata
+void evloop_set_userdata(evloop_t* loop, void* userdata);
+void* evloop_userdata(evloop_t* loop);
+
+void evloop_register_cb(evloop_t* loop, idle_cb cb);
 
 // event
 #define event_set_id(ev, id)          ((event_t*)(ev))->event_id = id

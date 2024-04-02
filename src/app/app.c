@@ -100,10 +100,15 @@ static void on_idle(evidle_t* idle) {
 
 static void on_timer(evtimer_t* timer) {
     evloop_t* loop = event_loop(timer);
-    printf("on_timer: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
-           event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
-           LLU(evloop_now_hrtime(loop)));
+    // printf("on_timer: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
+    //        event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
+    //        LLU(evloop_now_hrtime(loop)));
+    // linenoiseHide(loop->userdata);
+    linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
     printf("Hello World %d\n", event_userdata(timer));
+    linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
+    // printf("Hello World %d\n", event_userdata(timer));
+    // linenoiseShow(loop->userdata);
 }
 
 static void on_period(evtimer_t* timer) {
@@ -113,9 +118,21 @@ static void on_period(evtimer_t* timer) {
            LLU(evloop_now_hrtime(loop)));
 }
 
+char* line;
+
 static void on_cmd(evio_t* io) {
     cmd_ctx_t* ctx = event_userdata(io);
-    cmd_async_commandloop(ctx);
+
+    line = linenoiseEditFeed(&ctx->ls);
+    if (line != linenoiseEditMore) {
+        linenoiseEditStop(&ctx->ls);
+        if (line == NULL) exit(0);
+        printf("echo: '%s'\n", line);
+        free(line);
+        linenoiseEditStart(&ctx->ls, -1, -1, ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
+    } else {
+        // printf("more\n", line);
+    }
 }
 
 static void on_accept(evio_t* io) {
@@ -251,13 +268,6 @@ int main(int argc, char* argv[]) {
     log_info("Create an event loop");
     loop = evloop_new(EVLOOP_FLAG_AUTO_FREE);
 
-    /* async cmd */
-    evio_t* cmdio;
-    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC);
-
-    cmdio = ev_read(loop, ctx->ls.ifd, on_cmd);
-    event_set_userdata(cmdio, ctx);
-
     /* Add idle event */
     // for (int i = -2; i <= 2; ++i) {
     //     evidle_t* idle = evidle_add(loop, on_idle, 1); // repeate times: 1
@@ -268,8 +278,8 @@ int main(int argc, char* argv[]) {
     /* Add timer event */
     // evtimer_t* timer;
     // // Add timer timeout
-    // for (int i = 1; i <= 3; ++i) {
-    //     timer = evtimer_add(loop, on_timer, 1000, 1);
+    // for (int i = 1; i <= 1; ++i) {
+    //     timer = evtimer_add(loop, on_timer, 1000, 0);
     //     event_set_userdata(timer, (void*)(intptr_t)i);
     // }
     // // Add timer period (every minute)
@@ -303,7 +313,6 @@ int main(int argc, char* argv[]) {
     sniffer_set_direction(sniff, DIRECTION_ALL);
     sniffer_set_filter_str(sniff, "arp");
     sniffer_start(sniff);
-
     // ev_read(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */
@@ -315,6 +324,13 @@ int main(int argc, char* argv[]) {
     //     log_info("Start cmd framework frontend mode");
     //     cmdf_tid = thread_create(frontend_cmdf, cmd);
     // }
+
+    /* async cmd */
+    evio_t* cmdio;
+    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC);
+    evloop_set_userdata(loop, ctx);
+    cmdio = ev_read(loop, ctx->ls.ifd, on_cmd);
+    event_set_userdata(cmdio, ctx);
 
     /* Run event loop */
     log_info("Run event loop");

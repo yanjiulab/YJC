@@ -239,10 +239,12 @@ cmd_ctx_t* cmd_ctx_new(int flags) {
     if (ctx->flags & CMD_FLAG_ASYNC) {
         // if (!ctx->async_buff)
         ctx->async_buff = malloc(ASYNC_BUFFLEN);
-        char buff[1024];
-        // linenoiseEditStart(&ctx->ls, -1, -1, ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
-        linenoiseEditStart(&ctx->ls, -1, -1, buff, 1024, ctx->prompt);
+        // char buff[1024];
+        linenoiseEditStart(&ctx->ls, -1, -1, ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
+        // linenoiseEditStart(&ctx->ls, -1, -1, buff, 1024, ctx->prompt);
         // return ctx;
+        // linenoiseHide(&ctx->ls);
+        // linenoiseShow(&ctx->ls);
     }
 
     return ctx;
@@ -446,49 +448,55 @@ char* cmd_async_commandloop(cmd_ctx_t* ctx) {
     int retflag;
 
     inputbuff = linenoiseEditFeed(&ctx->ls);
+    if (inputbuff != linenoiseEditMore) {
+        // finish
+        ctx->async_ready = true;
+    } else {
+        return NULL;
+    }
     /* A NULL return means: line editing is continuing.
      * Otherwise the user hit enter or stopped editing
      * (CTRL+C/D). */
 
-    // if (inputbuff != linenoiseEditMore) return;
+    if (inputbuff != linenoiseEditMore) return;
 
-    // /* Trim string */
-    // cmd_trim(inputbuff);
+    /* Trim string */
+    cmd_trim(inputbuff);
 
-    // /* If input is empty, call do_emptyline command. */
-    // // Never reach?
-    // if (inputbuff[0] == '\0') {
-    //     ctx->do_emptyline(ctx, NULL);
-    //     return;
-    // }
+    /* If input is empty, call do_emptyline command. */
+    // Never reach?
+    if (inputbuff[0] == '\0') {
+        ctx->do_emptyline(ctx, NULL);
+        return;
+    }
 
-    // /* If we've reached this, then line has something in it.
-    //  * If readline is enabled, save this to history. */
-    // cmd_add_history(inputbuff);
+    /* If we've reached this, then line has something in it.
+     * If readline is enabled, save this to history. */
+    cmd_add_history(inputbuff);
 
-    // /* Split by first space.
-    //  * This should be the command, followed by arguments. */
-    // if ((spcptr = strchr(inputbuff, ' '))) {
-    //     *spcptr = '\0';
+    /* Split by first space.
+     * This should be the command, followed by arguments. */
+    if ((spcptr = strchr(inputbuff, ' '))) {
+        *spcptr = '\0';
 
-    //     cmdptr = inputbuff;
-    //     argsptr = spcptr + 1;
-    // } else {
-    //     cmdptr = inputbuff;
-    //     argsptr = NULL;
-    // }
+        cmdptr = inputbuff;
+        argsptr = spcptr + 1;
+    } else {
+        cmdptr = inputbuff;
+        argsptr = NULL;
+    }
 
-    // /* Parse arguments */
-    // cmd_args = cmd_parse_arguments(argsptr);
+    /* Parse arguments */
+    cmd_args = cmd_parse_arguments(argsptr);
 
-    // /* Execute command. */
-    // retflag = cmd_default_do_command(ctx, cmdptr, cmd_args);
-    // switch (retflag) {
-    // case CMD_ERROR_UNKNOWN_COMMAND:
-    //     fprintf(stdout, "Unknown command '%s'.\n", cmdptr);
-    //     break;
-    // }
-    // return inputbuff;
+    /* Execute command. */
+    retflag = cmd_default_do_command(ctx, cmdptr, cmd_args);
+    switch (retflag) {
+    case CMD_ERROR_UNKNOWN_COMMAND:
+        fprintf(stdout, "Unknown command '%s'.\n", cmdptr);
+        break;
+    }
+    return inputbuff;
 }
 
 void cmd_commandloop(cmd_ctx_t* ctx) {
