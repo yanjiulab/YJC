@@ -496,6 +496,58 @@ char* cmd_async_commandloop(cmd_ctx_t* ctx) {
     return inputbuff;
 }
 
+/* Async process */
+int cmd_command_process(cmd_ctx_t* ctx, const char* inputbuff) {
+
+    /* Trim string */
+    cmd_trim(inputbuff);
+
+    /* If input is empty, call do_emptyline command. */
+    if (inputbuff[0] == '\0') {
+        ctx->do_emptyline(ctx, NULL);
+        return;
+    }
+
+    /* If we've reached this, then line has something in it.
+     * If readline is enabled, save this to history. */
+    cmd_add_history(inputbuff);
+
+    /* Split by first space.
+     * This should be the command, followed by arguments. */
+    cmd_arglist_t* cmd_args;
+    char *cmdptr, *argsptr, *spcptr;
+    int retflag;
+    if ((spcptr = strchr(inputbuff, ' '))) {
+        *spcptr = '\0';
+
+        cmdptr = inputbuff;
+        argsptr = spcptr + 1;
+    } else {
+        cmdptr = inputbuff;
+        argsptr = NULL;
+    }
+
+    /* Parse arguments */
+    cmd_args = cmd_parse_arguments(argsptr);
+
+    /* Execute command. */
+    retflag = cmd_default_do_command(ctx, cmdptr, cmd_args);
+    switch (retflag) {
+    case CMD_ERROR_UNKNOWN_COMMAND:
+        fprintf(stdout, "Unknown command '%s'.\n", cmdptr);
+        break;
+    }
+
+    /* Free arguments */
+    cmd_free_arglist(cmd_args);
+
+    // #ifdef CMDF_READLINE_SUPPORT
+    // /* Free buffer */
+    // free(inputbuff);
+    // #endif
+    free(inputbuff);
+}
+
 void cmd_commandloop(cmd_ctx_t* ctx) {
     // #ifndef CMDF_READLINE_SUPPORT
     //     char inputbuff[CMDF_MAX_INPUT_BUFFER_LENGTH];

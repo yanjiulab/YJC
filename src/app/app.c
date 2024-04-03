@@ -133,8 +133,10 @@ static void on_cmd(evio_t* io) {
     if (line != linenoiseEditMore) {
         linenoiseEditStop(&ctx->ls);
         if (line == NULL) exit(0);
-        printf("echo: '%s'\n", line);
-        free(line);
+        // process
+        cmd_command_process(ctx, line);
+        // 
+        // free(line);
         // linenoiseEditStart(&ctx->ls, ctx->cmd_stdin, ctx->cmd_stdout,
         linenoiseEditStart(&ctx->ls, -1, -1,
                            ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
