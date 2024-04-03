@@ -11,6 +11,8 @@
  * 1. 退出时的处理，有卡顿。涉及到多线程和事件循环对信号的处理流程优化。
  */
 
+
+
 #include "base.h"
 #include "args.h"
 #include "iniparser.h"
@@ -105,7 +107,12 @@ static void on_timer(evtimer_t* timer) {
     //        LLU(evloop_now_hrtime(loop)));
     // linenoiseHide(loop->userdata);
     linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
-    printf("Hello World %d\n", event_userdata(timer));
+    // log_info("Hello World %d", event_userdata(timer));
+    // log_info("Hello World %d", event_userdata(timer));
+    
+    printf("Hello" "\r\n");
+    printf("Hello" "\r\n");
+
     linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
     // printf("Hello World %d\n", event_userdata(timer));
     // linenoiseShow(loop->userdata);
@@ -118,18 +125,19 @@ static void on_period(evtimer_t* timer) {
            LLU(evloop_now_hrtime(loop)));
 }
 
-char* line;
-
 static void on_cmd(evio_t* io) {
     cmd_ctx_t* ctx = event_userdata(io);
 
+    char* line;
     line = linenoiseEditFeed(&ctx->ls);
     if (line != linenoiseEditMore) {
         linenoiseEditStop(&ctx->ls);
         if (line == NULL) exit(0);
         printf("echo: '%s'\n", line);
         free(line);
-        linenoiseEditStart(&ctx->ls, -1, -1, ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
+        // linenoiseEditStart(&ctx->ls, ctx->cmd_stdin, ctx->cmd_stdout,
+        linenoiseEditStart(&ctx->ls, -1, -1,
+                           ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
     } else {
         // printf("more\n", line);
     }
@@ -276,22 +284,23 @@ int main(int argc, char* argv[]) {
     // }
 
     /* Add timer event */
-    // evtimer_t* timer;
-    // // Add timer timeout
-    // for (int i = 1; i <= 1; ++i) {
-    //     timer = evtimer_add(loop, on_timer, 1000, 0);
-    //     event_set_userdata(timer, (void*)(intptr_t)i);
-    // }
-    // // Add timer period (every minute)
-    // timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
+    evtimer_t* timer;
+    // Add timer timeout
+    for (int i = 1; i <= 1; ++i) {
+        timer = evtimer_add(loop, on_timer, 1000, 0);
+        event_set_userdata(timer, (void*)(intptr_t)i);
+    }
+    // Add timer period (every minute)
+    timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
 
     // UDP server
-    int udp_fd = udp_server(ANYADDR, "520", NULL);
-    struct in_addr group;
-    struct in_addr ifaddr;
-    group.s_addr = htonl(0xe1000009);
-    so_bindtodev(udp_fd, "ens38");
-    so_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
+    int udp_fd = udp_server(ANYADDR, "1234", NULL);
+    ev_read(loop, udp_fd, on_udp);
+    // struct in_addr group;
+    // struct in_addr ifaddr;
+    // group.s_addr = htonl(0xe1000009);
+    // so_bindtodev(udp_fd, "ens38");
+    // so_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
 
     // struct sockaddr_in servaddr;
     // servaddr.sin_family = AF_INET;
@@ -308,11 +317,11 @@ int main(int argc, char* argv[]) {
     // evio_add(loop, udp_fd, on_udp);
 
     // Sniffer
-    sniff = sniffer_new("ens33");
-    sniffer_set_record(sniff, SNIFFER_RECORD_PCAP, 100, NULL);
-    sniffer_set_direction(sniff, DIRECTION_ALL);
-    sniffer_set_filter_str(sniff, "arp");
-    sniffer_start(sniff);
+    // sniff = sniffer_new("ens33");
+    // sniffer_set_record(sniff, SNIFFER_RECORD_PCAP, 100, NULL);
+    // sniffer_set_direction(sniff, DIRECTION_ALL);
+    // sniffer_set_filter_str(sniff, "arp");
+    // sniffer_start(sniff);
     // ev_read(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */
@@ -327,7 +336,8 @@ int main(int argc, char* argv[]) {
 
     /* async cmd */
     evio_t* cmdio;
-    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC);
+    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, -1, -1, NULL);
+    // cmd_set_inout(ctx, udp_fd, udp_fd);
     evloop_set_userdata(loop, ctx);
     cmdio = ev_read(loop, ctx->ls.ifd, on_cmd);
     event_set_userdata(cmdio, ctx);

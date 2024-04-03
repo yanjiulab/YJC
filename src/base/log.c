@@ -59,7 +59,7 @@ static void stdout_callback(log_Event* ev) {
             ev->file, ev->line);
 #endif
     vfprintf(ev->udata, ev->fmt, ev->ap);
-    fprintf(ev->udata, "\n");
+    fprintf(ev->udata, "\r\n");
     fflush(ev->udata);
 }
 

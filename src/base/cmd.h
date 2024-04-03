@@ -54,9 +54,11 @@ struct cmd_ctx_s {
     int exit_flag;
 
     /* in, out, err */
-    FILE* cmd_stdin;
-    FILE* cmd_stdout;
-    FILE* cmd_stderr;
+    // FILE* cmd_stdin;
+    // FILE* cmd_stdout;
+    // FILE* cmd_stderr;
+    int cmd_stdin;
+    int cmd_stdout;
 
     /* Callback pointers */
     cmd_command_cb do_emptyline;
@@ -91,6 +93,6 @@ void cmd_default_commandloop(cmd_ctx_t* ctx);
 char* cmd_async_commandloop(cmd_ctx_t* ctx);
 void cmd_commandloop(cmd_ctx_t* ctx);
 
-cmd_ctx_t* cmd_ctx_new(int flags);
+cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* prompt);
 
 #endif

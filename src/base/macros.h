@@ -70,19 +70,25 @@
 #define LOWER(c)       ((c) | 0x20)
 #define UPPER(c)       ((c) & ~0x20)
 
+#define CR             '\r'
+#define LF             '\n'
+#define CRLF           "\r\n"
+
 /* Debug macros */
 #ifdef PRINT_DEBUG
 // #define printd(...) printf(__VA_ARGS__)
 // fprintf(stdout, GRAY "%s %d] " NOCOLOR fmt, __FILE__, __LINE__, ##__VA_ARGS__);
-#define printd(fmt, ...)                                     \
-    do {                                                     \
-        fprintf(stdout, L_DKGREY fmt NORMAL, ##__VA_ARGS__); \
-        fflush(stdout);                                      \
+// fprintf(stdout, L_DKGREY "[%s:%d:%s] ", __FILE__, __LINE__, __FUNCTION__);
+#define printd(fmt, ...)                                          \
+    do {                                                          \
+        fprintf(stdout, L_DKGREY fmt NORMAL CRLF, ##__VA_ARGS__); \
+        fflush(stdout);                                           \
     } while (0)
-#define printe(fmt, ...)                                \
-    do {                                                \
-        fprintf(stderr, RED fmt NORMAL, ##__VA_ARGS__); \
-        fflush(stderr);                                 \
+
+#define printe(fmt, ...)                                     \
+    do {                                                     \
+        fprintf(stderr, RED fmt NORMAL CRLF, ##__VA_ARGS__); \
+        fflush(stderr);                                      \
     } while (0)
 #else
 #define printd(...)

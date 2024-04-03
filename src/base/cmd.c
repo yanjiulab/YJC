@@ -196,21 +196,21 @@ char* cmd_default_hints(const char* buf, int* color, int* bold) {
 }
 
 /* API */
-cmd_ctx_t* cmd_ctx_new(int flags) {
+cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* prompt) {
     cmd_ctx_t* ctx;
     EV_ALLOC_SIZEOF(ctx);
 
     // entries
     entry_array_init(&ctx->entries, 16);
 
-    ctx->prompt = cmd_default_prompt;
+    ctx->prompt = prompt ? prompt : cmd_default_prompt;
+    ctx->cmd_stdin = stdin_fd != -1 ? stdin_fd : STDIN_FILENO;
+    ctx->cmd_stdout = stdout_fd != -1 ? stdout_fd : STDOUT_FILENO;
     ctx->intro = cmd_default_intro;
     ctx->doc_header = cmd_default_doc_header;
     ctx->undoc_header = cmd_default_undoc_header;
     ctx->ruler = cmd_default_ruler;
     ctx->doc_cmds = ctx->undoc_cmds = ctx->entry_count = 0;
-    // ctx->cmd_stdin = stdin;
-    // ctx->cmd_stdout = stdout;
 
     /* Set command callbacks */
 
@@ -235,16 +235,13 @@ cmd_ctx_t* cmd_ctx_new(int flags) {
      * user uses the <tab> key. */
     linenoiseSetCompletionCallback(cmd_default_completion);
     linenoiseSetHintsCallback(cmd_default_hints);
-    linenoiseSetMultiLine(1);
+    // linenoiseSetMultiLine(1);
     if (ctx->flags & CMD_FLAG_ASYNC) {
         // if (!ctx->async_buff)
         ctx->async_buff = malloc(ASYNC_BUFFLEN);
         // char buff[1024];
-        linenoiseEditStart(&ctx->ls, -1, -1, ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
-        // linenoiseEditStart(&ctx->ls, -1, -1, buff, 1024, ctx->prompt);
-        // return ctx;
-        // linenoiseHide(&ctx->ls);
-        // linenoiseShow(&ctx->ls);
+        linenoiseEditStart(&ctx->ls, ctx->cmd_stdin, ctx->cmd_stdout,
+                           ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
     }
 
     return ctx;
