@@ -2,22 +2,22 @@
 #include "errors.h"
 #include "event.h"
 
-int eio_unpack(eio_t* io, void* buf, int readbytes) {
+int evio_unpack(evio_t* io, void* buf, int readbytes) {
     unpack_setting_t* setting = io->unpack_setting;
     switch (setting->mode) {
     case UNPACK_BY_FIXED_LENGTH:
-        return eio_unpack_by_fixed_length(io, buf, readbytes);
+        return evio_unpack_by_fixed_length(io, buf, readbytes);
     case UNPACK_BY_DELIMITER:
-        return eio_unpack_by_delimiter(io, buf, readbytes);
+        return evio_unpack_by_delimiter(io, buf, readbytes);
     case UNPACK_BY_LENGTH_FIELD:
-        return eio_unpack_by_length_field(io, buf, readbytes);
+        return evio_unpack_by_length_field(io, buf, readbytes);
     default:
-        eio_read_cb(io, buf, readbytes);
+        evio_read_cb(io, buf, readbytes);
         return readbytes;
     }
 }
 
-int eio_unpack_by_fixed_length(eio_t* io, void* buf, int readbytes) {
+int evio_unpack_by_fixed_length(evio_t* io, void* buf, int readbytes) {
     const unsigned char* sp = (const unsigned char*)io->readbuf.base + io->readbuf.head;
     const unsigned char* ep = (const unsigned char*)buf + readbytes;
     unpack_setting_t* setting = io->unpack_setting;
@@ -29,7 +29,7 @@ int eio_unpack_by_fixed_length(eio_t* io, void* buf, int readbytes) {
     int remain = ep - p;
     int handled = 0;
     while (remain >= fixed_length) {
-        eio_read_cb(io, (void*)p, fixed_length);
+        evio_read_cb(io, (void*)p, fixed_length);
         handled += fixed_length;
         p += fixed_length;
         remain -= fixed_length;
@@ -47,7 +47,7 @@ int eio_unpack_by_fixed_length(eio_t* io, void* buf, int readbytes) {
     return handled;
 }
 
-int eio_unpack_by_delimiter(eio_t* io, void* buf, int readbytes) {
+int evio_unpack_by_delimiter(evio_t* io, void* buf, int readbytes) {
     const unsigned char* sp = (const unsigned char*)io->readbuf.base + io->readbuf.head;
     const unsigned char* ep = (const unsigned char*)buf + readbytes;
     unpack_setting_t* setting = io->unpack_setting;
@@ -70,7 +70,7 @@ int eio_unpack_by_delimiter(eio_t* io, void* buf, int readbytes) {
     match:
         p += delimiter_bytes;
         remain -= delimiter_bytes;
-        eio_read_cb(io, (void*)sp, p - sp);
+        evio_read_cb(io, (void*)sp, p - sp);
         handled += p - sp;
         sp = p;
         continue;
@@ -91,18 +91,18 @@ int eio_unpack_by_delimiter(eio_t* io, void* buf, int readbytes) {
             if (io->readbuf.len >= setting->package_max_length) {
                 // hloge("recv package over %d bytes!", (int)setting->package_max_length);
                 io->error = ERR_OVER_LIMIT;
-                eio_close(io);
+                evio_close(io);
                 return -1;
             }
             int newsize = MIN(io->readbuf.len * 2, setting->package_max_length);
-            eio_alloc_readbuf(io, newsize);
+            evio_alloc_readbuf(io, newsize);
         }
     }
 
     return handled;
 }
 
-int eio_unpack_by_length_field(eio_t* io, void* buf, int readbytes) {
+int evio_unpack_by_length_field(evio_t* io, void* buf, int readbytes) {
     const unsigned char* sp = (const unsigned char*)io->readbuf.base + io->readbuf.head;
     const unsigned char* ep = (const unsigned char*)buf + readbytes;
     unpack_setting_t* setting = io->unpack_setting;
@@ -133,14 +133,14 @@ int eio_unpack_by_length_field(eio_t* io, void* buf, int readbytes) {
             if (varint_bytes == -1) {
                 // hloge("varint is too big!");
                 io->error = ERR_OVER_LIMIT;
-                eio_close(io);
+                evio_close(io);
                 return -1;
             }
             head_len = setting->body_offset + varint_bytes - setting->length_field_bytes;
         }
         package_len = head_len + body_len + setting->length_adjustment;
         if (remain >= package_len) {
-            eio_read_cb(io, (void*)p, package_len);
+            evio_read_cb(io, (void*)p, package_len);
             handled += package_len;
             p += package_len;
             remain -= package_len;
@@ -160,11 +160,11 @@ int eio_unpack_by_length_field(eio_t* io, void* buf, int readbytes) {
             if (package_len > setting->package_max_length) {
                 // hloge("package length over %d bytes!", (int)setting->package_max_length);
                 io->error = ERR_OVER_LIMIT;
-                eio_close(io);
+                evio_close(io);
                 return -1;
             }
             int newsize = LIMIT(package_len, io->readbuf.len * 2, setting->package_max_length);
-            eio_alloc_readbuf(io, newsize);
+            evio_alloc_readbuf(io, newsize);
         }
     }
 

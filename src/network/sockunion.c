@@ -394,9 +394,11 @@ unsigned int sockunion_hash(const union sockunion* su) {
 size_t family2addrsize(int family) {
     switch (family) {
     case AF_INET:
-        return sizeof(struct in_addr);
+        // return sizeof(struct in_addr);
+        return sizeof(struct sockaddr_in);
     case AF_INET6:
-        return sizeof(struct in6_addr);
+        return sizeof(struct sockaddr_in6);
+        // return sizeof(struct in6_addr);
     }
     return 0;
 }
@@ -429,6 +431,32 @@ void sockunion_set(union sockunion* su, int family, const uint8_t* addr,
         memcpy(&su->sin6.sin6_addr, addr, bytes);
         break;
     }
+}
+
+int sockunion_set_ip(union sockunion* addr, const char* host) {
+    if (!host || *host == '\0') {
+        addr->sin.sin_family = AF_INET;
+        addr->sin.sin_addr.s_addr = htonl(INADDR_ANY);
+        return 0;
+    }
+
+    return str2sockunion(host, addr); // only ip, not dns
+    // return ResolveAddr(host, addr);
+}
+void sockunion_set_port(union sockunion* addr, int port) {
+    if (addr->sa.sa_family == AF_INET) {
+        addr->sin.sin_port = htons(port);
+    } else if (addr->sa.sa_family == AF_INET6) {
+        addr->sin6.sin6_port = htons(port);
+    }
+}
+int sockunion_set_ipport(union sockunion* addr, const char* host, int port) {
+    int ret = sockunion_set_ip(addr, host);
+    if (ret != 0)
+        return ret;
+    sockunion_set_port(addr, port);
+    // SOCKADDR_PRINT(addr);
+    return 0;
 }
 
 /* After TCP connection is established.  Get local address and port. */

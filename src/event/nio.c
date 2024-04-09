@@ -1,110 +1,111 @@
-#include "concurrency.h"
+
 #include "event.h"
 #include "iowatcher.h"
 #include "log.h"
 #include "socket.h"
+#include "sockunion.h"
 
-static void __connect_timeout_cb(etimer_t* timer) {
-    eio_t* io = (eio_t*)timer->privdata;
+static void __connect_timeout_cb(evtimer_t* timer) {
+    evio_t* io = (evio_t*)timer->privdata;
     if (io) {
-        char localaddrstr[SOCKADDR_STRLEN] = {0};
-        char peeraddrstr[SOCKADDR_STRLEN] = {0};
+        char localaddrstr[SU_ADDRSTRLEN] = {0};
+        char peeraddrstr[SU_ADDRSTRLEN] = {0};
         log_warn("connect timeout [%s] <=> [%s]",
-                 SOCKADDR_STR(io->localaddr, localaddrstr),
-                 SOCKADDR_STR(io->peeraddr, peeraddrstr));
+                 SU_ADDRSTR(io->localaddr, localaddrstr),
+                 SU_ADDRSTR(io->peeraddr, peeraddrstr));
         io->error = ETIMEDOUT;
-        eio_close(io);
+        evio_close(io);
     }
 }
 
-static void __close_timeout_cb(etimer_t* timer) {
-    eio_t* io = (eio_t*)timer->privdata;
+static void __close_timeout_cb(evtimer_t* timer) {
+    evio_t* io = (evio_t*)timer->privdata;
     if (io) {
-        char localaddrstr[SOCKADDR_STRLEN] = {0};
-        char peeraddrstr[SOCKADDR_STRLEN] = {0};
+        char localaddrstr[SU_ADDRSTRLEN] = {0};
+        char peeraddrstr[SU_ADDRSTRLEN] = {0};
         log_warn("close timeout [%s] <=> [%s]",
-                 SOCKADDR_STR(io->localaddr, localaddrstr),
-                 SOCKADDR_STR(io->peeraddr, peeraddrstr));
+                 SU_ADDRSTR(io->localaddr, localaddrstr),
+                 SU_ADDRSTR(io->peeraddr, peeraddrstr));
         io->error = ETIMEDOUT;
-        eio_close(io);
+        evio_close(io);
     }
 }
 
-static void __accept_cb(eio_t* io) {
-    eio_accept_cb(io);
+static void __accept_cb(evio_t* io) {
+    evio_accept_cb(io);
 }
 
-static void __connect_cb(eio_t* io) {
-    eio_del_connect_timer(io);
-    eio_connect_cb(io);
+static void __connect_cb(evio_t* io) {
+    evio_del_connect_timer(io);
+    evio_connect_cb(io);
 }
 
-static void __read_cb(eio_t* io, void* buf, int readbytes) {
+static void __read_cb(evio_t* io, void* buf, int readbytes) {
     // printd("> %.*s\n", readbytes, buf);
     io->last_read_hrtime = io->loop->cur_hrtime;
-    eio_handle_read(io, buf, readbytes);
+    evio_handle_read(io, buf, readbytes);
 }
 
-static void __write_cb(eio_t* io, const void* buf, int writebytes) {
+static void __write_cb(evio_t* io, const void* buf, int writebytes) {
     // printd("< %.*s\n", writebytes, buf);
     io->last_write_hrtime = io->loop->cur_hrtime;
-    eio_write_cb(io, buf, writebytes);
+    evio_write_cb(io, buf, writebytes);
 }
 
-static void __close_cb(eio_t* io) {
+static void __close_cb(evio_t* io) {
     // printd("close fd=%d\n", io->fd);
-    eio_del_connect_timer(io);
-    eio_del_close_timer(io);
-    eio_del_read_timer(io);
-    eio_del_write_timer(io);
-    eio_del_keepalive_timer(io);
-    eio_del_heartbeat_timer(io);
-    eio_close_cb(io);
+    evio_del_connect_timer(io);
+    evio_del_close_timer(io);
+    evio_del_read_timer(io);
+    evio_del_write_timer(io);
+    evio_del_keepalive_timer(io);
+    evio_del_heartbeat_timer(io);
+    evio_close_cb(io);
 }
 
-static void ssl_server_handshake(eio_t* io) {
+static void ssl_server_handshake(evio_t* io) {
     // printd("ssl server handshake...\n");
     // int ret = hssl_accept(io->ssl);
     // if (ret == 0) {
     //     // handshake finish
-    //     eio_del(io, EV_READ);
+    //     evio_del(io, EV_READ);
     //     printd("ssl handshake finished.\n");
     //     __accept_cb(io);
     // } else if (ret == HSSL_WANT_READ) {
     //     if ((io->events & EV_READ) == 0) {
-    //         eio_add(io, ssl_server_handshake, EV_READ);
+    //         evio_add(io, ssl_server_handshake, EV_READ);
     //     }
     // } else {
     //     log_error("ssl handshake failed: %d", ret);
     //     io->error = ERR_SSL_HANDSHAKE;
-    //     eio_close(io);
+    //     evio_close(io);
     // }
 }
 
-static void ssl_client_handshake(eio_t* io) {
+static void ssl_client_handshake(evio_t* io) {
     // printd("ssl client handshake...\n");
     // int ret = hssl_connect(io->ssl);
     // if (ret == 0) {
     //     // handshake finish
-    //     eio_del(io, EV_READ);
+    //     evio_del(io, EV_READ);
     //     printd("ssl handshake finished.\n");
     //     __connect_cb(io);
     // } else if (ret == HSSL_WANT_READ) {
     //     if ((io->events & EV_READ) == 0) {
-    //         eio_add(io, ssl_client_handshake, EV_READ);
+    //         evio_add(io, ssl_client_handshake, EV_READ);
     //     }
     // } else {
     //     log_error("ssl handshake failed: %d", ret);
     //     io->error = ERR_SSL_HANDSHAKE;
-    //     eio_close(io);
+    //     evio_close(io);
     // }
 }
 
-static void nio_accept(eio_t* io) {
+static void nio_accept(evio_t* io) {
     // printd("nio_accept listenfd=%d\n", io->fd);
     int connfd = 0, err = 0, accept_cnt = 0;
     socklen_t addrlen;
-    eio_t* connio = NULL;
+    evio_t* connio = NULL;
     while (accept_cnt++ < 3) {
         addrlen = sizeof(sockaddr_u);
         connfd = accept(io->fd, io->peeraddr, &addrlen);
@@ -120,12 +121,12 @@ static void nio_accept(eio_t* io) {
         }
         addrlen = sizeof(sockaddr_u);
         getsockname(connfd, io->localaddr, &addrlen);
-        connio = eio_get(io->loop, connfd);
+        connio = evio_get(io->loop, connfd);
         // NOTE: inherit from listenio
         connio->accept_cb = io->accept_cb;
         connio->userdata = io->userdata;
         if (io->unpack_setting) {
-            eio_set_unpack(connio, io->unpack_setting);
+            evio_set_unpack(connio, io->unpack_setting);
         }
 
         if (io->io_type == EIO_TYPE_SSL) {
@@ -151,7 +152,7 @@ static void nio_accept(eio_t* io) {
             //     }
             //     connio->ssl = ssl;
             // }
-            // eio_enable_ssl(connio);
+            // evio_enable_ssl(connio);
             // ssl_server_handshake(connio);
         } else {
             // NOTE: SSL call accept_cb after handshake finished
@@ -162,10 +163,10 @@ static void nio_accept(eio_t* io) {
 
 accept_error:
     log_error("listenfd=%d accept error: %s:%d", io->fd, socket_strerror(io->error), io->error);
-    eio_close(io);
+    evio_close(io);
 }
 
-static void nio_connect(eio_t* io) {
+static void nio_connect(evio_t* io) {
     // printd("nio_connect connfd=%d\n", io->fd);
     socklen_t addrlen = sizeof(sockaddr_u);
     int ret = getpeername(io->fd, io->peeraddr, &addrlen);
@@ -213,28 +214,28 @@ static void nio_connect(eio_t* io) {
 
 connect_error:
     log_warn("connfd=%d connect error: %s:%d", io->fd, socket_strerror(io->error), io->error);
-    eio_close(io);
+    evio_close(io);
 }
 
 static void nio_connect_event_cb(event_t* ev) {
-    eio_t* io = (eio_t*)ev->userdata;
+    evio_t* io = (evio_t*)ev->userdata;
     uint32_t id = (uintptr_t)ev->privdata;
     if (io->id != id)
         return;
     nio_connect(io);
 }
 
-static int nio_connect_async(eio_t* io) {
+static int nio_connect_async(evio_t* io) {
     event_t ev;
     memset(&ev, 0, sizeof(ev));
     ev.cb = nio_connect_event_cb;
     ev.userdata = io;
     ev.privdata = (void*)(uintptr_t)io->id;
-    eloop_post_event(io->loop, &ev);
+    evloop_post_event(io->loop, &ev);
     return 0;
 }
 
-static int __nio_read(eio_t* io, void* buf, int len) {
+static int __nio_read(evio_t* io, void* buf, int len) {
     int nread = 0;
     switch (io->io_type) {
     case EIO_TYPE_SSL:
@@ -261,7 +262,7 @@ static int __nio_read(eio_t* io, void* buf, int len) {
     return nread;
 }
 
-static int __nio_write(eio_t* io, const void* buf, int len) {
+static int __nio_write(evio_t* io, const void* buf, int len) {
     int nwrite = 0;
     switch (io->io_type) {
     case EIO_TYPE_SSL:
@@ -277,7 +278,7 @@ static int __nio_write(eio_t* io, const void* buf, int len) {
     case EIO_TYPE_UDP:
     case EIO_TYPE_KCP:
     case EIO_TYPE_IP:
-        nwrite = sendto(io->fd, buf, len, 0, io->peeraddr, SOCKADDR_LEN(io->peeraddr));
+        nwrite = sendto(io->fd, buf, len, 0, io->peeraddr, SU_ADDRLEN(io->peeraddr));
         break;
     default:
         nwrite = write(io->fd, buf, len);
@@ -287,7 +288,7 @@ static int __nio_write(eio_t* io, const void* buf, int len) {
     return nwrite;
 }
 
-static void nio_read(eio_t* io) {
+static void nio_read(evio_t* io) {
     // printd("nio_read fd=%d\n", io->fd);
     void* buf;
     int len = 0, nread = 0, err = 0;
@@ -331,11 +332,11 @@ read:
 read_error:
 disconnect:
     if (io->io_type & EIO_TYPE_SOCK_STREAM) {
-        eio_close(io);
+        evio_close(io);
     }
 }
 
-static void nio_write(eio_t* io) {
+static void nio_write(evio_t* io) {
     // printd("nio_write fd=%d\n", io->fd);
     int nwrite = 0, err = 0;
     recursive_mutex_lock(&io->write_mutex);
@@ -344,7 +345,7 @@ write:
         recursive_mutex_unlock(&io->write_mutex);
         if (io->close) {
             io->close = 0;
-            eio_close(io);
+            evio_close(io);
         }
         return;
     }
@@ -387,11 +388,11 @@ write_error:
 disconnect:
     recursive_mutex_unlock(&io->write_mutex);
     if (io->io_type & EIO_TYPE_SOCK_STREAM) {
-        eio_close(io);
+        evio_close(io);
     }
 }
 
-static void eio_handle_events(eio_t* io) {
+static void evio_handle_events(evio_t* io) {
     if ((io->events & EV_READ) && (io->revents & EV_READ)) {
         if (io->accept) {
             nio_accept(io);
@@ -404,7 +405,7 @@ static void eio_handle_events(eio_t* io) {
         // NOTE: del EV_WRITE, if write_queue empty
         recursive_mutex_lock(&io->write_mutex);
         if (write_queue_empty(&io->write_queue)) {
-            eio_del(io, EV_WRITE);
+            evio_del(io, EV_WRITE);
         }
         recursive_mutex_unlock(&io->write_mutex);
         if (io->connect) {
@@ -421,13 +422,13 @@ static void eio_handle_events(eio_t* io) {
     io->revents = 0;
 }
 
-int eio_accept(eio_t* io) {
+int evio_accept(evio_t* io) {
     io->accept = 1;
-    return eio_add(io, eio_handle_events, EV_READ);
+    return evio_add(io, evio_handle_events, EV_READ);
 }
 
-int eio_connect(eio_t* io) {
-    int ret = connect(io->fd, io->peeraddr, SOCKADDR_LEN(io->peeraddr));
+int evio_connect(evio_t* io) {
+    int ret = connect(io->fd, io->peeraddr, SU_ADDRLEN(io->peeraddr));
 #ifdef OS_WIN
     if (ret < 0 && socket_errno() != WSAEWOULDBLOCK) {
 #else
@@ -435,7 +436,7 @@ int eio_connect(eio_t* io) {
 #endif
         perror("connect");
         io->error = socket_errno();
-        eio_close_async(io);
+        evio_close_async(io);
         return ret;
     }
     if (ret == 0) {
@@ -444,36 +445,36 @@ int eio_connect(eio_t* io) {
         return 0;
     }
     int timeout = io->connect_timeout ? io->connect_timeout : EIO_DEFAULT_CONNECT_TIMEOUT;
-    io->connect_timer = etimer_add(io->loop, __connect_timeout_cb, timeout, 1);
+    io->connect_timer = evtimer_add(io->loop, __connect_timeout_cb, timeout, 1);
     io->connect_timer->privdata = io;
     io->connect = 1;
-    return eio_add(io, eio_handle_events, EV_WRITE);
+    return evio_add(io, evio_handle_events, EV_WRITE);
 }
 
-int eio_read(eio_t* io) {
+int evio_read(evio_t* io) {
     if (io->closed) {
-        log_error("eio_read called but fd[%d] already closed!", io->fd);
+        log_error("evio_read called but fd[%d] already closed!", io->fd);
         return -1;
     }
-    eio_add(io, eio_handle_events, EV_READ);
+    evio_add(io, evio_handle_events, EV_READ);
     if (io->readbuf.tail > io->readbuf.head &&
         io->unpack_setting == NULL &&
         io->read_flags == 0) {
-        eio_read_remain(io);
+        evio_read_remain(io);
     }
     return 0;
 }
 
-int eio_write(eio_t* io, const void* buf, size_t len) {
+int evio_write(evio_t* io, const void* buf, size_t len) {
     if (io->closed) {
-        log_error("eio_write called but fd[%d] already closed!", io->fd);
+        log_error("evio_write called but fd[%d] already closed!", io->fd);
         return -1;
     }
     int nwrite = 0, err = 0;
     recursive_mutex_lock(&io->write_mutex);
 #if WITH_KCP
     if (io->io_type == EIO_TYPE_KCP) {
-        nwrite = eio_write_kcp(io, buf, len);
+        nwrite = evio_write_kcp(io, buf, len);
         // if (nwrite < 0) goto write_error;
         goto write_done;
     }
@@ -489,7 +490,7 @@ int eio_write(eio_t* io, const void* buf, size_t len) {
                 log_warn("try_write failed, enqueue!");
                 goto enqueue;
             } else {
-                // perror("write");
+                perror("write");
                 io->error = err;
                 goto write_error;
             }
@@ -501,7 +502,7 @@ int eio_write(eio_t* io, const void* buf, size_t len) {
             goto write_done;
         }
     enqueue:
-        eio_add(io, eio_handle_events, EV_WRITE);
+        evio_add(io, evio_handle_events, EV_WRITE);
     }
     if (nwrite < len) {
         if (io->write_bufsize + len - nwrite > io->max_write_bufsize) {
@@ -538,20 +539,20 @@ disconnect:
     recursive_mutex_unlock(&io->write_mutex);
     /* NOTE:
      * We usually free resources in hclose_cb,
-     * if eio_close_sync, we have to be very careful to avoid using freed resources.
-     * But if eio_close_async, we do not have to worry about this.
+     * if evio_close_sync, we have to be very careful to avoid using freed resources.
+     * But if evio_close_async, we do not have to worry about this.
      */
     if (io->io_type & EIO_TYPE_SOCK_STREAM) {
-        eio_close_async(io);
+        evio_close_async(io);
     }
     return nwrite < 0 ? nwrite : -1;
 }
 
-int eio_close(eio_t* io) {
+int evio_close(evio_t* io) {
     if (io->closed)
         return 0;
     if (gettid() != io->loop->tid) {
-        return eio_close_async(io);
+        return evio_close_async(io);
     }
 
     recursive_mutex_lock(&io->write_mutex);
@@ -564,14 +565,14 @@ int eio_close(eio_t* io) {
         recursive_mutex_unlock(&io->write_mutex);
         log_warn("write_queue not empty, close later.");
         int timeout_ms = io->close_timeout ? io->close_timeout : EIO_DEFAULT_CLOSE_TIMEOUT;
-        io->close_timer = etimer_add(io->loop, __close_timeout_cb, timeout_ms, 1);
+        io->close_timer = evtimer_add(io->loop, __close_timeout_cb, timeout_ms, 1);
         io->close_timer->privdata = io;
         return 0;
     }
     io->closed = 1;
     recursive_mutex_unlock(&io->write_mutex);
 
-    eio_done(io);
+    evio_done(io);
     __close_cb(io);
     if (io->ssl) {
         // hssl_free(io->ssl);

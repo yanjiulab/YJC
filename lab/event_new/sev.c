@@ -17,7 +17,7 @@ evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat) {
     idle->priority = EVENT_LOWEST_PRIORITY;
     idle->repeat = repeat;
     list_add(&idle->node, &loop->idles);
-    event_add(loop, idle, cb);
+    EVENT_ADD(loop, idle, cb);
     loop->nidles++;
     return idle;
 }
@@ -34,7 +34,7 @@ void evidle_del(evidle_t* idle) {
     if (!idle->active)
         return;
     __evidle_del(idle);
-    event_del(idle);
+    EVENT_DEL(idle);
 }
 
 // evtimer
@@ -61,7 +61,7 @@ evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint3
     }
 
     heap_insert(&loop->timers, &timer->node);
-    event_add(loop, timer, cb);
+    EVENT_ADD(loop, timer, cb);
     loop->ntimers++;
     return (evtimer_t*)timer;
 }
@@ -83,7 +83,7 @@ evtimer_t* evtimer_add_period(evloop_t* loop, evtimer_cb cb, int8_t minute, int8
     timer->week = week;
     timer->next_timeout = (uint64_t)cron_next_timeout(minute, hour, day, week, month) * 1000000;
     heap_insert(&loop->realtimers, &timer->node);
-    event_add(loop, timer, cb);
+    EVENT_ADD(loop, timer, cb);
     loop->ntimers++;
     return (evtimer_t*)timer;
 }
@@ -111,7 +111,7 @@ void evtimer_reset(evtimer_t* timer, uint32_t timeout_ms) {
         timer->next_timeout = timer->next_timeout / 100000 * 100000;
     }
     heap_insert(&loop->timers, &timer->node);
-    event_reset(timer);
+    EVENT_RESET(timer);
 }
 
 static void __evtimer_del(evtimer_t* timer) {
@@ -131,177 +131,29 @@ void evtimer_del(evtimer_t* timer) {
     if (!timer->active)
         return;
     __evtimer_del(timer);
-    event_del(timer);
+    EVENT_DEL(timer);
 }
 
 // evio
-// iowatcher
 #define EVIO
-typedef struct select_ctx_s {
-    int max_fd;
-    fd_set readfds;
-    fd_set writefds;
-    int nread;
-    int nwrite;
-} select_ctx_t;
 
-int iowatcher_init(evloop_t* loop) {
-    if (loop->iowatcher)
-        return 0;
-    select_ctx_t* select_ctx;
-    EV_ALLOC_SIZEOF(select_ctx);
-    select_ctx->max_fd = -1;
-    FD_ZERO(&select_ctx->readfds);
-    FD_ZERO(&select_ctx->writefds);
-    select_ctx->nread = 0;
-    select_ctx->nwrite = 0;
-    loop->iowatcher = select_ctx;
-    return 0;
-}
-
-int iowatcher_cleanup(evloop_t* loop) {
-    EV_FREE(loop->iowatcher);
-    return 0;
-}
-
-int iowatcher_add_event(evloop_t* loop, int fd, int events) {
-    if (loop->iowatcher == NULL) {
-        iowatcher_init(loop);
-    }
-    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
-    if (fd > select_ctx->max_fd) {
-        select_ctx->max_fd = fd;
-    }
-    if (events & EV_READ) {
-        if (!FD_ISSET(fd, &select_ctx->readfds)) {
-            FD_SET(fd, &select_ctx->readfds);
-            select_ctx->nread++;
-        }
-    }
-    if (events & EV_WRITE) {
-        if (!FD_ISSET(fd, &select_ctx->writefds)) {
-            FD_SET(fd, &select_ctx->writefds);
-            select_ctx->nwrite++;
-        }
-    }
-    return 0;
-}
-
-int iowatcher_del_event(evloop_t* loop, int fd, int events) {
-    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
-    if (select_ctx == NULL)
-        return 0;
-    if (fd == select_ctx->max_fd) {
-        select_ctx->max_fd = -1;
-    }
-    if (events & EV_READ) {
-        if (FD_ISSET(fd, &select_ctx->readfds)) {
-            FD_CLR(fd, &select_ctx->readfds);
-            select_ctx->nread--;
-        }
-    }
-    if (events & EV_WRITE) {
-        if (FD_ISSET(fd, &select_ctx->writefds)) {
-            FD_CLR(fd, &select_ctx->writefds);
-            select_ctx->nwrite--;
-        }
-    }
-    return 0;
-}
-
-static int find_max_active_fd(evloop_t* loop) {
-    evio_t* io = NULL;
-    for (int i = loop->ios.maxsize - 1; i >= 0; --i) {
-        io = loop->ios.ptr[i];
-        if (io && io->active && io->events)
-            return i;
-    }
-    return -1;
-}
-
-static int remove_bad_fds(evloop_t* loop) {
-    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
-    if (select_ctx == NULL)
-        return 0;
-    int badfds = 0;
-    int error = 0;
-    socklen_t optlen = sizeof(error);
-    for (int fd = 0; fd <= select_ctx->max_fd; ++fd) {
-        if (FD_ISSET(fd, &select_ctx->readfds) || FD_ISSET(fd, &select_ctx->writefds)) {
-            error = 0;
-            optlen = sizeof(int);
-            if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&error, &optlen) < 0 || error != 0) {
-                ++badfds;
-                evio_t* io = loop->ios.ptr[fd];
-                if (io) {
-                    evio_del(io, EV_RDWR);
-                }
-            }
-        }
-    }
-    return badfds;
-}
-
-int iowatcher_poll_events(evloop_t* loop, int timeout) {
-    select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
-    if (select_ctx == NULL)
-        return 0;
-    if (select_ctx->nread == 0 && select_ctx->nwrite == 0) {
-        return 0;
-    }
-    int max_fd = select_ctx->max_fd;
-    fd_set readfds = select_ctx->readfds;
-    fd_set writefds = select_ctx->writefds;
-    if (max_fd == -1) {
-        select_ctx->max_fd = max_fd = find_max_active_fd(loop);
-    }
-    struct timeval tv, *tp;
-    if (timeout == INFINITE) {
-        tp = NULL;
-    } else {
-        tv.tv_sec = timeout / 1000;
-        tv.tv_usec = (timeout % 1000) * 1000;
-        tp = &tv;
-    }
-    int nselect = select(max_fd + 1, &readfds, &writefds, NULL, tp);
-    if (nselect < 0) {
-        if (errno == EBADF) {
-            perror("select");
-            remove_bad_fds(loop);
-            return -EBADF;
-        }
-        return nselect;
-    }
-    if (nselect == 0) {
-        // linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
-        // printf("Fuck World\n");
-        // linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
-        return 0;
-    }
-
-    int nevents = 0;
-    int revents = 0;
-    for (int fd = 0; fd <= max_fd; ++fd) {
-        revents = 0;
-        if (FD_ISSET(fd, &readfds)) {
-            ++nevents;
-            revents |= EV_READ;
-        }
-        if (FD_ISSET(fd, &writefds)) {
-            ++nevents;
-            revents |= EV_WRITE;
-        }
-        if (revents) {
-            evio_t* io = loop->ios.ptr[fd];
-            if (io) {
-                io->revents = revents;
-                event_pending(io);
-            }
-        }
-        if (nevents == nselect)
-            break;
-    }
-    return nevents;
+// evloop API
+const char* evio_engine() {
+#ifdef EVENT_SELECT
+    return "select";
+#elif defined(EVENT_POLL)
+    return "poll";
+#elif defined(EVENT_EPOLL)
+    return "epoll";
+#elif defined(EVENT_KQUEUE)
+    return "kqueue";
+#elif defined(EVENT_IOCP)
+    return "iocp";
+#elif defined(EVENT_PORT)
+    return "evport";
+#else
+    return "noevent";
+#endif
 }
 
 evio_t* evio_get(evloop_t* loop, int fd) {
@@ -313,7 +165,7 @@ evio_t* evio_get(evloop_t* loop, int fd) {
     evio_t* io = loop->ios.ptr[fd];
     if (io == NULL) {
         EV_ALLOC_SIZEOF(io);
-        // evio_init(io);
+        evio_init(io);
         io->event_type = EVENT_TYPE_IO;
         io->loop = loop;
         io->fd = fd;
@@ -327,12 +179,47 @@ evio_t* evio_get(evloop_t* loop, int fd) {
     return io;
 }
 
+void evio_detach(evio_t* io) {
+    evloop_t* loop = io->loop;
+    int fd = io->fd;
+    assert(loop != NULL && fd < loop->ios.maxsize);
+    loop->ios.ptr[fd] = NULL;
+}
+
+void evio_attach(evloop_t* loop, evio_t* io) {
+    int fd = io->fd;
+    if (fd >= loop->ios.maxsize) {
+        int newsize = ceil2e(fd);
+        io_array_resize(&loop->ios, newsize > fd ? newsize : 2 * fd);
+    }
+
+    // NOTE: hio was not freed for reused when closed, but attached hio can't be reused,
+    // so we need to free it if fd exists to avoid memory leak.
+    evio_t* previo = loop->ios.ptr[fd];
+    if (previo != NULL && previo != io) {
+        evio_free(previo);
+    }
+
+    io->loop = loop;
+    // NOTE: use new_loop readbuf
+    io->readbuf.base = loop->readbuf.base;
+    io->readbuf.len = loop->readbuf.len;
+    loop->ios.ptr[fd] = io;
+}
+
+bool evio_exists(evloop_t* loop, int fd) {
+    if (fd >= loop->ios.maxsize) {
+        return false;
+    }
+    return loop->ios.ptr[fd] != NULL;
+}
+
 int evio_add(evio_t* io, evio_cb cb, int events) {
     printd("evio_add fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
 
     evloop_t* loop = io->loop;
     if (!io->active) {
-        event_add(loop, io, cb);
+        EVENT_ADD(loop, io, cb);
         loop->nios++;
     }
 
@@ -364,26 +251,46 @@ int evio_del(evio_t* io, int events) {
     if (io->events == 0) {
         io->loop->nios--;
         // NOTE: not EVENT_DEL, avoid free
-        event_inactive(io);
+        EVENT_INACTIVE(io);
     }
     return 0;
 }
 
-void evio_free(evio_t* io) {
-    if (io == NULL)
-        return;
-    // evio_close(io);
-    // recursive_mutex_destroy(&io->write_mutex);
-    EV_FREE(io->localaddr);
-    EV_FREE(io->peeraddr);
-    EV_FREE(io);
+
+uint32_t evio_next_id() {
+    static atomic_long s_id = ATOMIC_VAR_INIT(0);
+    return ++s_id;
 }
 
-bool evio_exists(evloop_t* loop, int fd) {
-    if (fd >= loop->ios.maxsize) {
-        return false;
+// uint64_t evloop_next_event_id() {
+//     static atomic_long s_id = ATOMIC_VAR_INIT(0);
+//     return ++s_id;
+// }
+
+
+// io with loop
+
+
+
+
+
+
+// io itself
+void evio_init(evio_t* io) {
+    // alloc localaddr,peeraddr when evio_socket_init
+    /*
+    if (io->localaddr == NULL) {
+        EV_ALLOC(io->localaddr, sizeof(sockaddr_u));
     }
-    return loop->ios.ptr[fd] != NULL;
+    if (io->peeraddr == NULL) {
+        EV_ALLOC(io->peeraddr, sizeof(sockaddr_u));
+    }
+    */
+
+    // write_queue init when hwrite try_write failed
+    // write_queue_init(&io->write_queue, 4);
+
+    recursive_mutex_init(&io->write_mutex);
 }
 
 void evio_ready(evio_t* io) {
@@ -399,7 +306,7 @@ void evio_ready(evio_t* io) {
     //     io->close = 0;
     //     // public:
     //     io->id = evio_next_id();
-    //     io->io_type = EIO_TYPE_UNKNOWN;
+    //     io->io_type = EVIO_TYPE_UNKNOWN;
     //     io->error = 0;
     //     io->events = io->revents = 0;
     //     io->last_read_hrtime = io->last_write_hrtime = io->loop->cur_hrtime;
@@ -456,39 +363,283 @@ void evio_ready(evio_t* io) {
 
     //     // io_type
     //     fill_io_type(io);
-    //     if (io->io_type & EIO_TYPE_SOCKET) {
+    //     if (io->io_type & EVIO_TYPE_SOCKET) {
     //         evio_socket_init(io);
     //     }
 }
+
+void evio_done(evio_t* io) {
+    if (!io->ready)
+        return;
+    io->ready = 0;
+
+    evio_del(io, EV_RDWR);
+
+    // readbuf
+    evio_free_readbuf(io);
+
+    // write_queue
+    offset_buf_t* pbuf = NULL;
+    recursive_mutex_lock(&io->write_mutex);
+    while (!write_queue_empty(&io->write_queue)) {
+        pbuf = write_queue_front(&io->write_queue);
+        EV_FREE(pbuf->base);
+        write_queue_pop_front(&io->write_queue);
+    }
+    write_queue_cleanup(&io->write_queue);
+    recursive_mutex_unlock(&io->write_mutex);
+
+#if WITH_RUDP
+    if ((io->io_type & EIO_TYPE_SOCK_DGRAM) || (io->io_type & EIO_TYPE_SOCK_RAW)) {
+        rudp_cleanup(&io->rudp);
+    }
+#endif
+}
+
+void evio_free(evio_t* io) {
+    if (io == NULL)
+        return;
+    evio_close(io);
+    recursive_mutex_destroy(&io->write_mutex);
+    EV_FREE(io->localaddr);
+    EV_FREE(io->peeraddr);
+    EV_FREE(io);
+}
+
+bool evio_is_opened(evio_t* io) {
+    if (io == NULL)
+        return false;
+    return io->ready == 1 && io->closed == 0;
+}
+
+bool evio_is_connected(evio_t* io) {
+    if (io == NULL)
+        return false;
+    return io->ready == 1 && io->connected == 1 && io->closed == 0;
+}
+
+bool evio_is_closed(evio_t* io) {
+    if (io == NULL)
+        return true;
+    return io->ready == 0 && io->closed == 1;
+}
+
+uint32_t evio_id(evio_t* io) { return io->id; }
+
+int evio_fd(evio_t* io) { return io->fd; }
+
+evio_type_e evio_type(evio_t* io) { return io->io_type; }
+
+int evio_error(evio_t* io) { return io->error; }
+
+int evio_events(evio_t* io) { return io->events; }
+
+int evio_revents(evio_t* io) { return io->revents; }
+
+struct sockaddr* evio_localaddr(evio_t* io) { return io->localaddr; }
+
+struct sockaddr* evio_peeraddr(evio_t* io) { return io->peeraddr; }
+
+void evio_set_context(evio_t* io, void* ctx) { io->ctx = ctx; }
+
+void* evio_context(evio_t* io) { return io->ctx; }
+
+accept_cb evio_getcb_accept(evio_t* io) { return io->accept_cb; }
+
+connect_cb evio_getcb_connect(evio_t* io) { return io->connect_cb; }
+
+read_cb evio_getcb_read(evio_t* io) { return io->read_cb; }
+
+write_cb evio_getcb_write(evio_t* io) { return io->write_cb; }
+
+close_cb evio_getcb_close(evio_t* io) { return io->close_cb; }
+
+void evio_setcb_accept(evio_t* io, accept_cb accept_cb) { io->accept_cb = accept_cb; }
+
+void evio_setcb_connect(evio_t* io, connect_cb connect_cb) { io->connect_cb = connect_cb; }
+
+void evio_setcb_read(evio_t* io, read_cb read_cb) { io->read_cb = read_cb; }
+
+void evio_setcb_write(evio_t* io, write_cb write_cb) { io->write_cb = write_cb; }
+
+void evio_setcb_close(evio_t* io, close_cb close_cb) { io->close_cb = close_cb; }
+
+
+//-----------------iobuf---------------------------------------------
+void evio_alloc_readbuf(evio_t* io, int len) {
+    if (len > io->max_read_bufsize) {
+        // ("read bufsize > %u, close it!", io->max_read_bufsize);
+        // io->error = ERR_OVER_LIMIT;
+        evio_close_async(io);
+        return;
+    }
+    if (evio_is_alloced_readbuf(io)) {
+        io->readbuf.base = (char*)ev_zrealloc(io->readbuf.base, len, io->readbuf.len);
+    } else {
+        EV_ALLOC(io->readbuf.base, len);
+    }
+    io->readbuf.len = len;
+    io->alloced_readbuf = 1;
+    io->small_readbytes_cnt = 0;
+}
+
+void evio_free_readbuf(evio_t* io) {
+    if (evio_is_alloced_readbuf(io)) {
+        EV_FREE(io->readbuf.base);
+        io->alloced_readbuf = 0;
+        // reset to loop->readbuf
+        io->readbuf.base = io->loop->readbuf.base;
+        io->readbuf.len = io->loop->readbuf.len;
+    }
+}
+
+void evio_memmove_readbuf(evio_t* io) {
+    fifo_buf_t* buf = &io->readbuf;
+    if (buf->tail == buf->head) {
+        buf->head = buf->tail = 0;
+        return;
+    }
+    if (buf->tail > buf->head) {
+        size_t size = buf->tail - buf->head;
+        // [head, tail] => [0, tail - head]
+        memmove(buf->base, buf->base + buf->head, size);
+        buf->head = 0;
+        buf->tail = size;
+    }
+}
+
+void evio_set_readbuf(evio_t* io, void* buf, size_t len) {
+    assert(io && buf && len != 0);
+    evio_free_readbuf(io);
+    io->readbuf.base = (char*)buf;
+    io->readbuf.len = len;
+    io->readbuf.head = io->readbuf.tail = 0;
+    io->alloced_readbuf = 0;
+}
+
+evio_readbuf_t* evio_get_readbuf(evio_t* io) { return &io->readbuf; }
+
+void evio_set_max_read_bufsize(evio_t* io, uint32_t size) { io->max_read_bufsize = size; }
+
+void evio_set_max_write_bufsize(evio_t* io, uint32_t size) { io->max_write_bufsize = size; }
+
+size_t evio_write_bufsize(evio_t* io) { return io->write_bufsize; }
 
 // int evio_read(evio_t* io) {
 //     if (io->closed) {
 //         log_error("evio_read called but fd[%d] already closed!", io->fd);
 //         return -1;
 //     }
-//     evio_add(io, io->read_cb, EV_READ);
-//     // if (io->readbuf.tail > io->readbuf.head &&
-//     //     io->unpack_setting == NULL &&
-//     //     io->read_flags == 0) {
-//     //     evio_read_remain(io);
-//     // }
+//     evio_add(io, evio_handle_events, EV_READ);
+//     if (io->readbuf.tail > io->readbuf.head &&
+//         // io->unpack_setting == NULL &&
+//         io->read_flags == 0) {
+//         evio_read_remain(io);
+//     }
 //     return 0;
 // }
 
-//------------------high-level apis-------------------------------------------
+//------------------low-level apis-------------------------------------------
+
+// evio_get -> evio_add
 evio_t* ev_read(evloop_t* loop, int fd, /*void* buf, size_t len,*/ evio_cb read_cb) {
     evio_t* io = evio_get(loop, fd);
     assert(io != NULL);
-    // if (buf && len) {
-    //     io->readbuf.base = (char*)buf;
-    //     io->readbuf.len = len;
-    // }
-    // if (read_cb) {
-    //     io->read_cb = read_cb;
-    // }
     evio_add(io, read_cb, EV_READ);
     return io;
 }
+
+//------------------high-level apis-------------------------------------------
+// evio_t* ev_hread(evloop_t* loop, int fd, void* buf, size_t len, evio_cb read_cb) {
+//     evio_t* io = evio_get(loop, fd);
+//     assert(io != NULL);
+//     if (buf && len) {
+//         io->readbuf.base = (char*)buf;
+//         io->readbuf.len = len;
+//     }
+//     if (read_cb) {
+//         io->read_cb = read_cb;
+//     }
+
+//     evio_read(io);
+//     return io;
+// }
+
+// evio_t* ev_write(evloop_t* loop, int fd, const void* buf, size_t len, write_cb write_cb) {
+//     evio_t* io = evio_get(loop, fd);
+//     assert(io != NULL);
+//     if (write_cb) {
+//         io->write_cb = write_cb;
+//     }
+//     evio_write(io, buf, len);
+//     return io;
+// }
+
+// evio_t* haccept(evloop_t* loop, int listenfd, accept_cb accept_cb) {
+//     evio_t* io = evio_get(loop, listenfd);
+//     assert(io != NULL);
+//     if (accept_cb) {
+//         io->accept_cb = accept_cb;
+//     }
+//     if (evio_accept(io) != 0)
+//         return NULL;
+//     return io;
+// }
+
+// evio_t* hconnect(evloop_t* loop, int connfd, connect_cb connect_cb) {
+//     evio_t* io = evio_get(loop, connfd);
+//     assert(io != NULL);
+//     if (connect_cb) {
+//         io->connect_cb = connect_cb;
+//     }
+//     if (evio_connect(io) != 0)
+//         return NULL;
+//     return io;
+// }
+
+// void hclose(evloop_t* loop, int fd) {
+//     evio_t* io = evio_get(loop, fd);
+//     assert(io != NULL);
+//     evio_close(io);
+// }
+
+// evio_t* hrecv(evloop_t* loop, int connfd, void* buf, size_t len, read_cb read_cb) {
+//     // evio_t* io = evio_get(loop, connfd);
+//     // assert(io != NULL);
+//     // io->recv = 1;
+//     // if (io->io_type != EVIO_TYPE_SSL) {
+//     // io->io_type = EVIO_TYPE_TCP;
+//     //}
+//     return hread(loop, connfd, buf, len, read_cb);
+// }
+
+// evio_t* hsend(evloop_t* loop, int connfd, const void* buf, size_t len, write_cb write_cb) {
+//     // evio_t* io = evio_get(loop, connfd);
+//     // assert(io != NULL);
+//     // io->send = 1;
+//     // if (io->io_type != EVIO_TYPE_SSL) {
+//     // io->io_type = EVIO_TYPE_TCP;
+//     //}
+//     return hwrite(loop, connfd, buf, len, write_cb);
+// }
+
+// evio_t* hrecvfrom(evloop_t* loop, int sockfd, void* buf, size_t len, read_cb read_cb) {
+//     // evio_t* io = evio_get(loop, sockfd);
+//     // assert(io != NULL);
+//     // io->recvfrom = 1;
+//     // io->io_type = EVIO_TYPE_UDP;
+//     return hread(loop, sockfd, buf, len, read_cb);
+// }
+
+// evio_t* hsendto(evloop_t* loop, int sockfd, const void* buf, size_t len, write_cb write_cb) {
+//     // evio_t* io = evio_get(loop, sockfd);
+//     // assert(io != NULL);
+//     // io->sendto = 1;
+//     // io->io_type = EVIO_TYPE_UDP;
+//     return hwrite(loop, sockfd, buf, len, write_cb);
+// }
+
+//------------------top-level apis-------------------------------------------
 
 // evloop
 #define EVLOOP
@@ -507,7 +658,7 @@ static int evloop_process_idles(evloop_t* loop) {
             // Real deletion occurs after evloop_process_pendings.
             __evidle_del(idle);
         }
-        event_pending(idle);
+        EVENT_PENDING(idle);
         ++nidles;
     }
     return nidles;
@@ -544,7 +695,7 @@ static int __evloop_process_timers(struct heap* timers, uint64_t timeout) {
             }
             heap_insert(timers, &timer->node);
         }
-        event_pending(timer);
+        EVENT_PENDING(timer);
         ++ntimers;
     }
     return ntimers;
@@ -586,7 +737,7 @@ static int evloop_process_pendings(evloop_t* loop) {
                 cur->pending = 0;
                 // NOTE: Now we can safely delete event marked as destroy.
                 if (cur->destroy) {
-                    event_del(cur);
+                    EVENT_DEL(cur);
                 }
             }
             cur = next;
@@ -819,8 +970,4 @@ void evloop_set_userdata(evloop_t* loop, void* userdata) {
 
 void* evloop_userdata(evloop_t* loop) {
     return loop->userdata;
-}
-
-void evloop_register_cb(evloop_t* loop, idle_cb cb) {
-    loop->cb = cb;
 }

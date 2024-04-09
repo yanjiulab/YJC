@@ -1,20 +1,19 @@
 #include "eventloop.h"
 
 #include "base.h"
-#include "concurrency.h"
 #include "defs.h"
 #include "event.h"
 #include "iowatcher.h"
 #include "log.h"
 #include "socket.h"
-
+#include "sockunion.h"
 #if defined(OS_UNIX) && HAVE_EVENTFD
 #include "sys/eventfd.h"
 #endif
 
-#define ELOOP_PAUSE_TIME             10    // ms
-#define ELOOP_MAX_BLOCK_TIME         100   // ms
-#define ELOOP_STAT_TIMEOUT           60000 // ms
+#define EVLOOP_PAUSE_TIME            10    // ms
+#define EVLOOP_MAX_BLOCK_TIME        100   // ms
+#define EVLOOP_STAT_TIMEOUT          60000 // ms
 
 #define IO_ARRAY_INIT_SIZE           1024
 #define CUSTOM_EVENT_QUEUE_INIT_SIZE 16
@@ -22,17 +21,17 @@
 #define EVENTFDS_READ_INDEX          0
 #define EVENTFDS_WRITE_INDEX         1
 
-static void __eidle_del(eidle_t* idle);
-static void __etimer_del(etimer_t* timer);
+static void __evidle_del(evidle_t* idle);
+static void __evtimer_del(evtimer_t* timer);
 
 static int timers_compare(const struct heap_node* lhs, const struct heap_node* rhs) {
     return TIMER_ENTRY(lhs)->next_timeout < TIMER_ENTRY(rhs)->next_timeout;
 }
 
-static int eloop_process_idles(eloop_t* loop) {
+static int evloop_process_idles(evloop_t* loop) {
     int nidles = 0;
     struct list_node* node = loop->idles.next;
-    eidle_t* idle = NULL;
+    evidle_t* idle = NULL;
     while (node != &loop->idles) {
         idle = IDLE_ENTRY(node);
         node = node->next;
@@ -41,8 +40,8 @@ static int eloop_process_idles(eloop_t* loop) {
         }
         if (idle->repeat == 0) {
             // NOTE: Just mark it as destroy and remove from list.
-            // Real deletion occurs after eloop_process_pendings.
-            __eidle_del(idle);
+            // Real deletion occurs after evloop_process_pendings.
+            __evidle_del(idle);
         }
         EVENT_PENDING(idle);
         ++nidles;
@@ -50,9 +49,9 @@ static int eloop_process_idles(eloop_t* loop) {
     return nidles;
 }
 
-static int __eloop_process_timers(struct heap* timers, uint64_t timeout) {
+static int __evloop_process_timers(struct heap* timers, uint64_t timeout) {
     int ntimers = 0;
-    etimer_t* timer = NULL;
+    evtimer_t* timer = NULL;
     while (timers->root) {
         // NOTE: root of minheap has min timeout.
         timer = TIMER_ENTRY(timers->root);
@@ -64,14 +63,14 @@ static int __eloop_process_timers(struct heap* timers, uint64_t timeout) {
         }
         if (timer->repeat == 0) {
             // NOTE: Just mark it as destroy and remove from heap.
-            // Real deletion occurs after eloop_process_pendings.
-            __etimer_del(timer);
+            // Real deletion occurs after evloop_process_pendings.
+            __evtimer_del(timer);
         } else {
             // NOTE: calc next timeout, then re-insert heap.
             heap_dequeue(timers);
             if (timer->event_type == EVENT_TYPE_TIMEOUT) {
                 while (timer->next_timeout <= timeout) {
-                    timer->next_timeout += (uint64_t)((etimeout_t*)timer)->timeout * 1000;
+                    timer->next_timeout += (uint64_t)((evtimeout_t*)timer)->timeout * 1000;
                 }
             } else if (timer->event_type == EVENT_TYPE_PERIOD) {
                 eperiod_t* period = (eperiod_t*)timer;
@@ -87,14 +86,14 @@ static int __eloop_process_timers(struct heap* timers, uint64_t timeout) {
     return ntimers;
 }
 
-static int eloop_process_timers(eloop_t* loop) {
-    uint64_t now = eloop_now_us(loop);
-    int ntimers = __eloop_process_timers(&loop->timers, loop->cur_hrtime);
-    ntimers += __eloop_process_timers(&loop->realtimers, now);
+static int evloop_process_timers(evloop_t* loop) {
+    uint64_t now = evloop_now_us(loop);
+    int ntimers = __evloop_process_timers(&loop->timers, loop->cur_hrtime);
+    ntimers += __evloop_process_timers(&loop->realtimers, now);
     return ntimers;
 }
 
-static int eloop_process_ios(eloop_t* loop, int timeout) {
+static int evloop_process_ios(evloop_t* loop, int timeout) {
     // That is to call IO multiplexing function such as select, poll, epoll, etc.
     int nevents = iowatcher_poll_events(loop, timeout);
     if (nevents < 0) {
@@ -103,7 +102,7 @@ static int eloop_process_ios(eloop_t* loop, int timeout) {
     return nevents < 0 ? 0 : nevents;
 }
 
-static int eloop_process_pendings(eloop_t* loop) {
+static int evloop_process_pendings(evloop_t* loop) {
     if (loop->npendings == 0)
         return 0;
 
@@ -134,70 +133,70 @@ static int eloop_process_pendings(eloop_t* loop) {
     return ncbs;
 }
 
-// eloop_process_ios -> eloop_process_timers -> eloop_process_idles -> eloop_process_pendings
-static int eloop_process_events(eloop_t* loop) {
+// evloop_process_ios -> evloop_process_timers -> evloop_process_idles -> evloop_process_pendings
+static int evloop_process_events(evloop_t* loop) {
     // ios -> timers -> idles
     int nios, ntimers, nidles;
     nios = ntimers = nidles = 0;
 
     // calc blocktime
-    int32_t blocktime_ms = ELOOP_MAX_BLOCK_TIME;
+    int32_t blocktime_ms = EVLOOP_MAX_BLOCK_TIME;
     if (loop->ntimers) {
-        eloop_update_time(loop);
+        evloop_update_time(loop);
         int64_t blocktime_us = blocktime_ms * 1000;
         if (loop->timers.root) {
             int64_t min_timeout = TIMER_ENTRY(loop->timers.root)->next_timeout - loop->cur_hrtime;
             blocktime_us = MIN(blocktime_us, min_timeout);
         }
         if (loop->realtimers.root) {
-            int64_t min_timeout = TIMER_ENTRY(loop->realtimers.root)->next_timeout - eloop_now_us(loop);
+            int64_t min_timeout = TIMER_ENTRY(loop->realtimers.root)->next_timeout - evloop_now_us(loop);
             blocktime_us = MIN(blocktime_us, min_timeout);
         }
         if (blocktime_us <= 0)
             goto process_timers;
         blocktime_ms = blocktime_us / 1000 + 1;
-        blocktime_ms = MIN(blocktime_ms, ELOOP_MAX_BLOCK_TIME);
+        blocktime_ms = MIN(blocktime_ms, EVLOOP_MAX_BLOCK_TIME);
     }
 
     if (loop->nios) {
-        nios = eloop_process_ios(loop, blocktime_ms);
+        nios = evloop_process_ios(loop, blocktime_ms);
     } else {
         ev_msleep(blocktime_ms);
     }
-    eloop_update_time(loop);
-    // wakeup by eloop_stop
-    if (loop->status == ELOOP_STATUS_STOP) {
+    evloop_update_time(loop);
+    // wakeup by evloop_stop
+    if (loop->status == EVLOOP_STATUS_STOP) {
         return 0;
     }
 
 process_timers:
     if (loop->ntimers) {
-        ntimers = eloop_process_timers(loop);
+        ntimers = evloop_process_timers(loop);
     }
 
     int npendings = loop->npendings;
     if (npendings == 0) {
         if (loop->nidles) {
-            nidles = eloop_process_idles(loop);
+            nidles = evloop_process_idles(loop);
         }
     }
-    int ncbs = eloop_process_pendings(loop);
+    int ncbs = evloop_process_pendings(loop);
     // printd("blocktime=%d nios=%d/%u ntimers=%d/%u nidles=%d/%u nactives=%d npendings=%d ncbs=%d\n",
     //         blocktime, nios, loop->nios, ntimers, loop->ntimers, nidles, loop->nidles,
     //         loop->nactives, npendings, ncbs);
     return ncbs;
 }
 
-static void eloop_stat_timer_cb(etimer_t* timer) {
-    eloop_t* loop = timer->loop;
+static void evloop_stat_timer_cb(evtimer_t* timer) {
+    evloop_t* loop = timer->loop;
     // hlog_set_level(LOG_LEVEL_DEBUG);
     log_debug("[loop] pid=%ld tid=%ld uptime=%lluus cnt=%llu nactives=%u nios=%u ntimers=%u nidles=%u", loop->pid,
               loop->tid, loop->cur_hrtime - loop->start_hrtime, loop->loop_cnt, loop->nactives, loop->nios, loop->ntimers,
               loop->nidles);
 }
 
-static void eventfd_read_cb(eio_t* io, void* buf, int readbytes) {
-    eloop_t* loop = io->loop;
+static void eventfd_read_cb(evio_t* io, void* buf, int readbytes) {
+    evloop_t* loop = io->loop;
     event_t* pev = NULL;
     event_t ev;
     uint64_t count = readbytes;
@@ -216,7 +215,7 @@ static void eventfd_read_cb(eio_t* io, void* buf, int readbytes) {
         }
         ev = *pev;
         event_queue_pop_front(&loop->custom_events);
-        // NOTE: unlock before cb, avoid deadlock if eloop_post_event called in cb.
+        // NOTE: unlock before cb, avoid deadlock if evloop_post_event called in cb.
         mutex_unlock(&loop->custom_events_mutex);
         if (ev.cb) {
             ev.cb(&ev);
@@ -227,7 +226,7 @@ unlock:
     mutex_unlock(&loop->custom_events_mutex);
 }
 
-static int eloop_create_eventfds(eloop_t* loop) {
+static int evloop_create_eventfds(evloop_t* loop) {
 #if defined(OS_UNIX) && HAVE_EVENTFD
     int efd = eventfd(0, 0);
     if (efd < 0) {
@@ -246,14 +245,14 @@ static int eloop_create_eventfds(eloop_t* loop) {
         return -1;
     }
 #endif
-    eio_t* io =
+    evio_t* io =
         hread(loop, loop->eventfds[EVENTFDS_READ_INDEX], loop->readbuf.base, loop->readbuf.len, eventfd_read_cb);
     io->priority = EVENT_HIGH_PRIORITY;
     ++loop->intern_nevents;
     return 0;
 }
 
-static void eloop_destroy_eventfds(eloop_t* loop) {
+static void evloop_destroy_eventfds(evloop_t* loop) {
 #if defined(OS_UNIX) && HAVE_EVENTFD
     // NOTE: eventfd has only one fd
     SAFE_CLOSE(loop->eventfds[0]);
@@ -261,14 +260,14 @@ static void eloop_destroy_eventfds(eloop_t* loop) {
     SAFE_CLOSE(loop->eventfds[0]);
     SAFE_CLOSE(loop->eventfds[1]);
 #else
-    // NOTE: Avoid duplication closesocket in eio_cleanup
+    // NOTE: Avoid duplication closesocket in evio_cleanup
     // SAFE_CLOSESOCKET(loop->eventfds[EVENTFDS_READ_INDEX]);
     SAFE_CLOSESOCKET(loop->eventfds[EVENTFDS_WRITE_INDEX]);
 #endif
     loop->eventfds[0] = loop->eventfds[1] = -1;
 }
 
-void eloop_post_event(eloop_t* loop, event_t* ev) {
+void evloop_post_event(evloop_t* loop, event_t* ev) {
     if (ev->loop == NULL) {
         ev->loop = loop;
     }
@@ -276,14 +275,14 @@ void eloop_post_event(eloop_t* loop, event_t* ev) {
         ev->event_type = EVENT_TYPE_CUSTOM;
     }
     if (ev->event_id == 0) {
-        ev->event_id = eloop_next_event_id();
+        ev->event_id = evloop_next_event_id();
     }
 
     int nwrite = 0;
     uint64_t count = 1;
     mutex_lock(&loop->custom_events_mutex);
     if (loop->eventfds[EVENTFDS_WRITE_INDEX] == -1) {
-        if (eloop_create_eventfds(loop) != 0) {
+        if (evloop_create_eventfds(loop) != 0) {
             goto unlock;
         }
     }
@@ -295,7 +294,7 @@ void eloop_post_event(eloop_t* loop, event_t* ev) {
     nwrite = send(loop->eventfds[EVENTFDS_WRITE_INDEX], "e", 1, 0);
 #endif
     if (nwrite <= 0) {
-        log_error("eloop_post_event failed!");
+        log_error("evloop_post_event failed!");
         goto unlock;
     }
     event_queue_push_back(&loop->custom_events, ev);
@@ -303,7 +302,7 @@ unlock:
     mutex_unlock(&loop->custom_events_mutex);
 }
 
-static void eloop_init(eloop_t* loop) {
+static void evloop_init(evloop_t* loop) {
 #ifdef OS_WIN
     WSAInit();
 #endif
@@ -312,7 +311,7 @@ static void eloop_init(eloop_t* loop) {
     signal(SIGPIPE, SIG_IGN);
 #endif
 
-    loop->status = ELOOP_STATUS_STOP;
+    loop->status = EVLOOP_STATUS_STOP;
     loop->pid = getpid();
     loop->tid = gettid();
 
@@ -327,7 +326,7 @@ static void eloop_init(eloop_t* loop) {
     io_array_init(&loop->ios, IO_ARRAY_INIT_SIZE);
 
     // readbuf
-    loop->readbuf.len = ELOOP_READ_BUFSIZE;
+    loop->readbuf.len = EVLOOP_READ_BUFSIZE;
     EV_ALLOC(loop->readbuf.base, loop->readbuf.len);
 
     // iowatcher
@@ -336,35 +335,35 @@ static void eloop_init(eloop_t* loop) {
     // custom_events
     mutex_init(&loop->custom_events_mutex);
     event_queue_init(&loop->custom_events, CUSTOM_EVENT_QUEUE_INIT_SIZE);
-    // NOTE: eloop_create_eventfds when eloop_post_event or eloop_run
+    // NOTE: evloop_create_eventfds when evloop_post_event or evloop_run
     loop->eventfds[0] = loop->eventfds[1] = -1;
 
-    // NOTE: init start_time here, because etimer_add use it.
+    // NOTE: init start_time here, because evtimer_add use it.
     loop->start_ms = gettimeofday_ms();
     loop->start_hrtime = loop->cur_hrtime = gethrtime_us();
 }
 
-static void eloop_cleanup(eloop_t* loop) {
+static void evloop_cleanup(evloop_t* loop) {
     // pendings
-    printd("cleanup pendings...\n");
+    printd("cleanup pendings...");
     for (int i = 0; i < EVENT_PRIORITY_SIZE; ++i) {
         loop->pendings[i] = NULL;
     }
 
     // ios
-    printd("cleanup ios...\n");
+    printd("cleanup ios...");
     for (int i = 0; i < loop->ios.maxsize; ++i) {
-        eio_t* io = loop->ios.ptr[i];
+        evio_t* io = loop->ios.ptr[i];
         if (io) {
-            eio_free(io);
+            evio_free(io);
         }
     }
     io_array_cleanup(&loop->ios);
 
     // idles
-    printd("cleanup idles...\n");
+    printd("cleanup idles...");
     struct list_node* node = loop->idles.next;
-    eidle_t* idle;
+    evidle_t* idle;
     while (node != &loop->idles) {
         idle = IDLE_ENTRY(node);
         node = node->next;
@@ -373,8 +372,8 @@ static void eloop_cleanup(eloop_t* loop) {
     list_init(&loop->idles);
 
     // timers
-    printd("cleanup timers...\n");
-    etimer_t* timer;
+    printd("cleanup timers...");
+    evtimer_t* timer;
     while (loop->timers.root) {
         timer = TIMER_ENTRY(loop->timers.root);
         heap_dequeue(&loop->timers);
@@ -400,155 +399,183 @@ static void eloop_cleanup(eloop_t* loop) {
 
     // custom_events
     mutex_lock(&loop->custom_events_mutex);
-    eloop_destroy_eventfds(loop);
+    evloop_destroy_eventfds(loop);
     event_queue_cleanup(&loop->custom_events);
     mutex_unlock(&loop->custom_events_mutex);
     mutex_destroy(&loop->custom_events_mutex);
 }
 
-eloop_t* eloop_new(int flags) {
-    eloop_t* loop;
+evloop_t* evloop_new(int flags) {
+    evloop_t* loop;
     EV_ALLOC_SIZEOF(loop);
-    eloop_init(loop);
+    evloop_init(loop);
     loop->flags |= flags;
     return loop;
 }
 
-void eloop_free(eloop_t** pp) {
+void evloop_free(evloop_t** pp) {
     if (pp && *pp) {
-        eloop_cleanup(*pp);
+        evloop_cleanup(*pp);
         EV_FREE(*pp);
         *pp = NULL;
     }
 }
 
-// while (loop->status) { eloop_process_events(loop); }
-int eloop_run(eloop_t* loop) {
+// while (loop->status) { evloop_process_events(loop); }
+int evloop_run(evloop_t* loop) {
     if (loop == NULL)
         return -1;
-    if (loop->status == ELOOP_STATUS_RUNNING)
+    if (loop->status == EVLOOP_STATUS_RUNNING)
         return -2;
 
-    loop->status = ELOOP_STATUS_RUNNING;
+    loop->status = EVLOOP_STATUS_RUNNING;
     loop->pid = getpid();
     loop->tid = gettid();
 
     if (loop->intern_nevents == 0) {
         mutex_lock(&loop->custom_events_mutex);
         if (loop->eventfds[EVENTFDS_WRITE_INDEX] == -1) {
-            eloop_create_eventfds(loop);
+            evloop_create_eventfds(loop);
         }
         mutex_unlock(&loop->custom_events_mutex);
 
 #ifdef DEBUG
-        etimer_add(loop, eloop_stat_timer_cb, ELOOP_STAT_TIMEOUT, INFINITE);
+        evtimer_add(loop, evloop_stat_timer_cb, EVLOOP_STAT_TIMEOUT, INFINITE);
         ++loop->intern_nevents;
 #endif
     }
 
-    while (loop->status != ELOOP_STATUS_STOP) {
-        if (loop->status == ELOOP_STATUS_PAUSE) {
-            ev_msleep(ELOOP_PAUSE_TIME);
-            eloop_update_time(loop);
+    while (loop->status != EVLOOP_STATUS_STOP) {
+        if (loop->status == EVLOOP_STATUS_PAUSE) {
+            ev_msleep(EVLOOP_PAUSE_TIME);
+            evloop_update_time(loop);
             continue;
         }
         ++loop->loop_cnt;
-        if ((loop->flags & ELOOP_FLAG_QUIT_WHEN_NO_ACTIVE_EVENTS) && loop->nactives <= loop->intern_nevents) {
+        if ((loop->flags & EVLOOP_FLAG_QUIT_WHEN_NO_ACTIVE_EVENTS) && loop->nactives <= loop->intern_nevents) {
             break;
         }
-        eloop_process_events(loop);
-        if (loop->flags & ELOOP_FLAG_RUN_ONCE) {
+        evloop_process_events(loop);
+        if (loop->flags & EVLOOP_FLAG_RUN_ONCE) {
             break;
         }
     }
 
-    loop->status = ELOOP_STATUS_STOP;
+    loop->status = EVLOOP_STATUS_STOP;
     loop->end_hrtime = gethrtime_us();
 
-    if (loop->flags & ELOOP_FLAG_AUTO_FREE) {
-        eloop_cleanup(loop);
+    if (loop->flags & EVLOOP_FLAG_AUTO_FREE) {
+        evloop_cleanup(loop);
         EV_FREE(loop);
     }
     return 0;
 }
 
-int eloop_wakeup(eloop_t* loop) {
+int evloop_wakeup(evloop_t* loop) {
     event_t ev;
     memset(&ev, 0, sizeof(ev));
-    eloop_post_event(loop, &ev);
+    evloop_post_event(loop, &ev);
     return 0;
 }
 
-int eloop_stop(eloop_t* loop) {
+int evloop_stop(evloop_t* loop) {
     if (gettid() != loop->tid) {
-        eloop_wakeup(loop);
+        evloop_wakeup(loop);
     }
-    loop->status = ELOOP_STATUS_STOP;
+    loop->status = EVLOOP_STATUS_STOP;
     return 0;
 }
 
-int eloop_pause(eloop_t* loop) {
-    if (loop->status == ELOOP_STATUS_RUNNING) {
-        loop->status = ELOOP_STATUS_PAUSE;
-    }
-    return 0;
-}
-
-int eloop_resume(eloop_t* loop) {
-    if (loop->status == ELOOP_STATUS_PAUSE) {
-        loop->status = ELOOP_STATUS_RUNNING;
+int evloop_pause(evloop_t* loop) {
+    if (loop->status == EVLOOP_STATUS_RUNNING) {
+        loop->status = EVLOOP_STATUS_PAUSE;
     }
     return 0;
 }
 
-eloop_status_e eloop_status(eloop_t* loop) { return loop->status; }
+int evloop_resume(evloop_t* loop) {
+    if (loop->status == EVLOOP_STATUS_PAUSE) {
+        loop->status = EVLOOP_STATUS_RUNNING;
+    }
+    return 0;
+}
 
-void eloop_update_time(eloop_t* loop) {
+evloop_status_e evloop_status(evloop_t* loop) {
+    return loop->status;
+}
+
+void evloop_update_time(evloop_t* loop) {
     loop->cur_hrtime = gethrtime_us();
-    if (eloop_now(loop) != time(NULL)) {
+    if (evloop_now(loop) != time(NULL)) {
         // systemtime changed, we adjust start_ms
         loop->start_ms = gettimeofday_ms() - (loop->cur_hrtime - loop->start_hrtime) / 1000;
     }
 }
 
-uint64_t eloop_now(eloop_t* loop) { return loop->start_ms / 1000 + (loop->cur_hrtime - loop->start_hrtime) / 1000000; }
+uint64_t evloop_now(evloop_t* loop) {
+    return loop->start_ms / 1000 + (loop->cur_hrtime - loop->start_hrtime) / 1000000;
+}
 
-uint64_t eloop_now_ms(eloop_t* loop) { return loop->start_ms + (loop->cur_hrtime - loop->start_hrtime) / 1000; }
+uint64_t evloop_now_ms(evloop_t* loop) {
+    return loop->start_ms + (loop->cur_hrtime - loop->start_hrtime) / 1000;
+}
 
-uint64_t eloop_now_us(eloop_t* loop) { return loop->start_ms * 1000 + (loop->cur_hrtime - loop->start_hrtime); }
+uint64_t evloop_now_us(evloop_t* loop) {
+    return loop->start_ms * 1000 + (loop->cur_hrtime - loop->start_hrtime);
+}
 
-uint64_t eloop_now_hrtime(eloop_t* loop) { return loop->cur_hrtime; }
+uint64_t evloop_now_hrtime(evloop_t* loop) {
+    return loop->cur_hrtime;
+}
 
-uint64_t eio_last_read_time(eio_t* io) {
-    eloop_t* loop = io->loop;
+uint64_t evio_last_read_time(evio_t* io) {
+    evloop_t* loop = io->loop;
     return loop->start_ms + (io->last_read_hrtime - loop->start_hrtime) / 1000;
 }
 
-uint64_t eio_last_write_time(eio_t* io) {
-    eloop_t* loop = io->loop;
+uint64_t evio_last_write_time(evio_t* io) {
+    evloop_t* loop = io->loop;
     return loop->start_ms + (io->last_write_hrtime - loop->start_hrtime) / 1000;
 }
 
-long eloop_pid(eloop_t* loop) { return loop->pid; }
+long evloop_pid(evloop_t* loop) {
+    return loop->pid;
+}
 
-long eloop_tid(eloop_t* loop) { return loop->tid; }
+long evloop_tid(evloop_t* loop) {
+    return loop->tid;
+}
 
-uint64_t eloop_count(eloop_t* loop) { return loop->loop_cnt; }
+uint64_t evloop_count(evloop_t* loop) {
+    return loop->loop_cnt;
+}
 
-uint32_t eloop_nios(eloop_t* loop) { return loop->nios; }
+uint32_t evloop_nios(evloop_t* loop) {
+    return loop->nios;
+}
 
-uint32_t eloop_ntimers(eloop_t* loop) { return loop->ntimers; }
+uint32_t evloop_ntimers(evloop_t* loop) {
+    return loop->ntimers;
+}
 
-uint32_t eloop_nidles(eloop_t* loop) { return loop->nidles; }
+uint32_t evloop_nidles(evloop_t* loop) {
+    return loop->nidles;
+}
 
-uint32_t eloop_nactives(eloop_t* loop) { return loop->nactives; }
+uint32_t evloop_nactives(evloop_t* loop) {
+    return loop->nactives;
+}
 
-void eloop_set_userdata(eloop_t* loop, void* userdata) { loop->userdata = userdata; }
+void evloop_set_userdata(evloop_t* loop, void* userdata) {
+    loop->userdata = userdata;
+}
 
-void* eloop_userdata(eloop_t* loop) { return loop->userdata; }
+void* evloop_userdata(evloop_t* loop) {
+    return loop->userdata;
+}
 
-eidle_t* eidle_add(eloop_t* loop, eidle_cb cb, uint32_t repeat) {
-    eidle_t* idle;
+evidle_t* evidle_add(evloop_t* loop, evidle_cb cb, uint32_t repeat) {
+    evidle_t* idle;
     EV_ALLOC_SIZEOF(idle);
     idle->event_type = EVENT_TYPE_IDLE;
     idle->priority = EVENT_LOWEST_PRIORITY;
@@ -559,7 +586,7 @@ eidle_t* eidle_add(eloop_t* loop, eidle_cb cb, uint32_t repeat) {
     return idle;
 }
 
-static void __eidle_del(eidle_t* idle) {
+static void __evidle_del(evidle_t* idle) {
     if (idle->destroy)
         return;
     idle->destroy = 1;
@@ -567,23 +594,23 @@ static void __eidle_del(eidle_t* idle) {
     idle->loop->nidles--;
 }
 
-void eidle_del(eidle_t* idle) {
+void evidle_del(evidle_t* idle) {
     if (!idle->active)
         return;
-    __eidle_del(idle);
+    __evidle_del(idle);
     EVENT_DEL(idle);
 }
 
-etimer_t* etimer_add(eloop_t* loop, etimer_cb cb, uint32_t timeout_ms, uint32_t repeat) {
+evtimer_t* evtimer_add(evloop_t* loop, evtimer_cb cb, uint32_t timeout_ms, uint32_t repeat) {
     if (timeout_ms == 0)
         return NULL;
-    etimeout_t* timer;
+    evtimeout_t* timer;
     EV_ALLOC_SIZEOF(timer);
     timer->event_type = EVENT_TYPE_TIMEOUT;
     timer->priority = EVENT_HIGHEST_PRIORITY;
     timer->repeat = repeat;
     timer->timeout = timeout_ms;
-    eloop_update_time(loop);
+    evloop_update_time(loop);
     timer->next_timeout = loop->cur_hrtime + (uint64_t)timeout_ms * 1000;
     // NOTE: Limit granularity to 100ms
     if (timeout_ms >= 1000 && timeout_ms % 100 == 0) {
@@ -592,15 +619,15 @@ etimer_t* etimer_add(eloop_t* loop, etimer_cb cb, uint32_t timeout_ms, uint32_t 
     heap_insert(&loop->timers, &timer->node);
     EVENT_ADD(loop, timer, cb);
     loop->ntimers++;
-    return (etimer_t*)timer;
+    return (evtimer_t*)timer;
 }
 
-void etimer_reset(etimer_t* timer, uint32_t timeout_ms) {
+void evtimer_reset(evtimer_t* timer, uint32_t timeout_ms) {
     if (timer->event_type != EVENT_TYPE_TIMEOUT) {
         return;
     }
-    eloop_t* loop = timer->loop;
-    etimeout_t* timeout = (etimeout_t*)timer;
+    evloop_t* loop = timer->loop;
+    evtimeout_t* timeout = (evtimeout_t*)timer;
     if (timer->destroy) {
         loop->ntimers++;
     } else {
@@ -621,8 +648,8 @@ void etimer_reset(etimer_t* timer, uint32_t timeout_ms) {
     EVENT_RESET(timer);
 }
 
-etimer_t* etimer_add_period(eloop_t* loop, etimer_cb cb, int8_t minute, int8_t hour, int8_t day, int8_t week,
-                            int8_t month, uint32_t repeat) {
+evtimer_t* evtimer_add_period(evloop_t* loop, evtimer_cb cb, int8_t minute, int8_t hour, int8_t day, int8_t week,
+                              int8_t month, uint32_t repeat) {
     if (minute > 59 || hour > 23 || day > 31 || week > 6 || month > 12) {
         return NULL;
     }
@@ -640,10 +667,10 @@ etimer_t* etimer_add_period(eloop_t* loop, etimer_cb cb, int8_t minute, int8_t h
     heap_insert(&loop->realtimers, &timer->node);
     EVENT_ADD(loop, timer, cb);
     loop->ntimers++;
-    return (etimer_t*)timer;
+    return (evtimer_t*)timer;
 }
 
-static void __etimer_del(etimer_t* timer) {
+static void __evtimer_del(evtimer_t* timer) {
     if (timer->destroy)
         return;
     if (timer->event_type == EVENT_TYPE_TIMEOUT) {
@@ -655,14 +682,14 @@ static void __etimer_del(etimer_t* timer) {
     timer->destroy = 1;
 }
 
-void etimer_del(etimer_t* timer) {
+void evtimer_del(evtimer_t* timer) {
     if (!timer->active)
         return;
-    __etimer_del(timer);
+    __evtimer_del(timer);
     EVENT_DEL(timer);
 }
 
-const char* eio_engine() {
+const char* evio_engine() {
 #ifdef EVENT_SELECT
     return "select";
 #elif defined(EVENT_POLL)
@@ -680,16 +707,16 @@ const char* eio_engine() {
 #endif
 }
 
-eio_t* eio_get(eloop_t* loop, int fd) {
+evio_t* evio_get(evloop_t* loop, int fd) {
     if (fd >= loop->ios.maxsize) {
         int newsize = ceil2e(fd);
         io_array_resize(&loop->ios, newsize > fd ? newsize : 2 * fd);
     }
 
-    eio_t* io = loop->ios.ptr[fd];
+    evio_t* io = loop->ios.ptr[fd];
     if (io == NULL) {
         EV_ALLOC_SIZEOF(io);
-        eio_init(io);
+        evio_init(io);
         io->event_type = EVENT_TYPE_IO;
         io->loop = loop;
         io->fd = fd;
@@ -697,20 +724,20 @@ eio_t* eio_get(eloop_t* loop, int fd) {
     }
 
     if (!io->ready) {
-        eio_ready(io);
+        evio_ready(io);
     }
 
     return io;
 }
 
-void eio_detach(eio_t* io) {
-    eloop_t* loop = io->loop;
+void evio_detach(evio_t* io) {
+    evloop_t* loop = io->loop;
     int fd = io->fd;
     assert(loop != NULL && fd < loop->ios.maxsize);
     loop->ios.ptr[fd] = NULL;
 }
 
-void eio_attach(eloop_t* loop, eio_t* io) {
+void evio_attach(evloop_t* loop, evio_t* io) {
     int fd = io->fd;
     if (fd >= loop->ios.maxsize) {
         int newsize = ceil2e(fd);
@@ -719,9 +746,9 @@ void eio_attach(eloop_t* loop, eio_t* io) {
 
     // NOTE: hio was not freed for reused when closed, but attached hio can't be reused,
     // so we need to free it if fd exists to avoid memory leak.
-    eio_t* preio = loop->ios.ptr[fd];
-    if (preio != NULL && preio != io) {
-        eio_free(preio);
+    evio_t* previo = loop->ios.ptr[fd];
+    if (previo != NULL && previo != io) {
+        evio_free(previo);
     }
 
     io->loop = loop;
@@ -731,24 +758,24 @@ void eio_attach(eloop_t* loop, eio_t* io) {
     loop->ios.ptr[fd] = io;
 }
 
-bool eio_exists(eloop_t* loop, int fd) {
+bool evio_exists(evloop_t* loop, int fd) {
     if (fd >= loop->ios.maxsize) {
         return false;
     }
     return loop->ios.ptr[fd] != NULL;
 }
 
-int eio_add(eio_t* io, eio_cb cb, int events) {
-    printd("eio_add fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
+int evio_add(evio_t* io, evio_cb cb, int events) {
+    printd("evio_add fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
 
-    eloop_t* loop = io->loop;
+    evloop_t* loop = io->loop;
     if (!io->active) {
         EVENT_ADD(loop, io, cb);
         loop->nios++;
     }
 
     if (!io->ready) {
-        eio_ready(io);
+        evio_ready(io);
     }
 
     if (cb) {
@@ -762,8 +789,8 @@ int eio_add(eio_t* io, eio_cb cb, int events) {
     return 0;
 }
 
-int eio_del(eio_t* io, int events) {
-    printd("eio_del fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
+int evio_del(evio_t* io, int events) {
+    printd("evio_del fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
 
     if (!io->active)
         return -1;
@@ -780,27 +807,27 @@ int eio_del(eio_t* io, int events) {
     return 0;
 }
 
-static void eio_close_event_cb(event_t* ev) {
-    eio_t* io = (eio_t*)ev->userdata;
+static void evio_close_event_cb(event_t* ev) {
+    evio_t* io = (evio_t*)ev->userdata;
     uint32_t id = (uintptr_t)ev->privdata;
     if (io->id != id)
         return;
-    eio_close(io);
+    evio_close(io);
 }
 
-int eio_close_async(eio_t* io) {
+int evio_close_async(evio_t* io) {
     event_t ev;
     memset(&ev, 0, sizeof(ev));
-    ev.cb = eio_close_event_cb;
+    ev.cb = evio_close_event_cb;
     ev.userdata = io;
     ev.privdata = (void*)(uintptr_t)io->id;
-    eloop_post_event(io->loop, &ev);
+    evloop_post_event(io->loop, &ev);
     return 0;
 }
 
 //------------------high-level apis-------------------------------------------
-eio_t* hread(eloop_t* loop, int fd, void* buf, size_t len, read_cb read_cb) {
-    eio_t* io = eio_get(loop, fd);
+evio_t* hread(evloop_t* loop, int fd, void* buf, size_t len, read_cb read_cb) {
+    evio_t* io = evio_get(loop, fd);
     assert(io != NULL);
     if (buf && len) {
         io->readbuf.base = (char*)buf;
@@ -809,50 +836,50 @@ eio_t* hread(eloop_t* loop, int fd, void* buf, size_t len, read_cb read_cb) {
     if (read_cb) {
         io->read_cb = read_cb;
     }
-    eio_read(io);
+    evio_read(io);
     return io;
 }
 
-eio_t* hwrite(eloop_t* loop, int fd, const void* buf, size_t len, write_cb write_cb) {
-    eio_t* io = eio_get(loop, fd);
+evio_t* hwrite(evloop_t* loop, int fd, const void* buf, size_t len, write_cb write_cb) {
+    evio_t* io = evio_get(loop, fd);
     assert(io != NULL);
     if (write_cb) {
         io->write_cb = write_cb;
     }
-    eio_write(io, buf, len);
+    evio_write(io, buf, len);
     return io;
 }
 
-eio_t* haccept(eloop_t* loop, int listenfd, accept_cb accept_cb) {
-    eio_t* io = eio_get(loop, listenfd);
+evio_t* haccept(evloop_t* loop, int listenfd, accept_cb accept_cb) {
+    evio_t* io = evio_get(loop, listenfd);
     assert(io != NULL);
     if (accept_cb) {
         io->accept_cb = accept_cb;
     }
-    if (eio_accept(io) != 0)
+    if (evio_accept(io) != 0)
         return NULL;
     return io;
 }
 
-eio_t* hconnect(eloop_t* loop, int connfd, connect_cb connect_cb) {
-    eio_t* io = eio_get(loop, connfd);
+evio_t* hconnect(evloop_t* loop, int connfd, connect_cb connect_cb) {
+    evio_t* io = evio_get(loop, connfd);
     assert(io != NULL);
     if (connect_cb) {
         io->connect_cb = connect_cb;
     }
-    if (eio_connect(io) != 0)
+    if (evio_connect(io) != 0)
         return NULL;
     return io;
 }
 
-void hclose(eloop_t* loop, int fd) {
-    eio_t* io = eio_get(loop, fd);
+void hclose(evloop_t* loop, int fd) {
+    evio_t* io = evio_get(loop, fd);
     assert(io != NULL);
-    eio_close(io);
+    evio_close(io);
 }
 
-eio_t* hrecv(eloop_t* loop, int connfd, void* buf, size_t len, read_cb read_cb) {
-    // eio_t* io = eio_get(loop, connfd);
+evio_t* hrecv(evloop_t* loop, int connfd, void* buf, size_t len, read_cb read_cb) {
+    // evio_t* io = evio_get(loop, connfd);
     // assert(io != NULL);
     // io->recv = 1;
     // if (io->io_type != EIO_TYPE_SSL) {
@@ -861,8 +888,8 @@ eio_t* hrecv(eloop_t* loop, int connfd, void* buf, size_t len, read_cb read_cb) 
     return hread(loop, connfd, buf, len, read_cb);
 }
 
-eio_t* hsend(eloop_t* loop, int connfd, const void* buf, size_t len, write_cb write_cb) {
-    // eio_t* io = eio_get(loop, connfd);
+evio_t* hsend(evloop_t* loop, int connfd, const void* buf, size_t len, write_cb write_cb) {
+    // evio_t* io = evio_get(loop, connfd);
     // assert(io != NULL);
     // io->send = 1;
     // if (io->io_type != EIO_TYPE_SSL) {
@@ -871,16 +898,16 @@ eio_t* hsend(eloop_t* loop, int connfd, const void* buf, size_t len, write_cb wr
     return hwrite(loop, connfd, buf, len, write_cb);
 }
 
-eio_t* hrecvfrom(eloop_t* loop, int sockfd, void* buf, size_t len, read_cb read_cb) {
-    // eio_t* io = eio_get(loop, sockfd);
+evio_t* hrecvfrom(evloop_t* loop, int sockfd, void* buf, size_t len, read_cb read_cb) {
+    // evio_t* io = evio_get(loop, sockfd);
     // assert(io != NULL);
     // io->recvfrom = 1;
     // io->io_type = EIO_TYPE_UDP;
     return hread(loop, sockfd, buf, len, read_cb);
 }
 
-eio_t* hsendto(eloop_t* loop, int sockfd, const void* buf, size_t len, write_cb write_cb) {
-    // eio_t* io = eio_get(loop, sockfd);
+evio_t* hsendto(evloop_t* loop, int sockfd, const void* buf, size_t len, write_cb write_cb) {
+    // evio_t* io = evio_get(loop, sockfd);
     // assert(io != NULL);
     // io->sendto = 1;
     // io->io_type = EIO_TYPE_UDP;
@@ -888,7 +915,7 @@ eio_t* hsendto(eloop_t* loop, int sockfd, const void* buf, size_t len, write_cb 
 }
 
 //-----------------top-level apis---------------------------------------------
-eio_t* eio_create_socket(eloop_t* loop, const char* host, int port, eio_type_e type, eio_side_e side) {
+evio_t* evio_create_socket(evloop_t* loop, const char* host, int port, evio_type_e type, evio_side_e side) {
     int sock_type = type & EIO_TYPE_SOCK_STREAM  ? SOCK_STREAM
                     : type & EIO_TYPE_SOCK_DGRAM ? SOCK_DGRAM
                     : type & EIO_TYPE_SOCK_RAW   ? SOCK_RAW
@@ -905,7 +932,7 @@ eio_t* eio_create_socket(eloop_t* loop, const char* host, int port, eio_type_e t
     }
 #endif
     if (port >= 0) {
-        ret = sockaddr_set_ipport(&addr, host, port);
+        ret = sockunion_set_ipport(&addr, host, port);
     }
     if (ret != 0) {
         // fprintf(stderr, "unknown host: %s\n", host);
@@ -916,13 +943,13 @@ eio_t* eio_create_socket(eloop_t* loop, const char* host, int port, eio_type_e t
         perror("socket");
         return NULL;
     }
-    eio_t* io = NULL;
+    evio_t* io = NULL;
     if (side == EIO_SERVER_SIDE) {
 #ifdef OS_UNIX
         so_reuseaddr(sockfd, 1);
         // so_reuseport(sockfd, 1);
 #endif
-        if (bind(sockfd, &addr.sa, sockaddr_len(&addr)) < 0) {
+        if (bind(sockfd, &addr.sin, sockunion_get_addrlen(&addr)) < 0) {
             perror("bind");
             closesocket(sockfd);
             return NULL;
@@ -935,64 +962,64 @@ eio_t* eio_create_socket(eloop_t* loop, const char* host, int port, eio_type_e t
             }
         }
     }
-    io = eio_get(loop, sockfd);
+    io = evio_get(loop, sockfd);
     assert(io != NULL);
     io->io_type = type;
     if (side == EIO_SERVER_SIDE) {
-        eio_set_localaddr(io, &addr.sa, sockaddr_len(&addr));
+        evio_set_localaddr(io, &addr.sa, sockunion_get_addrlen(&addr));
         io->priority = EVENT_HIGH_PRIORITY;
     } else {
-        eio_set_peeraddr(io, &addr.sa, sockaddr_len(&addr));
+        evio_set_peeraddr(io, &addr.sa, sockunion_get_addrlen(&addr));
     }
     return io;
 }
 
-eio_t* eloop_create_tcp_server(eloop_t* loop, const char* host, int port, accept_cb accept_cb) {
-    eio_t* io = eio_create_socket(loop, host, port, EIO_TYPE_TCP, EIO_SERVER_SIDE);
+evio_t* evloop_create_tcp_server(evloop_t* loop, const char* host, int port, accept_cb accept_cb) {
+    evio_t* io = evio_create_socket(loop, host, port, EIO_TYPE_TCP, EIO_SERVER_SIDE);
     if (io == NULL)
         return NULL;
-    eio_setcb_accept(io, accept_cb);
-    if (eio_accept(io) != 0)
+    evio_setcb_accept(io, accept_cb);
+    if (evio_accept(io) != 0)
         return NULL;
     return io;
 }
 
-eio_t* eloop_create_tcp_client(eloop_t* loop, const char* host, int port, connect_cb connect_cb, close_cb close_cb) {
-    eio_t* io = eio_create_socket(loop, host, port, EIO_TYPE_TCP, EIO_CLIENT_SIDE);
+evio_t* evloop_create_tcp_client(evloop_t* loop, const char* host, int port, connect_cb connect_cb, close_cb close_cb) {
+    evio_t* io = evio_create_socket(loop, host, port, EIO_TYPE_TCP, EIO_CLIENT_SIDE);
     if (io == NULL)
         return NULL;
-    eio_setcb_connect(io, connect_cb);
-    eio_setcb_close(io, close_cb);
-    if (eio_connect(io) != 0)
+    evio_setcb_connect(io, connect_cb);
+    evio_setcb_close(io, close_cb);
+    if (evio_connect(io) != 0)
         return NULL;
     return io;
 }
 
-eio_t* eloop_create_ssl_server(eloop_t* loop, const char* host, int port, accept_cb accept_cb) {
-    eio_t* io = eio_create_socket(loop, host, port, EIO_TYPE_SSL, EIO_SERVER_SIDE);
+evio_t* evloop_create_ssl_server(evloop_t* loop, const char* host, int port, accept_cb accept_cb) {
+    evio_t* io = evio_create_socket(loop, host, port, EIO_TYPE_SSL, EIO_SERVER_SIDE);
     if (io == NULL)
         return NULL;
-    eio_setcb_accept(io, accept_cb);
-    if (eio_accept(io) != 0)
+    evio_setcb_accept(io, accept_cb);
+    if (evio_accept(io) != 0)
         return NULL;
     return io;
 }
 
-eio_t* eloop_create_ssl_client(eloop_t* loop, const char* host, int port, connect_cb connect_cb, close_cb close_cb) {
-    eio_t* io = eio_create_socket(loop, host, port, EIO_TYPE_SSL, EIO_CLIENT_SIDE);
+evio_t* evloop_create_ssl_client(evloop_t* loop, const char* host, int port, connect_cb connect_cb, close_cb close_cb) {
+    evio_t* io = evio_create_socket(loop, host, port, EIO_TYPE_SSL, EIO_CLIENT_SIDE);
     if (io == NULL)
         return NULL;
-    eio_setcb_connect(io, connect_cb);
-    eio_setcb_close(io, close_cb);
-    if (eio_connect(io) != 0)
+    evio_setcb_connect(io, connect_cb);
+    evio_setcb_close(io, close_cb);
+    if (evio_connect(io) != 0)
         return NULL;
     return io;
 }
 
-eio_t* eloop_create_udp_server(eloop_t* loop, const char* host, int port) {
-    return eio_create_socket(loop, host, port, EIO_TYPE_UDP, EIO_SERVER_SIDE);
+evio_t* evloop_create_udp_server(evloop_t* loop, const char* host, int port) {
+    return evio_create_socket(loop, host, port, EIO_TYPE_UDP, EIO_SERVER_SIDE);
 }
 
-eio_t* eloop_create_udp_client(eloop_t* loop, const char* host, int port) {
-    return eio_create_socket(loop, host, port, EIO_TYPE_UDP, EIO_CLIENT_SIDE);
+evio_t* evloop_create_udp_client(evloop_t* loop, const char* host, int port) {
+    return evio_create_socket(loop, host, port, EIO_TYPE_UDP, EIO_CLIENT_SIDE);
 }

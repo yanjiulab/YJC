@@ -11,21 +11,19 @@
  * 1. 退出时的处理，有卡顿。涉及到多线程和事件循环对信号的处理流程优化。
  */
 
-
-
 #include "base.h"
 #include "args.h"
 #include "iniparser.h"
 #include "log.h"
-#include "sev.h"
+#include "eventloop.h"
+#include "event.h"
 #include "sniffer.h"
 #include "thread.h"
 #include "socket.h"
 #include "sockopt.h"
 #include "linenoise.h"
 #include "cmd.h"
-
-// #include <net/if.h>
+#include "sockunion.h"
 
 #define LIBCMDF_IMPL
 #include "cmdf.h"
@@ -49,7 +47,7 @@ static void sig_int() {
 }
 
 static CMDF_RETURN do_hello(cmdf_arglist* arglist) {
-    printf("\nHello, world!\n");
+    printd("\nHello, world!\n");
 
     return CMDF_OK;
 }
@@ -96,31 +94,28 @@ THREAD_ROUTINE(frontend_cmdf) {
 }
 
 static void on_idle(evidle_t* idle) {
-    printf("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld\n", LLU(event_id(idle)), event_priority(idle),
+    printd("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld\n", LLU(event_id(idle)), event_priority(idle),
            (long)(intptr_t)(event_userdata(idle)));
 }
 
 static void on_timer(evtimer_t* timer) {
     evloop_t* loop = event_loop(timer);
-    // printf("on_timer: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
+    // printd("on_timer: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
     //        event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
     //        LLU(evloop_now_hrtime(loop)));
     // linenoiseHide(loop->userdata);
-    linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
+    // linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
     // log_info("Hello World %d", event_userdata(timer));
-    // log_info("Hello World %d", event_userdata(timer));
-    
-    printf("Hello" "\r\n");
-    printf("Hello" "\r\n");
+    log_info("Hello World %d", event_userdata(timer));
 
-    linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
-    // printf("Hello World %d\n", event_userdata(timer));
+    // linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
+    // printd("Hello World %d\n", event_userdata(timer));
     // linenoiseShow(loop->userdata);
 }
 
 static void on_period(evtimer_t* timer) {
     evloop_t* loop = event_loop(timer);
-    printf("on_period: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
+    printd("on_period: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
            event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
            LLU(evloop_now_hrtime(loop)));
 }
@@ -135,38 +130,95 @@ static void on_cmd(evio_t* io) {
         if (line == NULL) exit(0);
         // process
         cmd_command_process(ctx, line);
-        // 
+        //
         // free(line);
         // linenoiseEditStart(&ctx->ls, ctx->cmd_stdin, ctx->cmd_stdout,
         linenoiseEditStart(&ctx->ls, -1, -1,
                            ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
     } else {
-        // printf("more\n", line);
+        // printd("more\n", line);
     }
 }
 
-static void on_accept(evio_t* io) {
-    struct sockaddr_in cliaddr;
-    socklen_t clilen = sizeof(cliaddr);
-    int conn;
-    conn = accept(io->fd, (struct sockaddr*)&cliaddr, &clilen);
-    log_info("client [%s:%d] connected console.", inet_ntoa(cliaddr.sin_addr),
-             ntohs(((struct sockaddr_in*)&cliaddr)->sin_port));
-
-    cmdf_tid = thread_create(backend_cmdf, conn);
+static void on_close(evio_t* io) {
+    printd("on_close fd=%d error=%d", evio_fd(io), evio_error(io));
 }
 
-static void on_udp(evio_t* io) {
-    char recvline[1024] = {0};
-    struct sockaddr_in cliaddr;
-    socklen_t addrlen = sizeof(cliaddr);
+static void on_recv(evio_t* io, void* buf, int readbytes) {
+    printd("on_recv fd=%d readbytes=%d", evio_fd(io), readbytes);
+    char localaddrstr[SU_ADDRSTRLEN] = {0};
+    char peeraddrstr[SU_ADDRSTRLEN] = {0};
+    printd("[%s] <=> [%s]",
+           SU_ADDRSTR(evio_localaddr(io), localaddrstr),
+           SU_ADDRSTR(evio_peeraddr(io), peeraddrstr));
+    printd("< %.*s", readbytes, (char*)buf);
+    // echo
+    printd("> %.*s", readbytes, (char*)buf);
+    evio_write(io, buf, readbytes);
 
-    int n = recvfrom(io->fd, recvline, 1024, 0, (struct sockaddr*)&cliaddr, &addrlen);
+#if TEST_READ_STOP
+    evio_read_stop(io);
+#elif TEST_READ_ONCE
+    evio_read_once(io);
+#elif TEST_READLINE
+    evio_readline(io);
+#elif TEST_READSTRING
+    evio_readstring(io);
+#elif TEST_READBYTES
+    evio_readbytes(io, TEST_READBYTES);
+#endif
+}
 
-    printf("client [%s:%d] recv %d bytes:\n", inet_ntoa(cliaddr.sin_addr),
-           ntohs(((struct sockaddr_in*)&cliaddr)->sin_port), n);
-    print_data(recvline, n);
-    // int s = sendto(io->fd, recvline, n, 0, (struct sockaddr*)&cliaddr, sizeof(cliaddr));
+static void on_accept(evio_t* io) {
+    // struct sockaddr_in cliaddr;
+    // socklen_t clilen = sizeof(cliaddr);
+    // int conn;
+    // conn = accept(io->fd, (struct sockaddr*)&cliaddr, &clilen);
+    // log_info("client [%s:%d] connected console.", inet_ntoa(cliaddr.sin_addr),
+    //          ntohs(((struct sockaddr_in*)&cliaddr)->sin_port));
+
+    // cmdf_tid = thread_create(backend_cmdf, conn);
+
+    printd("on_accept connfd=%d\n", evio_fd(io));
+    char localaddrstr[SU_ADDRSTRLEN] = {0};
+    char peeraddrstr[SU_ADDRSTRLEN] = {0};
+    printd("accept connfd=%d [%s] <= [%s]", evio_fd(io),
+           SU_ADDRSTR(evio_localaddr(io), localaddrstr),
+           SU_ADDRSTR(evio_peeraddr(io), peeraddrstr));
+
+    evio_setcb_close(io, on_close);
+    evio_setcb_read(io, on_recv);
+
+#if TEST_UNPACK
+    evio_set_unpack(io, &unpack_setting);
+#endif
+
+#if TEST_READ_ONCE
+    evio_read_once(io);
+#elif TEST_READLINE
+    evio_readline(io);
+#elif TEST_READSTRING
+    evio_readstring(io);
+#elif TEST_READBYTES
+    evio_readbytes(io, TEST_READBYTES);
+#else
+    evio_read_start(io);
+#endif
+}
+
+static void on_recvfrom(evio_t* io, void* buf, int readbytes) {
+    printd("on_recvfrom fd=%d readbytes=%d", evio_fd(io), readbytes);
+    char localaddrstr[SU_ADDRSTRLEN] = {0};
+    char peeraddrstr[SU_ADDRSTRLEN] = {0};
+    printd("[%s] <=> [%s]",
+           SU_ADDRSTR(evio_localaddr(io), localaddrstr),
+           SU_ADDRSTR(evio_peeraddr(io), peeraddrstr));
+
+    char* str = (char*)buf;
+    printd("< %.*s", readbytes, str);
+    // echo
+    printd("> %.*s", readbytes, str);
+    evio_write(io, buf, readbytes);
 }
 
 static void on_sniffer(evio_t* io) {
@@ -178,16 +230,16 @@ static void on_sniffer(evio_t* io) {
 
     result = parse_packet(sniff->packet, sniff->packet_len, PACKET_LAYER_2_ETHERNET, &error);
     if (result != PACKET_OK) {
-        printf("%s", error);
+        printd("%s", error);
     }
 
     result = packet_stringify(sniff->packet, DUMP_FULL, &dump, &error);
     if (result != STATUS_OK) {
-        printf("%s", error);
+        printd("%s", error);
     }
 
     print_line('-', 0);
-    printf("%s", dump);
+    printd("%s", dump);
 
     return 0;
 }
@@ -226,7 +278,7 @@ int main(int argc, char* argv[]) {
     /* Parse ini config file */
     dictionary* ini = iniparser_load("config.ini");
     iniparser_dump(ini, stderr);
-    // int i = iniparser_getint(ini, "sec:intkey", 0);
+    int i = iniparser_getint(ini, "sec:intkey", 0);
     // char *s = iniparser_getstring(ini, "sec:strkey", 0);
     // bool b = iniparser_getboolean(ini, "sec:boolkey", false);
     iniparser_freedict(ini);
@@ -279,44 +331,38 @@ int main(int argc, char* argv[]) {
     loop = evloop_new(EVLOOP_FLAG_AUTO_FREE);
 
     /* Add idle event */
-    // for (int i = -2; i <= 2; ++i) {
-    //     evidle_t* idle = evidle_add(loop, on_idle, 1); // repeate times: 1
-    //     event_set_priority(idle, i);
-    //     event_set_userdata(idle, (int)(i * i));
-    // }
+    for (int i = -2; i <= 2; ++i) {
+        evidle_t* idle = evidle_add(loop, on_idle, 1); // repeate times: 1
+        event_set_priority(idle, i);
+        event_set_userdata(idle, (int)(i * i));
+    }
 
     /* Add timer event */
-    evtimer_t* timer;
-    // Add timer timeout
-    for (int i = 1; i <= 1; ++i) {
-        timer = evtimer_add(loop, on_timer, 1000, 0);
-        event_set_userdata(timer, (void*)(intptr_t)i);
-    }
-    // Add timer period (every minute)
-    timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
+    // evtimer_t* timer;
+    // // Add timer timeout
+    // for (int i = 1; i <= 1; ++i) {
+    //     timer = evtimer_add(loop, on_timer, 1000, 0);
+    //     event_set_userdata(timer, (void*)(intptr_t)i);
+    // }
+    // // Add timer period (every minute)
+    // timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
 
-    // UDP server
-    int udp_fd = udp_server(ANYADDR, "1234", NULL);
-    ev_read(loop, udp_fd, on_udp);
+    // UDP echo server
+    evio_t* io = evloop_create_udp_server(loop, "0.0.0.0", 1234);
+    evio_setcb_read(io, on_recvfrom);
+    evio_read(io);
+
+    // TCP echo server
+    evio_t* listenio = evloop_create_tcp_server(loop, "0.0.0.0", 1234, on_accept);
+    printd("listenfd=%d", evio_fd(listenio));
+
+    // char buf[64];
+    // hread(loop, udp_fd, buf, sizeof(buf), on_recvfrom);
     // struct in_addr group;
     // struct in_addr ifaddr;
     // group.s_addr = htonl(0xe1000009);
     // so_bindtodev(udp_fd, "ens38");
     // so_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
-
-    // struct sockaddr_in servaddr;
-    // servaddr.sin_family = AF_INET;
-    // servaddr.sin_addr.s_addr = inet_addr("192.168.0.114");
-    // // servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    // servaddr.sin_port = htons(8866);
-
-    // int totlen = msglen + scrp_hdr_len;
-
-    // if (sendto(udp_fd, sendbuf, totlen, 0, (struct sockaddr*)&servaddr, sizeof(servaddr)) != (ssize_t)totlen) {
-    //     log_warn("SEND %s message error (%s)", scrp_kind(type, subtype), strerror(errno));
-    //     return -1;
-
-    // evio_add(loop, udp_fd, on_udp);
 
     // Sniffer
     // sniff = sniffer_new("ens33");
@@ -341,7 +387,8 @@ int main(int argc, char* argv[]) {
     cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, -1, -1, NULL);
     // cmd_set_inout(ctx, udp_fd, udp_fd);
     evloop_set_userdata(loop, ctx);
-    cmdio = ev_read(loop, ctx->ls.ifd, on_cmd);
+    char buff[64];
+    cmdio = hread(loop, ctx->ls.ifd, buff, sizeof(buff), on_cmd);
     event_set_userdata(cmdio, ctx);
 
     /* Run event loop */

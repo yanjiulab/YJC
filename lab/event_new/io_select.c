@@ -1,10 +1,8 @@
 #include "iowatcher.h"
 
-#ifdef EVENT_SELECT
-#include "defs.h"
-#include "event.h"
-#include "platform.h"
+#define EVENT_SELECT 0
 
+#ifdef EVENT_SELECT
 typedef struct select_ctx_s {
     int max_fd;
     fd_set readfds;
@@ -13,7 +11,7 @@ typedef struct select_ctx_s {
     int nwrite;
 } select_ctx_t;
 
-int iowatcher_init(eloop_t* loop) {
+int iowatcher_init(evloop_t* loop) {
     if (loop->iowatcher)
         return 0;
     select_ctx_t* select_ctx;
@@ -27,12 +25,12 @@ int iowatcher_init(eloop_t* loop) {
     return 0;
 }
 
-int iowatcher_cleanup(eloop_t* loop) {
+int iowatcher_cleanup(evloop_t* loop) {
     EV_FREE(loop->iowatcher);
     return 0;
 }
 
-int iowatcher_add_event(eloop_t* loop, int fd, int events) {
+int iowatcher_add_event(evloop_t* loop, int fd, int events) {
     if (loop->iowatcher == NULL) {
         iowatcher_init(loop);
     }
@@ -55,7 +53,7 @@ int iowatcher_add_event(eloop_t* loop, int fd, int events) {
     return 0;
 }
 
-int iowatcher_del_event(eloop_t* loop, int fd, int events) {
+int iowatcher_del_event(evloop_t* loop, int fd, int events) {
     select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
     if (select_ctx == NULL)
         return 0;
@@ -77,8 +75,8 @@ int iowatcher_del_event(eloop_t* loop, int fd, int events) {
     return 0;
 }
 
-static int find_max_active_fd(eloop_t* loop) {
-    eio_t* io = NULL;
+static int find_max_active_fd(evloop_t* loop) {
+    evio_t* io = NULL;
     for (int i = loop->ios.maxsize - 1; i >= 0; --i) {
         io = loop->ios.ptr[i];
         if (io && io->active && io->events)
@@ -87,7 +85,7 @@ static int find_max_active_fd(eloop_t* loop) {
     return -1;
 }
 
-static int remove_bad_fds(eloop_t* loop) {
+static int remove_bad_fds(evloop_t* loop) {
     select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
     if (select_ctx == NULL)
         return 0;
@@ -100,9 +98,9 @@ static int remove_bad_fds(eloop_t* loop) {
             optlen = sizeof(int);
             if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*)&error, &optlen) < 0 || error != 0) {
                 ++badfds;
-                eio_t* io = loop->ios.ptr[fd];
+                evio_t* io = loop->ios.ptr[fd];
                 if (io) {
-                    eio_del(io, EV_RDWR);
+                    evio_del(io, EV_RDWR);
                 }
             }
         }
@@ -110,7 +108,7 @@ static int remove_bad_fds(eloop_t* loop) {
     return badfds;
 }
 
-int iowatcher_poll_events(eloop_t* loop, int timeout) {
+int iowatcher_poll_events(evloop_t* loop, int timeout) {
     select_ctx_t* select_ctx = (select_ctx_t*)loop->iowatcher;
     if (select_ctx == NULL)
         return 0;
@@ -133,19 +131,20 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
     }
     int nselect = select(max_fd + 1, &readfds, &writefds, NULL, tp);
     if (nselect < 0) {
-#ifdef OS_WIN
-        if (WSAGetLastError() == WSAENOTSOCK) {
-#else
         if (errno == EBADF) {
             perror("select");
-#endif
             remove_bad_fds(loop);
             return -EBADF;
         }
         return nselect;
     }
-    if (nselect == 0)
+    if (nselect == 0) {
+        // linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
+        // printf("Fuck World\n");
+        // linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
         return 0;
+    }
+
     int nevents = 0;
     int revents = 0;
     for (int fd = 0; fd <= max_fd; ++fd) {
@@ -159,7 +158,7 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
             revents |= EV_WRITE;
         }
         if (revents) {
-            eio_t* io = loop->ios.ptr[fd];
+            evio_t* io = loop->ios.ptr[fd];
             if (io) {
                 io->revents = revents;
                 EVENT_PENDING(io);
@@ -170,4 +169,4 @@ int iowatcher_poll_events(eloop_t* loop, int timeout) {
     }
     return nevents;
 }
-#endif
+#endif // EVENT_SELECT

@@ -28,15 +28,19 @@ union sockunion {
 #endif
 };
 
+typedef union sockunion sockaddr_u; // for ev
+
 enum connect_result { connect_error,
                       connect_success,
                       connect_in_progress };
 
 /* Default address family. */
-#define AF_INET_UNION AF_INET6
+#define AF_INET_UNION         AF_INET6
 
 /* Sockunion address string length.  Same as INET6_ADDRSTRLEN. */
-#define SU_ADDRSTRLEN 46
+#define SU_ADDRSTRLEN         46
+#define SU_ADDRSTR(addr, buf) sockunion2str((sockaddr_u*)addr, buf, sizeof(buf))
+#define SU_ADDRLEN(addr)      sockunion_get_addrlen((sockaddr_u*)addr)
 
 /* Macro to set link local index to the IPv6 address.  For KAME IPv6
    stack. */
@@ -69,6 +73,10 @@ extern size_t sockunion_get_addrlen(const union sockunion*);
 extern const uint8_t* sockunion_get_addr(const union sockunion*);
 extern void sockunion_set(union sockunion*, int family, const uint8_t* addr,
                           size_t bytes);
+
+int sockunion_set_ip(union sockunion* addr, const char* host);
+void sockunion_set_port(union sockunion* addr, int port);
+int sockunion_set_ipport(union sockunion* addr, const char* host, int port);
 
 extern union sockunion* sockunion_str2su(const char* str);
 extern int sockunion_accept(int sock, union sockunion*);

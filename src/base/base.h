@@ -35,14 +35,14 @@ EXPORT void ev_free(void* ptr);
 EXPORT long ev_alloc_cnt();
 EXPORT long ev_free_cnt();
 static inline void ev_memcheck(void) {
-    printf("Memcheck => alloc:%ld free:%ld\n", ev_alloc_cnt(), ev_free_cnt());
+    printd("Memcheck => alloc:%ld free:%ld", ev_alloc_cnt(), ev_free_cnt());
 }
 #define MEMCHECK atexit(ev_memcheck);
 
 #define EV_ALLOC(ptr, size)                                                                                \
     do {                                                                                                   \
         *(void**)&(ptr) = ev_zalloc(size);                                                                 \
-        printd("alloc(%p, size=%llu)\tat [%s:%d:%s]\n", ptr, (unsigned long long)size, __FILE__, __LINE__, \
+        printd("alloc(%p, size=%llu)\tat [%s:%d:%s]", ptr, (unsigned long long)size, __FILE__, __LINE__, \
                __FUNCTION__);                                                                              \
     } while (0)
 
@@ -52,7 +52,7 @@ static inline void ev_memcheck(void) {
     do {                                                                                  \
         if (ptr) {                                                                        \
             ev_free(ptr);                                                                 \
-            printd("free( %p )\tat [%s:%d:%s]\n", ptr, __FILE__, __LINE__, __FUNCTION__); \
+            printd("free( %p )\tat [%s:%d:%s]", ptr, __FILE__, __LINE__, __FUNCTION__); \
             ptr = NULL;                                                                   \
         }                                                                                 \
     } while (0)

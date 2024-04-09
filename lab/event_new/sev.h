@@ -12,15 +12,84 @@
 #include "base.h" // for container of
 #include "list.h"
 #include "array.h"
+#include "queue.h"
+#include "sockunion.h"
+#include "socket.h"
 
-#define NHANDLERS          16
-#define TIMER_SECOND_MICRO 1000000L
+#define NHANDLERS                16
+#define TIMER_SECOND_MICRO       1000000L
 
-#define IO_ARRAY_INIT_SIZE 1024
-#define SEV_SELECT         0
-#define SEV_POLL           1
-#define SEV_EPOLL          2
+#define IO_ARRAY_INIT_SIZE       1024
+#define SEV_SELECT               0
+#define SEV_POLL                 1
+#define SEV_EPOLL                2
 
+#define EVIO_READ_ONCE           0x1
+#define EVIO_READ_UNTIL_LENGTH   0x2
+#define EVIO_READ_UNTIL_DELIM    0x4
+
+#define EVLOOP_READ_BUFSIZE      8192       // 8K
+#define READ_BUFSIZE_HIGH_WATER  65536      // 64K
+#define WRITE_BUFSIZE_HIGH_WATER (1U << 23) // 8M
+#define MAX_READ_BUFSIZE         (1U << 24) // 16M
+#define MAX_WRITE_BUFSIZE        (1U << 24) // 16M
+
+// iobuf
+typedef struct buf_s {
+    char* base;
+    size_t len;
+} buf_t;
+
+typedef struct offset_buf_s {
+    char* base;
+    size_t len;
+    size_t offset;
+} offset_buf_t;
+
+typedef struct fifo_buf_s {
+    char* base;
+    size_t len;
+    size_t head;
+    size_t tail;
+} fifo_buf_t;
+
+typedef struct fifo_buf_s evio_readbuf_t;
+
+// evio
+typedef enum {
+    EVIO_TYPE_UNKNOWN = 0,
+    EVIO_TYPE_STDIN = 0x00000001,
+    EVIO_TYPE_STDOUT = 0x00000002,
+    EVIO_TYPE_STDERR = 0x00000004,
+    EVIO_TYPE_STDIO = 0x0000000F,
+
+    EVIO_TYPE_FILE = 0x00000010,
+
+    EVIO_TYPE_IP = 0x00000100,
+    EVIO_TYPE_SOCK_RAW = 0x00000F00,
+
+    EVIO_TYPE_UDP = 0x00001000,
+    EVIO_TYPE_KCP = 0x00002000,
+    EVIO_TYPE_DTLS = 0x00010000,
+    EVIO_TYPE_SOCK_DGRAM = 0x000FF000,
+
+    EVIO_TYPE_TCP = 0x00100000,
+    EVIO_TYPE_SSL = 0x01000000,
+    EVIO_TYPE_TLS = EVIO_TYPE_SSL,
+    EVIO_TYPE_SOCK_STREAM = 0x0FF00000,
+
+    EVIO_TYPE_SOCKET = 0x0FFFFF00,
+} evio_type_e;
+
+typedef enum {
+    EVIO_SERVER_SIDE = 0,
+    EVIO_CLIENT_SIDE = 1,
+} evio_side_e;
+
+#define EVIO_DEFAULT_CONNECT_TIMEOUT    10000 // ms
+#define EVIO_DEFAULT_CLOSE_TIMEOUT      60000 // ms
+#define EVIO_DEFAULT_KEEPALIVE_TIMEOUT  75000 // ms
+#define EVIO_DEFAULT_HEARTBEAT_INTERVAL 10000 // ms
 // #define evloop(ev)         (((event_t*)(ev))->loop)
 
 // typedef int EV_RETURN;
@@ -85,6 +154,7 @@ struct evloop {
     void* userdata;
     // private:
     //  events
+    uint32_t intern_nevents;
     uint32_t nactives;
     uint32_t npendings;
     // pendings: with priority as array.index
@@ -100,9 +170,12 @@ struct evloop {
     struct io_array ios;
     uint32_t nios;
     // one loop per thread, so one readbuf per loop is OK.
-    // buf_t readbuf;
+    buf_t readbuf;
     void* iowatcher;
-    idle_cb cb;
+    // custom_events
+    // int eventfds[2];
+    // event_queue custom_events;
+    // pthread_mutex_t custom_events_mutex;
 };
 
 #define EVENT_FLAGS       \
@@ -156,6 +229,62 @@ struct evperiod {
     int8_t month;
 };
 
+//-----------------unpack---------------------------------------------
+typedef enum {
+    UNPACK_MODE_NONE = 0,
+    UNPACK_BY_FIXED_LENGTH = 1, // Not recommended
+    UNPACK_BY_DELIMITER = 2,    // Suitable for text protocol
+    UNPACK_BY_LENGTH_FIELD = 3, // Suitable for binary protocol
+} unpack_mode_e;
+
+#define DEFAULT_PACKAGE_MAX_LENGTH  (1 << 21) // 2M
+
+// UNPACK_BY_DELIMITER
+#define PACKAGE_MAX_DELIMITER_BYTES 8
+
+// UNPACK_BY_LENGTH_FIELD
+typedef enum {
+    ENCODE_BY_VARINT = 17,                   // 1 MSB + 7 bits
+    ENCODE_BY_LITTEL_ENDIAN = LITTLE_ENDIAN, // 1234
+    ENCODE_BY_BIG_ENDIAN = BIG_ENDIAN,       // 4321
+} unpack_coding_e;
+
+typedef struct unpack_setting_s {
+    unpack_mode_e mode;
+    unsigned int package_max_length;
+    union {
+        // UNPACK_BY_FIXED_LENGTH
+        struct {
+            unsigned int fixed_length;
+        };
+        // UNPACK_BY_DELIMITER
+        struct {
+            unsigned char delimiter[PACKAGE_MAX_DELIMITER_BYTES];
+            unsigned short delimiter_bytes;
+        };
+        /*
+         * UNPACK_BY_LENGTH_FIELD
+         *
+         * package_len = head_len + body_len + length_adjustment
+         *
+         * if (length_field_coding == ENCODE_BY_VARINT) head_len = body_offset + varint_bytes - length_field_bytes;
+         * else head_len = body_offset;
+         *
+         * length_field stores body length, exclude head length,
+         * if length_field = head_len + body_len, then length_adjustment should be set to -head_len.
+         *
+         */
+        struct {
+            unsigned short body_offset; // Equal to head length usually
+            unsigned short length_field_offset;
+            unsigned short length_field_bytes;
+            short length_adjustment;
+            unpack_coding_e length_field_coding;
+        };
+    };
+} unpack_setting_t;
+
+QUEUE_DECL(offset_buf_t, write_queue);
 struct evio {
     EVENT_FIELDS
     // flags
@@ -173,7 +302,7 @@ struct evio {
     unsigned alloced_readbuf : 1; // for evio_alloc_readbuf
     unsigned alloced_ssl_ctx : 1; // for evio_new_ssl_ctx
     // public:
-    // evio_type_e io_type;
+    evio_type_e io_type;
     uint32_t id; // fd cannot be used as unique identifier, so we provide an id
     int fd;
     int error;
@@ -183,56 +312,99 @@ struct evio {
     struct sockaddr* peeraddr;
     uint64_t last_read_hrtime;
     uint64_t last_write_hrtime;
-    //     // read
-        // fifo_buf_t readbuf;
-    //     unsigned int read_flags;
-    //     // for eio_read_until
-    //     union {
-    //         unsigned int read_until_length;
-    //         unsigned char read_until_delim;
-    //     };
-    //     uint32_t max_read_bufsize;
-    //     uint32_t small_readbytes_cnt; // for readbuf autosize
-    //     // write
-    //     struct write_queue write_queue;
-    //     pthread_mutex_t write_mutex; // lock write and write_queue
-    //     uint32_t write_bufsize;
-    //     uint32_t max_write_bufsize;
-    //     // callbacks
+    // read
+    fifo_buf_t readbuf;
+    unsigned int read_flags;
+    // for evio_read_until
+    union {
+        unsigned int read_until_length;
+        unsigned char read_until_delim;
+    };
+    uint32_t max_read_bufsize;
+    uint32_t small_readbytes_cnt; // for readbuf autosize
+    // write
+    struct write_queue write_queue;
+    pthread_mutex_t write_mutex; // lock write and write_queue
+    uint32_t write_bufsize;
+    uint32_t max_write_bufsize;
+    // callbacks
     read_cb read_cb;
     write_cb write_cb;
     close_cb close_cb;
     accept_cb accept_cb;
     connect_cb connect_cb;
-    //     // timers
-    //     int connect_timeout;    // ms
-    //     int close_timeout;      // ms
-    //     int read_timeout;       // ms
-    //     int write_timeout;      // ms
-    //     int keepalive_timeout;  // ms
-    //     int heartbeat_interval; // ms
-    //     eio_send_heartbeat_fn heartbeat_fn;
-    //     etimer_t* connect_timer;
-    //     etimer_t* close_timer;
-    //     etimer_t* read_timer;
-    //     etimer_t* write_timer;
-    //     etimer_t* keepalive_timer;
-    //     etimer_t* heartbeat_timer;
+    // timers
+    int connect_timeout;    // ms
+    int close_timeout;      // ms
+    int read_timeout;       // ms
+    int write_timeout;      // ms
+    int keepalive_timeout;  // ms
+    int heartbeat_interval; // ms
+
+    //     evio_send_heartbeat_fn heartbeat_fn;
+    evtimer_t* connect_timer;
+    evtimer_t* close_timer;
+    evtimer_t* read_timer;
+    evtimer_t* write_timer;
+    evtimer_t* keepalive_timer;
+    evtimer_t* heartbeat_timer;
     //     // upstream
-    //     struct eio_s* upstream_io; // for eio_setup_upstream
-    //     // unpack
-    //     unpack_setting_t* unpack_setting; // for eio_set_unpack
-    //     // ssl
-    //     void* ssl;      // for eio_set_ssl
-    //     void* ssl_ctx;  // for eio_set_ssl_ctx
-    //     char* hostname; // for hssl_set_sni_hostname
-    //     // context
-    //     void* ctx; // for eio_context / eio_set_context
-    // // private:
-    // #if defined(EVENT_POLL) || defined(EVENT_KQUEUE)
-    //     int event_index[2]; // for poll,kqueue
-    // #endif
+    //     struct evio_s* upstream_io; // for evio_setup_upstream
+    // unpack
+    unpack_setting_t* unpack_setting; // for evio_set_unpack
+                                      //     // ssl
+                                      //     void* ssl;      // for evio_set_ssl
+                                      //     void* ssl_ctx;  // for evio_set_ssl_ctx
+                                      //     char* hostname; // for hssl_set_sni_hostname
+    // context
+    void* ctx; // for evio_context / evio_set_context
+    // private:
+#if defined(EVENT_POLL) || defined(EVENT_KQUEUE)
+    int event_index[2]; // for poll,kqueue
+#endif
 };
+
+/*
+ * evio lifeline:
+ *
+ * fd =>
+ * evio_get => EV_ALLOC_SIZEOF(io) => evio_init => evio_ready
+ *
+ * evio_read  => evio_add(EV_READ) => evio_read_cb
+ * evio_write => evio_add(EV_WRITE) => evio_write_cb
+ * evio_close => evio_done => evio_del(EV_RDWR) => evio_close_cb
+ *
+ * eloop_stop => eloop_free => evio_free => EV_FREE(io)
+ */
+void evio_init(evio_t* io);
+void evio_ready(evio_t* io);
+void evio_done(evio_t* io);
+void evio_free(evio_t* io);
+uint32_t evio_next_id();
+
+void evio_accept_cb(evio_t* io);
+void evio_connect_cb(evio_t* io);
+void evio_handle_read(evio_t* io, void* buf, int readbytes);
+void evio_read_cb(evio_t* io, void* buf, int len);
+void evio_write_cb(evio_t* io, const void* buf, int len);
+void evio_close_cb(evio_t* io);
+
+void evio_del_connect_timer(evio_t* io);
+void evio_del_close_timer(evio_t* io);
+void evio_del_read_timer(evio_t* io);
+void evio_del_write_timer(evio_t* io);
+void evio_del_keepalive_timer(evio_t* io);
+void evio_del_heartbeat_timer(evio_t* io);
+
+static inline bool evio_is_loop_readbuf(evio_t* io) {
+    return io->readbuf.base == io->loop->readbuf.base;
+}
+static inline bool evio_is_alloced_readbuf(evio_t* io) {
+    return io->alloced_readbuf;
+}
+void evio_alloc_readbuf(evio_t* io, int len);
+void evio_free_readbuf(evio_t* io);
+void evio_memmove_readbuf(evio_t* io);
 
 // evloop
 #define EVLOOP_FLAG_RUN_ONCE                   0x00000001
@@ -250,8 +422,6 @@ uint64_t evloop_now_hrtime(evloop_t* loop); // us
 // userdata
 void evloop_set_userdata(evloop_t* loop, void* userdata);
 void* evloop_userdata(evloop_t* loop);
-
-void evloop_register_cb(evloop_t* loop, idle_cb cb);
 
 // event
 #define event_set_id(ev, id)          ((event_t*)(ev))->event_id = id
@@ -271,19 +441,19 @@ uint64_t evloop_next_event_id();
 #define EVENT_ENTRY(p) container_of(p, event_t, pending_node)
 #define IDLE_ENTRY(p)  container_of(p, evidle_t, node)
 
-#define event_active(ev)      \
+#define EVENT_ACTIVE(ev)      \
     if (!ev->active) {        \
         ev->active = 1;       \
         ev->loop->nactives++; \
     }
 
-#define event_inactive(ev)    \
+#define EVENT_INACTIVE(ev)    \
     if (ev->active) {         \
         ev->active = 0;       \
         ev->loop->nactives--; \
     }
 
-#define event_pending(ev)                                                              \
+#define EVENT_PENDING(ev)                                                              \
     do {                                                                               \
         if (!ev->pending) {                                                            \
             ev->pending = 1;                                                           \
@@ -294,26 +464,26 @@ uint64_t evloop_next_event_id();
         }                                                                              \
     } while (0)
 
-#define event_add(loop, ev, cb)                \
+#define EVENT_ADD(loop, ev, cb)                \
     do {                                       \
         ev->loop = loop;                       \
         ev->event_id = evloop_next_event_id(); \
         ev->cb = (event_cb)cb;                 \
-        event_active(ev);                      \
+        EVENT_ACTIVE(ev);                      \
     } while (0)
 
-#define event_del(ev)       \
+#define EVENT_DEL(ev)       \
     do {                    \
-        event_inactive(ev); \
+        EVENT_INACTIVE(ev); \
         if (!ev->pending) { \
             EV_FREE(ev);    \
         }                   \
     } while (0)
 
-#define event_reset(ev)   \
+#define EVENT_RESET(ev)   \
     do {                  \
         ev->destroy = 0;  \
-        event_active(ev); \
+        EVENT_ACTIVE(ev); \
         ev->pending = 0;  \
     } while (0)
 
@@ -340,20 +510,18 @@ void evtimer_del(evtimer_t* timer);
 void evtimer_reset(evtimer_t* timer, uint32_t etimeout_ms);
 
 // evio
+
 #define EV_READ  0x0001
 #define EV_WRITE 0x0004
 #define EV_RDWR  (EV_READ | EV_WRITE)
-
-int iowatcher_init(evloop_t* loop);
-int iowatcher_cleanup(evloop_t* loop);
-int iowatcher_add_event(evloop_t* loop, int fd, int events);
-int iowatcher_del_event(evloop_t* loop, int fd, int events);
-int iowatcher_poll_events(evloop_t* loop, int timeout);
 
 evio_t* evio_get(evloop_t* loop, int fd);
 int evio_add(evio_t* io, evio_cb cb, int events);
 int evio_del(evio_t* io, int events);
 
 // high-level api
-evio_t* ev_read(evloop_t* loop, int fd, /*void* buf, size_t len,*/ evio_cb read_cb);
+evio_t* ev_read(evloop_t* loop, int fd, evio_cb read_cb);
+// evio_get -> evio_add
+// evio_t* ev_hread(evloop_t* loop, int fd, void* buf, size_t len, evio_cb read_cb);
+
 #endif

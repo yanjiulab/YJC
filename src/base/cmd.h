@@ -48,7 +48,7 @@ struct cmd_ctx_s {
 
     /* Index in cmd__entries array from which commands would be active */
     // int entry_start;
-    struct entry_array entries;
+    entry_array entries;
 
     /* Flags */
     int exit_flag;
