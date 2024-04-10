@@ -231,45 +231,85 @@ bool evio_is_closed(evio_t* io) {
     return io->ready == 0 && io->closed == 1;
 }
 
-uint32_t evio_id(evio_t* io) { return io->id; }
+uint32_t evio_id(evio_t* io) {
+    return io->id;
+}
 
-int evio_fd(evio_t* io) { return io->fd; }
+int evio_fd(evio_t* io) {
+    return io->fd;
+}
 
-evio_type_e evio_type(evio_t* io) { return io->io_type; }
+evio_type_e evio_type(evio_t* io) {
+    return io->io_type;
+}
 
-int evio_error(evio_t* io) { return io->error; }
+int evio_error(evio_t* io) {
+    return io->error;
+}
 
-int evio_events(evio_t* io) { return io->events; }
+int evio_events(evio_t* io) {
+    return io->events;
+}
 
-int evio_revents(evio_t* io) { return io->revents; }
+int evio_revents(evio_t* io) {
+    return io->revents;
+}
 
-struct sockaddr* evio_localaddr(evio_t* io) { return io->localaddr; }
+struct sockaddr* evio_localaddr(evio_t* io) {
+    return io->localaddr;
+}
 
-struct sockaddr* evio_peeraddr(evio_t* io) { return io->peeraddr; }
+struct sockaddr* evio_peeraddr(evio_t* io) {
+    return io->peeraddr;
+}
 
-void evio_set_context(evio_t* io, void* ctx) { io->ctx = ctx; }
+void evio_set_context(evio_t* io, void* ctx) {
+    io->ctx = ctx;
+}
 
-void* evio_context(evio_t* io) { return io->ctx; }
+void* evio_context(evio_t* io) {
+    return io->ctx;
+}
 
-accept_cb evio_getcb_accept(evio_t* io) { return io->accept_cb; }
+accept_cb evio_getcb_accept(evio_t* io) {
+    return io->accept_cb;
+}
 
-connect_cb evio_getcb_connect(evio_t* io) { return io->connect_cb; }
+connect_cb evio_getcb_connect(evio_t* io) {
+    return io->connect_cb;
+}
 
-read_cb evio_getcb_read(evio_t* io) { return io->read_cb; }
+read_cb evio_getcb_read(evio_t* io) {
+    return io->read_cb;
+}
 
-write_cb evio_getcb_write(evio_t* io) { return io->write_cb; }
+write_cb evio_getcb_write(evio_t* io) {
+    return io->write_cb;
+}
 
-close_cb evio_getcb_close(evio_t* io) { return io->close_cb; }
+close_cb evio_getcb_close(evio_t* io) {
+    return io->close_cb;
+}
 
-void evio_setcb_accept(evio_t* io, accept_cb accept_cb) { io->accept_cb = accept_cb; }
+void evio_setcb_accept(evio_t* io, accept_cb accept_cb) {
+    io->accept_cb = accept_cb;
+}
 
-void evio_setcb_connect(evio_t* io, connect_cb connect_cb) { io->connect_cb = connect_cb; }
+void evio_setcb_connect(evio_t* io, connect_cb connect_cb) {
+    io->connect_cb = connect_cb;
+}
 
-void evio_setcb_read(evio_t* io, read_cb read_cb) { io->read_cb = read_cb; }
+void evio_setcb_read(evio_t* io, read_cb read_cb) {
+    io->read_cb = read_cb;
+}
 
-void evio_setcb_write(evio_t* io, write_cb write_cb) { io->write_cb = write_cb; }
+void evio_setcb_write(evio_t* io, write_cb write_cb) {
+    io->write_cb = write_cb;
+}
 
-void evio_setcb_close(evio_t* io, close_cb close_cb) { io->close_cb = close_cb; }
+void evio_setcb_close(evio_t* io, close_cb close_cb) {
+    io->close_cb = close_cb;
+}
 
 void evio_accept_cb(evio_t* io) {
     /*
@@ -402,7 +442,9 @@ void evio_close_cb(evio_t* io) {
     }
 }
 
-void evio_set_type(evio_t* io, evio_type_e type) { io->io_type = type; }
+void evio_set_type(evio_t* io, evio_type_e type) {
+    io->io_type = type;
+}
 
 void evio_set_localaddr(evio_t* io, struct sockaddr* addr, int addrlen) {
     if (io->localaddr == NULL) {
@@ -424,7 +466,9 @@ int evio_set_hostname(evio_t* io, const char* hostname) {
     return 0;
 }
 
-const char* evio_get_hostname(evio_t* io) { return io->hostname; }
+const char* evio_get_hostname(evio_t* io) {
+    return io->hostname;
+}
 
 void evio_del_connect_timer(evio_t* io) {
     if (io->connect_timer) {
@@ -475,9 +519,13 @@ void evio_del_heartbeat_timer(evio_t* io) {
     }
 }
 
-void evio_set_connect_timeout(evio_t* io, int timeout_ms) { io->connect_timeout = timeout_ms; }
+void evio_set_connect_timeout(evio_t* io, int timeout_ms) {
+    io->connect_timeout = timeout_ms;
+}
 
-void evio_set_close_timeout(evio_t* io, int timeout_ms) { io->close_timeout = timeout_ms; }
+void evio_set_close_timeout(evio_t* io, int timeout_ms) {
+    io->close_timeout = timeout_ms;
+}
 
 static void __read_timeout_cb(evtimer_t* timer) {
     evio_t* io = (evio_t*)timer->privdata;
@@ -663,13 +711,21 @@ void evio_set_readbuf(evio_t* io, void* buf, size_t len) {
     io->alloced_readbuf = 0;
 }
 
-evio_readbuf_t* evio_get_readbuf(evio_t* io) { return &io->readbuf; }
+evio_readbuf_t* evio_get_readbuf(evio_t* io) {
+    return &io->readbuf;
+}
 
-void evio_set_max_read_bufsize(evio_t* io, uint32_t size) { io->max_read_bufsize = size; }
+void evio_set_max_read_bufsize(evio_t* io, uint32_t size) {
+    io->max_read_bufsize = size;
+}
 
-void evio_set_max_write_bufsize(evio_t* io, uint32_t size) { io->max_write_bufsize = size; }
+void evio_set_max_write_bufsize(evio_t* io, uint32_t size) {
+    io->max_write_bufsize = size;
+}
 
-size_t evio_write_bufsize(evio_t* io) { return io->write_bufsize; }
+size_t evio_write_bufsize(evio_t* io) {
+    return io->write_bufsize;
+}
 
 int evio_read_once(evio_t* io) {
     io->read_flags |= EIO_READ_ONCE;
@@ -736,6 +792,13 @@ int evio_read_remain(evio_t* io) {
         evio_read_cb(io, buf, remain);
     }
     return remain;
+}
+
+evio_t* evio_read_raw(evloop_t* loop, int fd, evio_cb read_cb) {
+    evio_t* io = evio_get(loop, fd);
+    assert(io != NULL);
+    evio_add(io, read_cb, EV_READ);
+    return io;
 }
 
 //-----------------unpack---------------------------------------------
@@ -819,7 +882,9 @@ void evio_setup_upstream(evio_t* io1, evio_t* io2) {
     io2->upstream_io = io1;
 }
 
-evio_t* evio_get_upstream(evio_t* io) { return io->upstream_io; }
+evio_t* evio_get_upstream(evio_t* io) {
+    return io->upstream_io;
+}
 
 evio_t* evio_setup_tcp_upstream(evio_t* io, const char* host, int port, int ssl) {
     evio_t* upstream_io = evio_create_socket(io->loop, host, port, EIO_TYPE_TCP, EIO_CLIENT_SIDE);

@@ -343,7 +343,6 @@ int evio_connect(evio_t* io);
 int evio_read(evio_t* io);
 #define evio_read_start(io) evio_read(io)
 #define evio_read_stop(io)  evio_del(io, EV_READ)
-
 // evio_read_start => read_cb => evio_read_stop
 int evio_read_once(evio_t* io);
 // evio_read_once => read_cb(len)
@@ -356,6 +355,8 @@ int evio_read_remain(evio_t* io);
 #define evio_readstring(io)      evio_read_until_delim(io, '\0')
 #define evio_readbytes(io, len)  evio_read_until_length(io, len)
 #define evio_read_until(io, len) evio_read_until_length(io, len)
+// evio_get => evio_add(io, EV_READ) => evio_cb
+evio_t* evio_read_raw(evloop_t* loop, int fd, evio_cb read_cb);
 
 // NOTE: evio_write is thread-safe, locked by recursive_mutex, allow to be called by other threads.
 // evio_try_write => evio_add(io, EV_WRITE) => write => write_cb

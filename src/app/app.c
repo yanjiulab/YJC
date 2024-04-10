@@ -70,28 +70,17 @@ static CMDF_RETURN do_quit(cmdf_arglist* arglist) {
 }
 
 // $ nc 127.0.0.1 CMDF_BE_PORT
-THREAD_ROUTINE(backend_cmdf) {
-    log_info("thread %lu start", thread_id());
-    int fd = (int)userdata;
-    FILE* f = fdopen(fd, "w+");
-    cmdf_init("tcp> ", PROG_INTRO, NULL, NULL, 0, 1, f, f);
-    cmdf_register_command(do_quit, "quit", "Quit the application");
-    cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");
-    cmdf_commandloop();
-    cmdf_quit;
-    log_info("thread %lu exit", thread_id());
-}
-
-THREAD_ROUTINE(frontend_cmdf) {
-    char* cmd = (char*)userdata;
-    log_info("thread %lu start", thread_id());
-    cmdf_init(str_fmt("%s> ", cmd), PROG_INTRO, NULL, NULL, 0, 0, 0, 0);
-    // cmdf_init("ab >", PROG_INTRO, NULL, NULL, 0, 0, 0, 0);
-    cmdf_register_command(do_quit, "quit", "Quit the application");
-    cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");
-    cmdf_commandloop();
-    log_info("thread %lu exit", thread_id());
-}
+// THREAD_ROUTINE(backend_cmdf) {
+//     log_info("thread %lu start", thread_id());
+//     int fd = (int)userdata;
+//     FILE* f = fdopen(fd, "w+");
+//     cmdf_init("tcp> ", PROG_INTRO, NULL, NULL, 0, 1, f, f);
+//     cmdf_register_command(do_quit, "quit", "Quit the application");
+//     cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");
+//     cmdf_commandloop();
+//     cmdf_quit;
+//     log_info("thread %lu exit", thread_id());
+// }
 
 static void on_idle(evidle_t* idle) {
     printd("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld\n", LLU(event_id(idle)), event_priority(idle),
@@ -103,14 +92,9 @@ static void on_timer(evtimer_t* timer) {
     // printd("on_timer: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
     //        event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
     //        LLU(evloop_now_hrtime(loop)));
-    // linenoiseHide(loop->userdata);
-    // linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
-    // log_info("Hello World %d", event_userdata(timer));
+    linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
     log_info("Hello World %d", event_userdata(timer));
-
-    // linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
-    // printd("Hello World %d\n", event_userdata(timer));
-    // linenoiseShow(loop->userdata);
+    linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
 }
 
 static void on_period(evtimer_t* timer) {
@@ -121,22 +105,22 @@ static void on_period(evtimer_t* timer) {
 }
 
 static void on_cmd(evio_t* io) {
-    cmd_ctx_t* ctx = event_userdata(io);
+    evloop_t* loop = event_loop(io);
+    cmd_ctx_t* ctx = (cmd_ctx_t*)evloop_userdata(loop);
 
-    char* line;
-    line = linenoiseEditFeed(&ctx->ls);
+    char* line = linenoiseEditFeed(&ctx->ls);
     if (line != linenoiseEditMore) {
+        // Encounter ENTER, then command input should stop
         linenoiseEditStop(&ctx->ls);
-        if (line == NULL) exit(0);
-        // process
+        if (line == NULL) { // CTRL+C/D
+            evloop_stop(loop);
+            return;
+        }
+        // Process command
         cmd_command_process(ctx, line);
-        //
-        // free(line);
-        // linenoiseEditStart(&ctx->ls, ctx->cmd_stdin, ctx->cmd_stdout,
-        linenoiseEditStart(&ctx->ls, -1, -1,
-                           ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
-    } else {
-        // printd("more\n", line);
+
+        // Restart the next command input process
+        linenoiseEditStart(&ctx->ls, -1, -1, ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
     }
 }
 
@@ -338,14 +322,14 @@ int main(int argc, char* argv[]) {
     }
 
     /* Add timer event */
-    // evtimer_t* timer;
-    // // Add timer timeout
-    // for (int i = 1; i <= 1; ++i) {
-    //     timer = evtimer_add(loop, on_timer, 1000, 0);
-    //     event_set_userdata(timer, (void*)(intptr_t)i);
-    // }
-    // // Add timer period (every minute)
-    // timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
+    evtimer_t* timer;
+    // Add timer timeout
+    for (int i = 1; i <= 1; ++i) {
+        timer = evtimer_add(loop, on_timer, 1000, 0);
+        event_set_userdata(timer, (void*)(intptr_t)i);
+    }
+    // Add timer period (every minute)
+    timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
 
     // UDP echo server
     evio_t* io = evloop_create_udp_server(loop, "0.0.0.0", 1234);
@@ -385,11 +369,9 @@ int main(int argc, char* argv[]) {
     /* async cmd */
     evio_t* cmdio;
     cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, -1, -1, NULL);
-    // cmd_set_inout(ctx, udp_fd, udp_fd);
+    cmd_register_command(ctx, do_hello, "hello", "hello");
     evloop_set_userdata(loop, ctx);
-    char buff[64];
-    cmdio = hread(loop, ctx->ls.ifd, buff, sizeof(buff), on_cmd);
-    event_set_userdata(cmdio, ctx);
+    cmdio = evio_read_raw(loop, ctx->ls.ifd, on_cmd);
 
     /* Run event loop */
     log_info("Run event loop");
