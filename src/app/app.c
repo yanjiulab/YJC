@@ -25,12 +25,12 @@
 #include "cmd.h"
 #include "sockunion.h"
 
-#define LIBCMDF_IMPL
-#include "cmdf.h"
-#define PROG_INTRO                                                             \
-    "Welcome to YJC vtysh! YJC is a simple program for network programming.\n" \
-    "You can use this as a reference on how to use the library!"
-#define CMDF_BE_PORT "6688"
+// #define LIBCMDF_IMPL
+// #include "cmdf.h"
+// #define PROG_INTRO                                                             \
+//     "Welcome to YJC vtysh! YJC is a simple program for network programming.\n" \
+//     "You can use this as a reference on how to use the library!"
+// #define CMDF_BE_PORT "6688"
 
 /* Global vars */
 evloop_t* loop = NULL;
@@ -46,13 +46,15 @@ static void sig_int() {
     evloop_stop(loop);
 }
 
-static CMDF_RETURN do_hello(cmdf_arglist* arglist) {
+static int do_hello(cmd_arglist_t* arglist) {
     printd("\nHello, world!\n");
 
-    return CMDF_OK;
+    // printd("Software version: ")
+
+    return CMD_OK;
 }
 
-static CMDF_RETURN do_setlog(cmdf_arglist* arglist) {
+static int do_setlog(cmd_arglist_t* arglist) {
     int level = 1;
 
     if (arglist && arglist->count) {
@@ -60,13 +62,13 @@ static CMDF_RETURN do_setlog(cmdf_arglist* arglist) {
     }
     log_set_level(level);
 
-    return CMDF_OK;
+    return CMD_OK;
 }
 
-static CMDF_RETURN do_quit(cmdf_arglist* arglist) {
+static int do_quit(cmd_arglist_t* arglist) {
     sig_int();
 
-    return CMDF_OK;
+    return CMD_OK;
 }
 
 // $ nc 127.0.0.1 CMDF_BE_PORT
@@ -369,7 +371,7 @@ int main(int argc, char* argv[]) {
     /* async cmd */
     evio_t* cmdio;
     cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, -1, -1, NULL);
-    cmd_register_command(ctx, do_hello, "hello", "hello");
+    cmd_register_command(ctx, do_hello, "hello", "Print Hello");
     evloop_set_userdata(loop, ctx);
     cmdio = evio_read_raw(loop, ctx->ls.ifd, on_cmd);
 

@@ -225,7 +225,6 @@ cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* promp
     /* Register exit callback, if required */
     // if (use_default_exit)
     cmd_register_command(ctx, cmd_default_do_exit, "exit", "Exit the cmd framework");
-    cmd_register_command(ctx, cmd_default_do_exit, "exit", "Exit the cmd framework");
     /* Register help callback */
     cmd_register_command(ctx, cmd_default_do_help, "help",
                          "Get information on a command"
@@ -438,64 +437,6 @@ void cmd_free_arglist(cmd_arglist_t* arglist) {
     free(arglist);
 }
 
-char* cmd_async_commandloop(cmd_ctx_t* ctx) {
-    char* inputbuff;
-    char *cmdptr, *argsptr, *spcptr;
-    cmd_arglist_t* cmd_args;
-    int retflag;
-
-    inputbuff = linenoiseEditFeed(&ctx->ls);
-    if (inputbuff != linenoiseEditMore) {
-        // finish
-        ctx->async_ready = true;
-    } else {
-        return NULL;
-    }
-    /* A NULL return means: line editing is continuing.
-     * Otherwise the user hit enter or stopped editing
-     * (CTRL+C/D). */
-
-    if (inputbuff != linenoiseEditMore) return;
-
-    /* Trim string */
-    cmd_trim(inputbuff);
-
-    /* If input is empty, call do_emptyline command. */
-    // Never reach?
-    if (inputbuff[0] == '\0') {
-        ctx->do_emptyline(ctx, NULL);
-        return;
-    }
-
-    /* If we've reached this, then line has something in it.
-     * If readline is enabled, save this to history. */
-    cmd_add_history(inputbuff);
-
-    /* Split by first space.
-     * This should be the command, followed by arguments. */
-    if ((spcptr = strchr(inputbuff, ' '))) {
-        *spcptr = '\0';
-
-        cmdptr = inputbuff;
-        argsptr = spcptr + 1;
-    } else {
-        cmdptr = inputbuff;
-        argsptr = NULL;
-    }
-
-    /* Parse arguments */
-    cmd_args = cmd_parse_arguments(argsptr);
-
-    /* Execute command. */
-    retflag = cmd_default_do_command(ctx, cmdptr, cmd_args);
-    switch (retflag) {
-    case CMD_ERROR_UNKNOWN_COMMAND:
-        fprintf(stdout, "Unknown command '%s'.\n", cmdptr);
-        break;
-    }
-    return inputbuff;
-}
-
 /* Async process */
 int cmd_command_process(cmd_ctx_t* ctx, const char* inputbuff) {
 
@@ -547,6 +488,7 @@ int cmd_command_process(cmd_ctx_t* ctx, const char* inputbuff) {
     // #endif
     free(inputbuff);
 }
+
 
 void cmd_commandloop(cmd_ctx_t* ctx) {
     // #ifndef CMDF_READLINE_SUPPORT

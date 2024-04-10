@@ -76,10 +76,6 @@ struct cmd_ctx_s {
 cmd_arglist_t* cmd_parse_arguments(char* argline);
 void cmd_free_arglist(cmd_arglist_t* arglist);
 
-/* Adding/Removing Command Entries */
-int cmd_register_command(cmd_ctx_t* ctx, cmd_command_cb callback, const char* cmdname,
-                         const char* help);
-
 /* Default callbacks */
 int cmd_default_do_command(cmd_ctx_t* ctx, const char* cmdname, cmd_arglist_t* arglist);
 int cmd_default_do_help(cmd_ctx_t* ctx, cmd_arglist_t* arglist);
@@ -87,12 +83,17 @@ int cmd_default_do_emptyline(cmd_ctx_t* ctx, cmd_arglist_t* arglist /* Unused */
 int cmd_default_do_exit(cmd_ctx_t* ctx, cmd_arglist_t* arglist /* Unused */);
 // int cmd_default_do_noop(cmd_arglist_t* arglist /* Unused */);
 // int cmd_default_do_q(int, int);
-void cmd_default_commandloop(cmd_ctx_t* ctx);
 
 /* Public interface functions */
-char* cmd_async_commandloop(cmd_ctx_t* ctx);
-void cmd_commandloop(cmd_ctx_t* ctx);
-
+/* Create Command context */
 cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* prompt);
+/* Adding/Removing Command Entries */
+int cmd_register_command(cmd_ctx_t* ctx, cmd_command_cb callback, const char* cmdname, const char* help);
+/* Synchronized API */
+void cmd_commandloop(cmd_ctx_t* ctx);
+/* Asynchronized API */
+// in async mode, user should get input command string (by some eventloop)
+// and then call it to process cmd.
+int cmd_command_process(cmd_ctx_t* ctx, const char* inputbuff);
 
 #endif
