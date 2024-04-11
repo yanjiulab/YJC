@@ -1,0 +1,24 @@
+(libcmd) (libcmd) h[0K[10C(libcmd) he[0K[11C[0K(libcmd) he[0K[11C(libcmd) hel[0K[12C[0K(libcmd) hel[0K[12C(libcmd) help[0;35;49m world[0m[0K[13C(libcmd) help[0K[13C
+Documented Commands:
+=====================
+/mask	Enable mask mode. 
+/unmask	Disable mask mode. 
+exit	Exit the cmd framework 
+help	Get information on a command or list commands. 
+
+
+Undocumented Commands:
+=======================
+hello 
+
+Documented Commands:
+=====================
+/mask	Enable mask mode. 
+/unmask	Disable mask mode. 
+exit	Exit the cmd framework 
+help	Get information on a command or list commands. 
+
+
+Undocumented Commands:
+=======================
+hello 

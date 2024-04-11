@@ -35,7 +35,6 @@
 /* Global vars */
 evloop_t* loop = NULL;
 sniffer_t* sniff = NULL;
-thread_t cmdf_tid;
 
 static void sig_int() {
     //     cmdf__default_do_exit(NULL);
@@ -71,21 +70,8 @@ static int do_quit(cmd_arglist_t* arglist) {
     return CMD_OK;
 }
 
-// $ nc 127.0.0.1 CMDF_BE_PORT
-// THREAD_ROUTINE(backend_cmdf) {
-//     log_info("thread %lu start", thread_id());
-//     int fd = (int)userdata;
-//     FILE* f = fdopen(fd, "w+");
-//     cmdf_init("tcp> ", PROG_INTRO, NULL, NULL, 0, 1, f, f);
-//     cmdf_register_command(do_quit, "quit", "Quit the application");
-//     cmdf_register_command(do_setlog, "log", "Set log debug level. SYNOPSIS: log [level]");
-//     cmdf_commandloop();
-//     cmdf_quit;
-//     log_info("thread %lu exit", thread_id());
-// }
-
 static void on_idle(evidle_t* idle) {
-    printd("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld\n", LLU(event_id(idle)), event_priority(idle),
+    printd("on_idle: event_id=%llu\tpriority=%d\tuserdata=%ld", LLU(event_id(idle)), event_priority(idle),
            (long)(intptr_t)(event_userdata(idle)));
 }
 
@@ -94,36 +80,16 @@ static void on_timer(evtimer_t* timer) {
     // printd("on_timer: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
     //        event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
     //        LLU(evloop_now_hrtime(loop)));
-    linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
+    // linenoiseHide(&((cmd_ctx_t*)(loop->userdata))->ls);
     log_info("Hello World %d", event_userdata(timer));
-    linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
+    // linenoiseShow(&((cmd_ctx_t*)(loop->userdata))->ls);
 }
 
 static void on_period(evtimer_t* timer) {
     evloop_t* loop = event_loop(timer);
-    printd("on_period: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus\n", LLU(event_id(timer)),
+    printd("on_period: event_id=%llu\tpriority=%d\tuserdata=%ld\ttime=%llus\thrtime=%lluus", LLU(event_id(timer)),
            event_priority(timer), (long)(intptr_t)(event_userdata(timer)), LLU(evloop_now(loop)),
            LLU(evloop_now_hrtime(loop)));
-}
-
-static void on_cmd(evio_t* io) {
-    evloop_t* loop = event_loop(io);
-    cmd_ctx_t* ctx = (cmd_ctx_t*)evloop_userdata(loop);
-
-    char* line = linenoiseEditFeed(&ctx->ls);
-    if (line != linenoiseEditMore) {
-        // Encounter ENTER, then command input should stop
-        linenoiseEditStop(&ctx->ls);
-        if (line == NULL) { // CTRL+C/D
-            evloop_stop(loop);
-            return;
-        }
-        // Process command
-        cmd_command_process(ctx, line);
-
-        // Restart the next command input process
-        linenoiseEditStart(&ctx->ls, -1, -1, ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
-    }
 }
 
 static void on_close(evio_t* io) {
@@ -165,7 +131,7 @@ static void on_accept(evio_t* io) {
 
     // cmdf_tid = thread_create(backend_cmdf, conn);
 
-    printd("on_accept connfd=%d\n", evio_fd(io));
+    printd("on_accept connfd=%d", evio_fd(io));
     char localaddrstr[SU_ADDRSTRLEN] = {0};
     char peeraddrstr[SU_ADDRSTRLEN] = {0};
     printd("accept connfd=%d [%s] <= [%s]", evio_fd(io),
@@ -228,6 +194,69 @@ static void on_sniffer(evio_t* io) {
     printd("%s", dump);
 
     return 0;
+}
+
+static void on_cmd_recv(evio_t* io, void* buf, int readbytes) {
+    printd("on_recv fd=%d readbytes=%d", evio_fd(io), readbytes);
+    char localaddrstr[SU_ADDRSTRLEN] = {0};
+    char peeraddrstr[SU_ADDRSTRLEN] = {0};
+    printd("[%s] <=> [%s]",
+           SU_ADDRSTR(evio_localaddr(io), localaddrstr),
+           SU_ADDRSTR(evio_peeraddr(io), peeraddrstr));
+
+    cmd_ctx_t* ctx = (cmd_ctx_t*)(event_loop(io)->userdata);
+    char* inputbuf = strndup(buf, readbytes);
+    cmd_command_process(ctx, inputbuf);
+
+    /* Print prompt, if any. */
+    if (ctx->ls.prompt)
+        evio_write(io, ctx->ls.prompt, ctx->ls.plen);
+}
+
+static void on_cmd_accept(evio_t* io) {
+    char localaddrstr[SU_ADDRSTRLEN] = {0};
+    char peeraddrstr[SU_ADDRSTRLEN] = {0};
+    printd("accept new client connection connfd=%d [%s] <= [%s]", evio_fd(io),
+           SU_ADDRSTR(evio_localaddr(io), localaddrstr),
+           SU_ADDRSTR(evio_peeraddr(io), peeraddrstr));
+
+    evio_t* cmdio;
+    FILE* s = fdopen(evio_fd(io), "w+");
+    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, s, s, NULL);
+    cmd_register_command(ctx, do_hello, "hello", NULL);
+
+    evloop_set_userdata(event_loop(io), ctx);
+
+    evio_setcb_close(io, on_close);
+    evio_setcb_read(io, on_cmd_recv);
+    evio_read(io);
+
+    /* Print intro, if any. */
+    if (ctx->intro) {
+        evio_write(io, "\n", 1);
+        evio_write(io, ctx->intro, strlen(ctx->intro));
+        evio_write(io, "\n\n", 2);
+    }
+}
+
+static void on_cmd_raw(evio_t* io) {
+    evloop_t* loop = event_loop(io);
+    cmd_ctx_t* ctx = (cmd_ctx_t*)evloop_userdata(loop);
+
+    char* line = linenoiseEditFeed(&ctx->ls);
+    if (line != linenoiseEditMore) {
+        // Encounter ENTER, then command input should stop
+        linenoiseEditStop(&ctx->ls);
+        if (line == NULL) { // CTRL+C/D
+            evloop_stop(loop);
+            return;
+        }
+        // Process command
+        cmd_command_process(ctx, line);
+
+        // Restart the next command input process
+        linenoiseEditStart(&ctx->ls, fileno(ctx->cmd_stdin), fileno(ctx->cmd_stdout), ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -317,19 +346,19 @@ int main(int argc, char* argv[]) {
     loop = evloop_new(EVLOOP_FLAG_AUTO_FREE);
 
     /* Add idle event */
-    for (int i = -2; i <= 2; ++i) {
-        evidle_t* idle = evidle_add(loop, on_idle, 1); // repeate times: 1
-        event_set_priority(idle, i);
-        event_set_userdata(idle, (int)(i * i));
-    }
+    // for (int i = -2; i <= 2; ++i) {
+    //     evidle_t* idle = evidle_add(loop, on_idle, 1); // repeate times: 1
+    //     event_set_priority(idle, i);
+    //     event_set_userdata(idle, (int)(i * i));
+    // }
 
     /* Add timer event */
     evtimer_t* timer;
     // Add timer timeout
-    for (int i = 1; i <= 1; ++i) {
-        timer = evtimer_add(loop, on_timer, 1000, 0);
-        event_set_userdata(timer, (void*)(intptr_t)i);
-    }
+    // for (int i = 1; i <= 1; ++i) {
+    //     timer = evtimer_add(loop, on_timer, 1000, 0);
+    //     event_set_userdata(timer, (void*)(intptr_t)i);
+    // }
     // Add timer period (every minute)
     timer = evtimer_add_period(loop, on_period, -1, -1, -1, -1, -1, 1);
 
@@ -342,13 +371,16 @@ int main(int argc, char* argv[]) {
     evio_t* listenio = evloop_create_tcp_server(loop, "0.0.0.0", 1234, on_accept);
     printd("listenfd=%d", evio_fd(listenio));
 
-    // char buf[64];
-    // hread(loop, udp_fd, buf, sizeof(buf), on_recvfrom);
-    // struct in_addr group;
-    // struct in_addr ifaddr;
-    // group.s_addr = htonl(0xe1000009);
-    // so_bindtodev(udp_fd, "ens38");
-    // so_ipv4_multicast(udp_fd, IP_ADD_MEMBERSHIP, ifaddr, group.s_addr, 3);
+    // TCP cmd server
+    // evio_t* cmd_listen = evloop_create_tcp_server(loop, "0.0.0.0", 6666, on_cmd_accept);
+    // printd("listenfd=%d", evio_fd(cmd_listen));
+
+    /* Stdin cmd server */
+    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, NULL, NULL, NULL);
+    evio_t* cmdio;
+    cmd_register_command(ctx, do_hello, "hello", NULL);
+    evloop_set_userdata(loop, ctx);
+    cmdio = evio_read_raw(loop, ctx->ls.ifd, on_cmd_raw);
 
     // Sniffer
     // sniff = sniffer_new("ens33");
@@ -356,7 +388,7 @@ int main(int argc, char* argv[]) {
     // sniffer_set_direction(sniff, DIRECTION_ALL);
     // sniffer_set_filter_str(sniff, "arp");
     // sniffer_start(sniff);
-    // ev_read(loop, sniff->psock->packet_fd, on_sniffer);
+    // evio_read_raw(loop, sniff->psock->packet_fd, on_sniffer);
 
     /* Start commandline loop */
     // if (isdaemon) {
@@ -368,12 +400,9 @@ int main(int argc, char* argv[]) {
     //     cmdf_tid = thread_create(frontend_cmdf, cmd);
     // }
 
-    /* async cmd */
-    evio_t* cmdio;
-    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, -1, -1, NULL);
-    cmd_register_command(ctx, do_hello, "hello", "Print Hello");
-    evloop_set_userdata(loop, ctx);
-    cmdio = evio_read_raw(loop, ctx->ls.ifd, on_cmd);
+    /* Async tcp command line */
+    // evio_t* cmd_listen = evloop_create_tcp_server(loop, "0.0.0.0", 1234, on_cmd_accept);
+    // printd("listenfd=%d", evio_fd(cmd_listen));
 
     /* Run event loop */
     log_info("Run event loop");

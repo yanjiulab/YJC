@@ -766,7 +766,7 @@ bool evio_exists(evloop_t* loop, int fd) {
 }
 
 int evio_add(evio_t* io, evio_cb cb, int events) {
-    printd("evio_add fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
+    printd("evio_add fd=%d io->events=%d events=%d", io->fd, io->events, events);
 
     evloop_t* loop = io->loop;
     if (!io->active) {
@@ -790,7 +790,7 @@ int evio_add(evio_t* io, evio_cb cb, int events) {
 }
 
 int evio_del(evio_t* io, int events) {
-    printd("evio_del fd=%d io->events=%d events=%d\n", io->fd, io->events, events);
+    printd("evio_del fd=%d io->events=%d events=%d", io->fd, io->events, events);
 
     if (!io->active)
         return -1;

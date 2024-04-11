@@ -19,6 +19,14 @@
 #define CMD_FLAG_ASYNC                0x00000001
 
 #define ASYNC_BUFFLEN                 1024
+#define CMD_PPRINT_RIGHT_OFFSET       1
+#define CMD_FREE                      free
+#define CMD_MALLOC                    malloc
+
+/* cmdf_windowsize struct */
+struct cmd_windowsize {
+    unsigned short h, w;
+};
 
 typedef struct cmd_ctx_s cmd_ctx_t;
 
@@ -54,11 +62,11 @@ struct cmd_ctx_s {
     int exit_flag;
 
     /* in, out, err */
-    // FILE* cmd_stdin;
-    // FILE* cmd_stdout;
+    FILE* cmd_stdin;
+    FILE* cmd_stdout;
     // FILE* cmd_stderr;
-    int cmd_stdin;
-    int cmd_stdout;
+    // int cmd_stdin;
+    // int cmd_stdout;
 
     /* Callback pointers */
     cmd_command_cb do_emptyline;
@@ -86,7 +94,7 @@ int cmd_default_do_exit(cmd_ctx_t* ctx, cmd_arglist_t* arglist /* Unused */);
 
 /* Public interface functions */
 /* Create Command context */
-cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* prompt);
+cmd_ctx_t* cmd_ctx_new(int flags, FILE* cmd_stdin, FILE* cmd_stdout, const char* prompt);
 /* Adding/Removing Command Entries */
 int cmd_register_command(cmd_ctx_t* ctx, cmd_command_cb callback, const char* cmdname, const char* help);
 /* Synchronized API */

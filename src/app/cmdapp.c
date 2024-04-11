@@ -19,7 +19,7 @@ int do_echo(cmd_ctx_t* ctx, cmd_arglist_t* args) {
 int main(int argc, char* argv[]) {
     log_info("hello cmd");
 
-    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, -1, -1, NULL);
+    cmd_ctx_t* ctx = cmd_ctx_new(CMD_FLAG_ASYNC, NULL, NULL, NULL);
     cmd_register_command(ctx, do_echo, "echo", "echo the cmd");
     cmd_commandloop(ctx);
 

@@ -1,5 +1,9 @@
 #include "cmd.h"
 
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+
 static const char* cmd_default_prompt = "(libcmd) ";
 static const char* cmd_default_intro = "Welcome to cmd";
 static const char* cmd_default_doc_header = "Documented Commands:";
@@ -18,70 +22,25 @@ int cmd_default_do_help(cmd_ctx_t* ctx, cmd_arglist_t* arglist) {
                 if (strcmp(arglist->args[0], ctx->entries.ptr[i]->cmdname) == 0) {
                     /* Print help, if any */
                     if (ctx->entries.ptr[i]->help) {
-                        printf("%s\n", ctx->entries.ptr[i]->help);
+                        fprintf(ctx->cmd_stdout, "%s\n", ctx->entries.ptr[i]->help);
                     } else {
-                        printf("\n(No documentation)\n");
+                        fprintf(ctx->cmd_stdout, "\n(No documentation)\n");
                     }
                     return CMD_OK;
                 }
             }
             /* If we reached this, means that the command was not found */
-            fprintf(stdout, "Command '%s' was not found.\n", arglist->args[0]);
+            fprintf(ctx->cmd_stdout, "Command '%s' was not found.\n", arglist->args[0]);
             return CMD_ERROR_UNKNOWN_COMMAND;
         } else {
-            fprintf(stdout, "Too many arguments for the 'help' command!\n");
+            fprintf(ctx->cmd_stdout, "Too many arguments for the 'help' command!\n");
             return CMD_ERROR_TOO_MANY_ARGS;
         }
     } else {
-        printf("doc cmd: \n");
-        for (int i = 0; i < ctx->entry_count; i++) {
-            entry = ctx->entries.ptr[i];
-            if (entry->help) {
-                printf("%s: %s\n", entry->cmdname, entry->help);
-            }
-        }
-
-        printf("\nundoc cmd: \n");
-        for (int i = 0; i < ctx->entry_count; i++) {
-            entry = ctx->entries.ptr[i];
-            if (!entry->help) {
-                printf("%s\n", entry->cmdname);
-            }
-        }
+        cmd_print_command_list(ctx);
     }
 
     return CMD_OK;
-
-    /* If no arguments provided, print all help listing.
-     * Otherwise, print documentation on specified command. */
-    // if (arglist) {
-    //     if (arglist->count == 1) {
-    //         for (i = cmd_settings_stack.top->entry_start; i < cmd_settings_stack.top->entry_start + cmd_settings_stack.top->entry_count; i++) {
-    //             if (strcmp(arglist->args[0], cmd_entries[i].cmdname) == 0) {
-    //                 /* Print help, if any */
-    //                 if (cmd_entries[i].help) {
-    //                     offset = fprintf(CMDF_STDOUT, "%s   ", cmd_entries[i].cmdname);
-    //                     cmd_pprint(offset, cmd_entries[i].help);
-    //                 } else
-    //                     printf("\n(No documentation)\n");
-
-    //                 return CMD_OK;
-    //             }
-    //         }
-
-    //         /* If we reached this, means that the command was not found */
-    //         fprintf(CMDF_STDOUT, "Command '%s' was not found.\n", arglist->args[0]);
-    //         return CMDF_ERROR_UNKNOWN_COMMAND;
-    //     } else {
-    //         fprintf(CMDF_STDOUT, "Too many arguments for the 'help' command!\n");
-    //         return CMDF_ERROR_TOO_MANY_ARGS;
-    //     }
-    // } else
-    //     cmd_print_command_list();
-
-    // fputc('\n', CMDF_STDOUT);
-
-    // return CMD_OK;
 }
 
 int cmd_default_do_emptyline(cmd_ctx_t* ctx, cmd_arglist_t* arglist /* Unusued */) {
@@ -178,6 +137,126 @@ static char* cmd_strdup(const char* src) {
     return strcpy(dst, src);
 }
 
+struct cmd_windowsize cmd_get_window_size(cmd_ctx_t* ctx) {
+
+    struct cmd_windowsize cm_winsize;
+    struct winsize ws;
+    int stdin_fd = fileno(ctx->cmd_stdin);
+
+    memset(&cm_winsize, 0, sizeof(struct cmd_windowsize));
+
+    /* if this ioctl() fails, return the zeroed struct as-is */
+    if (ioctl(stdin_fd, TIOCGWINSZ, &ws) == -1)
+        return cm_winsize;
+
+    cm_winsize.w = ws.ws_col;
+    cm_winsize.h = ws.ws_row;
+
+    return cm_winsize;
+}
+
+static void cmd_print_title(cmd_ctx_t* ctx, const char* title, char ruler) {
+    size_t i = 0;
+
+    fprintf(ctx->cmd_stdout, "\n%s\n", title);
+
+    for (i = 0; i < strlen(title) + 1; i++)
+        putc(ruler, ctx->cmd_stdout);
+
+    putc('\n', ctx->cmd_stdout);
+}
+
+/*
+ * Print a string from the current line, down to the next line if needed,
+ * which is padded with loffset characters.
+ * The function takes the input string and prints it word by word - if a word can not
+ * be printed on the line without being concatenated, it is printed on the next line.
+ */
+void cmd_pprint(cmd_ctx_t* ctx, size_t loffset, const char* const strtoprint) {
+    const struct cmd_windowsize winsize = cmd_get_window_size(ctx);
+    size_t total_printed = loffset, i, wordlen;
+    char *strbuff = cmd_strdup(strtoprint), *wordptr;
+
+    /* If we couldn't allocate a buffer, print regularly, exit. */
+    if (!strbuff) {
+        fprintf(ctx->cmd_stdout, "\n%s\n", strtoprint);
+        return;
+    }
+
+    /* Begin splitting by words */
+    wordptr = strtok(strbuff, " \t\n");
+    while (wordptr) {
+        /* Check if we can print this word. */
+        wordlen = strlen(wordptr);
+        if (total_printed + (wordlen + 1) > (size_t)(winsize.w - CMD_PPRINT_RIGHT_OFFSET)) {
+            /* Go to the next line and print the word there. */
+            /* Print newline and loffset spaces */
+            fputc('\n', ctx->cmd_stdout);
+            for (i = 0; i < loffset; i++)
+                fputc(' ', ctx->cmd_stdout);
+
+            total_printed = loffset;
+        }
+
+        /* Print the word */
+        fprintf(ctx->cmd_stdout, "%s ", wordptr);
+        total_printed += wordlen + 1; /* strlen(word) + space */
+
+        /* Get the next word */
+        wordptr = strtok(NULL, " \t\n");
+    }
+
+    fputc('\n', ctx->cmd_stdout);
+
+    CMD_FREE(strbuff);
+}
+
+void cmd_print_command_list(cmd_ctx_t* ctx) {
+
+    int i, printed, offset;
+    cmd_entry_t* entry;
+    const struct cmd_windowsize winsize = cmd_get_window_size(ctx);
+
+    /* Print documented commands */
+    cmd_print_title(ctx, ctx->doc_header, ctx->ruler);
+    for (i = 0, printed = 0; i < ctx->entry_count; i++) {
+        entry = ctx->entries.ptr[i];
+        if (entry->help) {
+            /* Check if we need to break into the next line. */
+            if (printed + strlen(entry->cmdname) + 1 >= winsize.w) {
+                printed = 0;
+                fputc('\n', ctx->cmd_stdout);
+            }
+
+            /* Print command */
+            offset = fprintf(ctx->cmd_stdout, "%s\t", entry->cmdname);
+            cmd_pprint(ctx, offset, entry->help);
+        }
+    }
+
+    fputc('\n', ctx->cmd_stdout);
+
+    /* Print undocumented commands, if any */
+    if (ctx->undoc_cmds > 0) {
+        cmd_print_title(ctx, ctx->undoc_header, ctx->ruler);
+        for (i = 0, printed = 0; i < ctx->entry_count; i++) {
+            entry = ctx->entries.ptr[i];
+            if (!entry->help) {
+                /* Check if we need to break into the next line. */
+                if (printed + strlen(entry->cmdname) + 1 >= winsize.w) {
+                    printed = 0;
+                    fputc('\n', ctx->cmd_stdout);
+                }
+
+                /* Print command */
+                printed += fprintf(ctx->cmd_stdout, "%s ", entry->cmdname);
+            }
+        }
+
+        fputc('\n', ctx->cmd_stdout);
+    }
+}
+
 void cmd_default_completion(const char* buf, linenoiseCompletions* lc) {
     if (buf[0] == 'h') {
         linenoiseAddCompletion(lc, "help");
@@ -196,7 +275,7 @@ char* cmd_default_hints(const char* buf, int* color, int* bold) {
 }
 
 /* API */
-cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* prompt) {
+cmd_ctx_t* cmd_ctx_new(int flags, FILE* cmd_stdin, FILE* cmd_stdout, const char* prompt) {
     cmd_ctx_t* ctx;
     EV_ALLOC_SIZEOF(ctx);
 
@@ -204,8 +283,8 @@ cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* promp
     entry_array_init(&ctx->entries, 16);
 
     ctx->prompt = prompt ? prompt : cmd_default_prompt;
-    ctx->cmd_stdin = stdin_fd != -1 ? stdin_fd : STDIN_FILENO;
-    ctx->cmd_stdout = stdout_fd != -1 ? stdout_fd : STDOUT_FILENO;
+    ctx->cmd_stdin = cmd_stdin ? cmd_stdin : stdin;
+    ctx->cmd_stdout = cmd_stdout ? cmd_stdout : stdout;
     ctx->intro = cmd_default_intro;
     ctx->doc_header = cmd_default_doc_header;
     ctx->undoc_header = cmd_default_undoc_header;
@@ -227,8 +306,7 @@ cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* promp
     cmd_register_command(ctx, cmd_default_do_exit, "exit", "Exit the cmd framework");
     /* Register help callback */
     cmd_register_command(ctx, cmd_default_do_help, "help",
-                         "Get information on a command"
-                         " or list commands.");
+                         "Get information on a command or list commands.");
 
     /* Set the completion callback. This will be called every time the
      * user uses the <tab> key. */
@@ -239,7 +317,7 @@ cmd_ctx_t* cmd_ctx_new(int flags, int stdin_fd, int stdout_fd, const char* promp
         // if (!ctx->async_buff)
         ctx->async_buff = malloc(ASYNC_BUFFLEN);
         // char buff[1024];
-        linenoiseEditStart(&ctx->ls, ctx->cmd_stdin, ctx->cmd_stdout,
+        linenoiseEditStart(&ctx->ls, fileno(ctx->cmd_stdin), fileno(ctx->cmd_stdout),
                            ctx->async_buff, ASYNC_BUFFLEN, ctx->prompt);
     }
 
@@ -475,9 +553,12 @@ int cmd_command_process(cmd_ctx_t* ctx, const char* inputbuff) {
     retflag = cmd_default_do_command(ctx, cmdptr, cmd_args);
     switch (retflag) {
     case CMD_ERROR_UNKNOWN_COMMAND:
-        fprintf(stdout, "Unknown command '%s'.\n", cmdptr);
+        fprintf(ctx->cmd_stdout, "Unknown command '%s'.\n", cmdptr);
         break;
     }
+
+    /* Flush stream */
+    fflush(ctx->cmd_stdout);
 
     /* Free arguments */
     cmd_free_arglist(cmd_args);
@@ -488,7 +569,6 @@ int cmd_command_process(cmd_ctx_t* ctx, const char* inputbuff) {
     // #endif
     free(inputbuff);
 }
-
 
 void cmd_commandloop(cmd_ctx_t* ctx) {
     // #ifndef CMDF_READLINE_SUPPORT
@@ -503,7 +583,7 @@ void cmd_commandloop(cmd_ctx_t* ctx) {
 
     /* Print intro, if any. */
     if (ctx->intro)
-        fprintf(stdout, "\n%s\n\n", ctx->intro);
+        fprintf(ctx->cmd_stdout, "\n%s\n\n", ctx->intro);
 
     while (!ctx->exit_flag) {
 
