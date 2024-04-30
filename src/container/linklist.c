@@ -5,6 +5,17 @@
 
 #include "linklist.h"
 
+static void* (*__calloc)(size_t) = calloc;
+static void (*__free)(void*) = free;
+
+// list_set_allocator allows for configuring a custom allocator for
+// all hashmap library operations. This function, if needed, should be called
+// only once at startup and a prior to calling hashmap_new().
+void list_set_allocator(void* (*calloc)(size_t, size_t), void (*free)(void*)) {
+    __calloc = calloc;
+    __free = free;
+}
+
 /* these *do not* cleanup list nodes and referenced data, as the functions
  * do - these macros simply {de,at}tach a listnode from/to a list.
  */

@@ -16,7 +16,7 @@ typedef struct epoll_ctx_s {
     struct events events;
 } epoll_ctx_t;
 
-int iowatcher_init(eloop_t* loop) {
+int iowatcher_init(evloop_t* loop) {
     if (loop->iowatcher)
         return 0;
     epoll_ctx_t* epoll_ctx;
@@ -27,7 +27,7 @@ int iowatcher_init(eloop_t* loop) {
     return 0;
 }
 
-int iowatcher_cleanup(eloop_t* loop) {
+int iowatcher_cleanup(evloop_t* loop) {
     if (loop->iowatcher == NULL)
         return 0;
     epoll_ctx_t* epoll_ctx = (epoll_ctx_t*)loop->iowatcher;
@@ -37,7 +37,7 @@ int iowatcher_cleanup(eloop_t* loop) {
     return 0;
 }
 
-int iowatcher_add_event(eloop_t* loop, int fd, int events) {
+int iowatcher_add_event(evloop_t* loop, int fd, int events) {
     if (loop->iowatcher == NULL) {
         iowatcher_init(loop);
     }
@@ -72,7 +72,7 @@ int iowatcher_add_event(eloop_t* loop, int fd, int events) {
     return 0;
 }
 
-int iowatcher_del_event(eloop_t* loop, int fd, int events) {
+int iowatcher_del_event(evloop_t* loop, int fd, int events) {
     epoll_ctx_t* epoll_ctx = (epoll_ctx_t*)loop->iowatcher;
     if (epoll_ctx == NULL)
         return 0;
@@ -103,7 +103,7 @@ int iowatcher_del_event(eloop_t* loop, int fd, int events) {
     return 0;
 }
 
-int iowatcher_poll_events(eloop_t* loop, int timeout) {
+int iowatcher_poll_events(evloop_t* loop, int timeout) {
     epoll_ctx_t* epoll_ctx = (epoll_ctx_t*)loop->iowatcher;
     if (epoll_ctx == NULL)
         return 0;
